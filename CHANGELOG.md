@@ -13,6 +13,8 @@ per-file diff commands.
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-08-03
+
 ### Added
 
 - **Language Gate** - no dimension or gate anywhere in the framework checked a posting's
@@ -54,6 +56,24 @@ per-file diff commands.
   `pdftotext -layout <file>.pdf - | grep '�'` - none of the hits may be a date field. (On
   the stock template two benign hits remain either way: the decorative separators on the
   contact and award lines, which are unrelated to dates and predate this fix.)
+
+- `tools/convert_salary_excel.py` now parses localized numeric string cells - Excel
+  exports that store numbers as text (a Danish `"108,5"`, `"1.234,5"`, or space-separated
+  thousands) previously hit `float()`'s `ValueError` and were silently dropped from
+  `salary_data.json`. The ambiguous single-comma-plus-three-digits pattern (`"1,234"`,
+  thousands in one locale and a decimal in another) is deliberately skipped rather than
+  guessed, preserving the old safe behaviour for the one case that cannot be
+  disambiguated. (#272)
+- `tools/check_upstream_updates.py` compares the template-repo slug case-insensitively -
+  GitHub serves repository paths case-insensitively, so a clone made from a lowercased
+  URL was a legitimate direct clone that nonetheless triggered #265's fork-vs-self
+  warning. (#273)
+
+### Changed
+
+- SETUP.md section 8 now shows the first-time `git remote add upstream ...` command
+  before telling you to `git fetch upstream`, which previously failed on any clone of a
+  personal fork with no explanation of the missing remote. (#274)
 
 ### Security & privacy
 
