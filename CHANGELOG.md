@@ -50,8 +50,10 @@ per-file diff commands.
   grep -rn '\\cventry{[^}]*--' cv/
   ```
 
-  Verify afterwards with `pdftotext -layout <file>.pdf - | grep -c '�'`, which should
-  return `0`.
+  Verify afterwards by extracting the text layer and checking the date lines specifically:
+  `pdftotext -layout <file>.pdf - | grep '�'` - none of the hits may be a date field. (On
+  the stock template two benign hits remain either way: the decorative separators on the
+  contact and award lines, which are unrelated to dates and predate this fix.)
 
 ### Security & privacy
 
