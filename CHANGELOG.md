@@ -118,7 +118,9 @@ per-file diff commands.
   its own row. The same
   step is mirrored into `job-application-assistant` because `/scrape` Step 5 routes straight
   into the skill (`framework_version` 1.2.0 -> 1.3.0), and `/scrape` Step 6 now defers to it
-  instead of adding a row of its own. `seen_jobs.json` is deliberately left alone.
+  instead of adding a row of its own. `seen_jobs.json` is deliberately left alone. **Forks:**
+  the bump means `check_upstream_updates.py` will flag the skill - reconcile the new Step 3b
+  (and Step 6b in `apply.md`) into your personalized copies rather than skipping the flag.
 
   **`drafted` is introduced into the tracker status vocabulary**, and every reader that
   meant *submitted* now says so. These readers define "open" by exclusion from the final
