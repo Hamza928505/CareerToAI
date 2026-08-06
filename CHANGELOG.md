@@ -13,6 +13,32 @@ per-file diff commands.
 
 ## [Unreleased]
 
+### Added
+
+- **Spec-pinning tests for the Language Gate's `/rank` contract** (#278) - four regression
+  guards in `tests/test_rank_command.py` pinning the `language_gate`/`language_note` fields
+  through Steps 2-5 of `/rank`, including the Step 4 persistence rule that was live-debugged
+  during #275 (vetoes reported in console output but `language_gate: null` on every persisted
+  entry). Mirrors the existing `gaps`/`strengths` pinning pattern. No behavior change.
+
+- **The jobnet and jobdanmark CLIs identify themselves on every API request** (#283) - their
+  `apiFetch`/`apiPost` wrappers now send an explicit `User-Agent` (`jobnet-cli/1.0`,
+  `jobdanmark-cli/1.0`) instead of Bun's anonymous default token, matching the honest
+  self-identification jobindex already uses on `htmlFetch`. The new `user-agent.test.ts`
+  suites assert the header on every request wrapper. No response behavior observed to
+  change.
+
+### Changed
+
+- **The four Danish demo portals now ship disabled** (#288) - `jobindex-search`,
+  `jobbank-search`, `jobdanmark-search`, and `jobnet-search` default to `enabled: false`,
+  and `/setup`'s job-portals question now acts on the answer: it flips them to
+  `enabled: true` when your market is Denmark, and leaves them off otherwise. Previously a
+  non-Danish user's `/scrape` ran all four Danish boards by default, spending tokens
+  fetching and filtering irrelevant listings. **Fork heads-up:** if you search the Danish
+  market, set `enabled: true` in those four `SKILL.md` files after updating (or re-run
+  `/setup --section search`); forks that already curated their portal set are unaffected.
+
 ### Fixed
 
 - **The robots gate did not fail closed** (`tools/robots_check.py`, #277). Found by an
@@ -34,23 +60,6 @@ per-file diff commands.
   direct callers, with a test pinning the terminator, that a dash-leading argument fails
   closed end to end, and that `gate()` never passes a caller-supplied URL through to
   curl. `--max-redirs 5` is set explicitly rather than left to curl's default.
-
-### Added
-
-- **Spec-pinning tests for the Language Gate's `/rank` contract** (#278) - four regression
-  guards in `tests/test_rank_command.py` pinning the `language_gate`/`language_note` fields
-  through Steps 2-5 of `/rank`, including the Step 4 persistence rule that was live-debugged
-  during #275 (vetoes reported in console output but `language_gate: null` on every persisted
-  entry). Mirrors the existing `gaps`/`strengths` pinning pattern. No behavior change.
-
-- **The jobnet and jobdanmark CLIs identify themselves on every API request** (#283) - their
-  `apiFetch`/`apiPost` wrappers now send an explicit `User-Agent` (`jobnet-cli/1.0`,
-  `jobdanmark-cli/1.0`) instead of Bun's anonymous default token, matching the honest
-  self-identification jobindex already uses on `htmlFetch`. The new `user-agent.test.ts`
-  suites assert the header on every request wrapper. No response behavior observed to
-  change.
-
-### Fixed
 
 - **Negative and fractional filter flags are rejected in the Danish portal CLIs** (#281) -
   `--jobage` (jobindex), `--radius` (jobnet), `--category`/`--jobtitle-id` (jobdanmark), and
