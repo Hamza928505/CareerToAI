@@ -15,6 +15,10 @@ per-file diff commands.
 
 ### Added
 
+- **README: video walkthrough link in Quick start** - The Next New Thing's hands-on
+  walkthrough of the workflow (recorded August 2026), for newcomers who want to see the
+  setup-to-application flow before reading. Docs only.
+
 - **Spec-pinning tests for the Language Gate's `/rank` contract** (#278) - four regression
   guards in `tests/test_rank_command.py` pinning the `language_gate`/`language_note` fields
   through Steps 2-5 of `/rank`, including the Step 4 persistence rule that was live-debugged
