@@ -13,6 +13,8 @@ per-file diff commands.
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-08-07
+
 ### Added
 
 - **`--jobage-minutes` on linkedin-search for sub-day freshness windows** (#302) - LinkedIn
@@ -386,5 +388,9 @@ At this baseline the framework provides:
 - **Cross-runtime support** - a root `AGENTS.md` pointer so Codex and Antigravity can
   discover the portable portal skills, with Claude Code as the reference runtime.
 
-[Unreleased]: https://github.com/MadsLorentzen/ai-job-search/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/MadsLorentzen/ai-job-search/compare/v1.4.0...HEAD
+[1.4.0]: https://github.com/MadsLorentzen/ai-job-search/compare/v1.3.0...v1.4.0
+[1.3.0]: https://github.com/MadsLorentzen/ai-job-search/compare/v1.2.0...v1.3.0
+[1.2.0]: https://github.com/MadsLorentzen/ai-job-search/compare/v1.1.0...v1.2.0
+[1.1.0]: https://github.com/MadsLorentzen/ai-job-search/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/MadsLorentzen/ai-job-search/releases/tag/v1.0.0
