@@ -15,6 +15,12 @@ per-file diff commands.
 
 ### Added
 
+- **`--jobage-minutes` on linkedin-search for sub-day freshness windows** (#302) - LinkedIn
+  filters its `f_TPR` parameter server-side at second granularity, so the CLI can now ask
+  for postings from the last N minutes instead of whole-day windows only. Conflicts with
+  `--jobage` are rejected explicitly (`CONFLICTING_AGE_FLAGS`). Useful for early-applicant
+  freshness on high-volume searches; URL construction only, no parsing change.
+
 - **README: video walkthrough link in Quick start** - The Next New Thing's hands-on
   walkthrough of the workflow (recorded August 2026), for newcomers who want to see the
   setup-to-application flow before reading. Docs only.
