@@ -13,6 +13,15 @@ per-file diff commands.
 
 ## [Unreleased]
 
+### Changed
+
+- **CI discovers portal CLIs instead of hardcoding them** (#310). The `cli-checks` matrix
+  is now emitted by a `discover-clis` job that finds every `.agents/skills/*/cli/package.json`,
+  so a portal skill added with `/add-portal` gets its `typecheck` and `test` scripts run by CI
+  automatically - on this repo and on any fork - without editing the workflow. Upstream
+  coverage is unchanged (the discovered list on `master` is exactly the six shipped portals).
+  `/add-portal`'s Register step now says so. Thanks @ayobamiseun.
+
 ### Fixed
 
 - **`/apply` archives the job posting while it still holds it** (#306). `/apply` drafted two
