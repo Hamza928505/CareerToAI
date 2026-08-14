@@ -13,6 +13,14 @@ per-file diff commands.
 
 ## [Unreleased]
 
+### Changed
+
+- **CONTRIBUTING: invited PRs are reserved for the invitee** - when a maintainer comment
+  explicitly invites a named contributor to implement an issue they diagnosed or designed,
+  the implementation is theirs for a stated window (default seven days, longer on request);
+  a duplicate PR filed inside that window closes in the invitee's favor regardless of
+  arrival order. Prospective from 2026-08-14. Sits alongside the existing credit norm.
+
 ### Fixed
 
 - **`convert_salary_excel.py` no longer misreads whole-thousands cells from a Danish-locale
