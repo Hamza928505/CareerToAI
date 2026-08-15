@@ -37,9 +37,9 @@ per-file diff commands.
   set its name styling through `\firstnamestyle`/`\lastnamestyle`, which moderncv 2.3.1
   (Debian/Ubuntu apt) does not have, so a fresh fork could not compile its own example CV
   on that toolchain. Name styling now routes through `\namefont`, the hook every name-style
-  macro shares: a true no-op on moderncv 2.4+ (where head iii typesets via
-  `\firstnamestyle`/`\lastnamestyle` and never calls `\namefont`'s replacements), and the
-  only option on 2.3.1 where those macros do not exist. Two review follow-ups landed in the
+  macro shares: live on every version (on 2.4+, head iii's `\firstnamestyle`/`\lastnamestyle`
+  both route through `\namefont`, so the override is what sets the 34pt name there too), and
+  the only option on 2.3.1 where those macros do not exist. Two review follow-ups landed in the
   same change: the `\hypersetup` comment now names the real clash mechanism
   (`\RequirePackage[unicode]{hyperref}` on < 2.4; `\PassOptionsToPackage`, introduced in
   2.4.0, is what removes the clash), and the metadata block sets `pdfpagemode=UseNone` - a
