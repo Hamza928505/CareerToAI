@@ -11,7 +11,7 @@ prefer updating to a tagged release over pulling raw `master` (see
 files a release touched; `python3 tools/check_upstream_updates.py` lists them with
 per-file diff commands.
 
-## [Unreleased]
+## [1.6.0] - 2026-08-19
 
 ### Added
 
@@ -883,7 +883,8 @@ At this baseline the framework provides:
 - **Cross-runtime support** - a root `AGENTS.md` pointer so Codex and Antigravity can
   discover the portable portal skills, with Claude Code as the reference runtime.
 
-[Unreleased]: https://github.com/MadsLorentzen/ai-job-search/compare/v1.5.0...HEAD
+[Unreleased]: https://github.com/MadsLorentzen/ai-job-search/compare/v1.6.0...HEAD
+[1.6.0]: https://github.com/MadsLorentzen/ai-job-search/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/MadsLorentzen/ai-job-search/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/MadsLorentzen/ai-job-search/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/MadsLorentzen/ai-job-search/compare/v1.2.0...v1.3.0
