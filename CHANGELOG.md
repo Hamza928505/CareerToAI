@@ -56,6 +56,16 @@ per-file diff commands.
 
 ### Fixed
 
+- **`convert_salary_excel.py` no longer corrupts US/UK-formatted numbers 1000x** - the
+  both-separators branch always assumed European locale, so a `"1,234.56"` cell was
+  silently converted to `1.23456` and written into `salary_data.json`. The rule is now
+  "the separator that appears last is the decimal separator", which also makes
+  multi-group values (`"1,234,567.89"`, `"1.234.567,89"`) parse instead of raising. And
+  `strip_type_patterns` now strips `COMPOUND_PATTERNS` words as substrings, mirroring
+  `header_matches`, so a Danish compound header pair ("Antal alle" / "Lønindeks alle")
+  pairs into one category instead of two unpaired standalones - the exact locale the
+  compound support was added for. Pinned by six new cases in
+  `tests/test_convert_salary_excel.py`.
 - **`jobdanmark-search` extracts the city when a comma follows the postcode** - the
   `location` regex required whitespace after the 4-digit postcode, but live
   `companyAddress` values frequently read `"2670, Greve"`; those results emitted
