@@ -15,6 +15,12 @@ per-file diff commands.
 
 ### Added
 
+- **Tests for `check_framework_version.py`** - the CI gate that stops a framework file
+  from being edited without a `framework_version` bump had zero tests, so the one-line
+  mutation `return meaningful_changes > 0` -> `return False` disabled it while the suite
+  stayed green. Four cases in the new `tests/test_check_framework_version.py` (clean
+  tree, unbumped edit, bumped edit, missing marker), each running the real script inside
+  an isolated git repo. Mutation-verified against that exact disable.
 - **Tests for `lint_skills.py`'s skill and command checks** - only `check_settings()`
   had coverage; the linter's main job (frontmatter keys, `allowed-tools` targets
   existing, the `# /<name>` command title rule) was unasserted, so deleting the
