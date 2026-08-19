@@ -120,6 +120,18 @@ per-file diff commands.
 
 ### Fixed
 
+- **`jobindex-search detail` rewritten against jobindex's current markup** - every
+  selector the old parser used is gone from live pages, so on 4 of 5 live postings it
+  returned CSS-comment text as the deadline (`"K \t\t... */"`), an external ATS URL as
+  its own `id` and `url`, null company/location/date, and a 160-char teaser as the
+  description - exit 0 every time. The new parser handles both live shapes (the
+  jobindex-native `jd-*` layout and the external-ATS passthrough), always keeps the
+  jobindex id and `jobannonce` URL, requires a real date next to the deadline label and
+  scans only visible markup (killing the CSS-comment capture), converts Danish long
+  dates to ISO, and reports `company: null` honestly on passthrough pages instead of
+  the ATS brand. Verified live on 5/5 postings (full descriptions of 5.5-9k chars, 4/5
+  ISO deadlines and locations). Fixture tests for both shapes, including the
+  CSS-comment trap, in the new `tests/detail-parsing.test.ts`.
 - **`/scrape` gains a recency fallback for portals with no recency flag** - Step 1b.3
   told every portal to scope to 14 days "using the portal's supported recency flag", but
   jobdanmark has none, leaving the instruction unsatisfiable there: the agent either
