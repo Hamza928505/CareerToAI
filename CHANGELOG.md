@@ -15,6 +15,13 @@ per-file diff commands.
 
 ### Added
 
+- **Fixture coverage for linkedin's date/location and jobindex's `parseSearchPage`** -
+  linkedin's search-card fixture carried no `<time>` or location element, so deleting
+  the `date` extraction (a `/scrape` contract field on a default-ON portal) left every
+  test green; jobindex's Stash parser had no tests at all, so `meta.total` could stop
+  using `hitcount` unnoticed. Four new linkedin cases (both listdate class variants,
+  location, absent-element nulls) and a new jobindex `search-page.test.ts` (hitcount
+  vs page count, contract-field mapping, deadline fallbacks). Both mutation-verified.
 - **Tests for `check_framework_version.py`** - the CI gate that stops a framework file
   from being edited without a `framework_version` bump had zero tests, so the one-line
   mutation `return meaningful_changes > 0` -> `return False` disabled it while the suite
