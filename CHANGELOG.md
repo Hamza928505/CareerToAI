@@ -56,6 +56,13 @@ per-file diff commands.
 
 ### Fixed
 
+- **`/reset documents` now clears `documents/postings/`** - the drop folder for
+  hand-pasted job posting text was absent from the preview, the delete block, and the
+  user-facing scope description, after which the command told the user "The `documents/`
+  folder is now empty" - false whenever postings were present, and they are exactly the
+  personal residue a reset exists to clear. A new `tests/test_reset_command.py` derives
+  the folder list from the git tree, so any future drop folder fails the test until
+  `/reset` covers it.
 - **`convert_salary_excel.py` no longer corrupts US/UK-formatted numbers 1000x** - the
   both-separators branch always assumed European locale, so a `"1,234.56"` cell was
   silently converted to `1.23456` and written into `salary_data.json`. The rule is now
