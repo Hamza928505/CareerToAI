@@ -46,6 +46,14 @@ per-file diff commands.
 
 ### Fixed
 
+- **`jobbank-search` search output now carries the `/scrape` contract's `date` field** (#342) -
+  the CLI emitted `posted` (full ISO 8601) but not the cross-portal `date` key, the one Step 2
+  contract field it was missing. Search results now additively emit `date` as `YYYY-MM-DD`
+  derived from `posted` (kept unchanged), `null` when the feed item carries no `pubDate`. The
+  result mapping is extracted into an exported `normalizeSearchItem` so the derivation is
+  pinned by tests. Completes the portal-contract series with #339 (jobnet) and #340
+  (jobdanmark).
+
 - **`jobdanmark-search` search output now carries the `/scrape` contract fields** - the CLI
   exposed the API-native schema (`companyName`, `publishedDate` in `DD-MM-YYYY`, …) with no
   `company`, `location`, `date` or `deadline`, so every `/scrape` run flagged jobdanmark as
