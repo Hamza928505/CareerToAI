@@ -65,6 +65,15 @@ per-file diff commands.
 
 ### Changed
 
+- **BREAKING (jobbank forks): `jobbank-search` search output emits `deadline` as
+  `YYYY-MM-DD`** - the feed's `DD.MM.YYYY` parenthetical was passed through raw,
+  contradicting the `/scrape` contract, the other portals, and the same CLI's own
+  `detail` command (which already emits ISO for the same job). `01.09.2026` is also
+  ambiguous to a date parser (1 Sep vs 9 Jan). The known shape is now converted;
+  "løbende" still maps to `null`, and an unrecognized shape passes through for `/rank`'s
+  defensive handling. Anything parsing the old `DD.MM.YYYY` output must update - though
+  the README's own search example already showed the ISO form. Pinned in
+  `tests/rss-parsing.test.ts` and `tests/search-normalization.test.ts`.
 - **Job matching reframed around function, not title** (`framework_version` 1.2.2 -> 1.2.3 in
   `04-job-evaluation.md`) - title-lookalike matching throws away career capital that doesn't
   fit one job-title box (e.g. a background spanning research leadership, platform ownership,
