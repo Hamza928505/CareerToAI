@@ -82,6 +82,13 @@ per-file diff commands.
 
 ### Fixed
 
+- **`jobindex-search` maps ASAP postings' deadline to `null`** - the portal's
+  `apply_deadline_asap` flag was emitted as the literal string `"ASAP"` on roughly half
+  of live results, contradicting the CLI's own README ("date string; null if not
+  listed") and the `/scrape` schema, and breaking every consumer that does date
+  arithmetic (`/rank`'s urgency and expiry sweep, `/outcome`'s deadline check,
+  `/notion-sync`'s typed date column). ASAP means "no stated deadline", which the
+  contract already represents as `null`. Pinned in `tests/search-page.test.ts`.
 - **`/gmail-sync` no longer restricts its search to the Inbox** - the query used
   `in:inbox` to "skip sent/drafts", but that operator also excludes every archived
   message, and self-defeatingly the mail matched by the very job-search label Step 3.1
