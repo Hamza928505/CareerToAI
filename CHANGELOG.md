@@ -120,6 +120,13 @@ per-file diff commands.
 
 ### Fixed
 
+- **`jobnet-search detail` no longer leaks the `1900-01-01` undisclosed-deadline
+  sentinel** - `search` maps the API's sentinel to `null` (with a test pinning it), but
+  `detail` dumped the raw response, so a posting whose deadline is simply not disclosed
+  contributed a deadline 126 years in the past to stored data, and `/rank`'s expiry
+  sweep would retire the job instantly. All three output formats now flow through a
+  `prepareDetail` normalization that maps the sentinel to `null`. Pinned in
+  `tests/detail-formatting.test.ts`.
 - **CI's placeholder guard now watches the CV's actual personal-data lines** - the
   sentinel for `cv/main_example.tex` was `[YOUR_NAME]`, whose only occurrences are a
   header comment and the hyperref `pdftitle`; `/setup`'s documented edit replaces the
