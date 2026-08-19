@@ -65,6 +65,11 @@ per-file diff commands.
 
 ### Changed
 
+- **`linkedin-search detail` drops the `applyUrl` field** - the extraction regex
+  assumed `class=` before `href=` and never matched LinkedIn's real markup (`null` on
+  every live posting since the markup ordering differs), and fixing the regex would only
+  capture the job-view URL, a duplicate of the record's own `url`. The field and the
+  SKILL.md "apply link" claim are removed; a test pins the removal.
 - **`jobdanmark-search` search output drops presentation-only keys** - `coverImage`,
   `companyLogo`, `companyLogoSvgMarkup`, `overlayColor`, and `silhouetteLogo` were ~40%
   of a live payload (a 30-result response shrinks from ~30k to ~20k chars), fed into
