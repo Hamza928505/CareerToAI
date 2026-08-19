@@ -56,6 +56,13 @@ per-file diff commands.
 
 ### Fixed
 
+- **`jobdanmark-search` extracts the city when a comma follows the postcode** - the
+  `location` regex required whitespace after the 4-digit postcode, but live
+  `companyAddress` values frequently read `"2670, Greve"`; those results emitted
+  `location: null` (7 of 30 in a live sample), so `/scrape`'s geography/commute filter
+  (Rule 3) had nothing to act on. The extraction now accepts an optional comma, trims the
+  captured city, and still refuses to mistake a 4-digit street number for the postcode.
+  Pinned by three new cases in `tests/search-normalization.test.ts`.
 - **Example-CV bullets no longer swallowed as LaTeX optional labels** - every placeholder
   bullet written as `\item [text]` (11 in `cv/main_example.tex`, 3 in
   `06-cover-letter-templates.md`'s taught template) let LaTeX parse the bracketed text as
