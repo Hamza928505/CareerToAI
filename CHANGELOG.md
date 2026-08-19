@@ -120,6 +120,14 @@ per-file diff commands.
 
 ### Fixed
 
+- **`jobdanmark-search detail`'s HTML fallback emits the same shapes as its JSON-LD
+  branch** - a posting without JSON-LD returned `datePosted` as the page's raw
+  `DD-MM-YYYY` text, `validThrough` as free text (including the literal `"Løbende"`,
+  which would flow into stored data as a deadline), and a hardcoded `null`
+  `addressLocality`. The fallback now converts overview dates to `YYYY-MM-DD`, maps
+  `Løbende` to `null` (jobbank's precedent for the equivalent), and derives the locality
+  from the workplace address with the same postcode extraction search uses. Pinned in
+  `tests/detail-parsing.test.ts`.
 - **`jobnet-search detail` no longer leaks the `1900-01-01` undisclosed-deadline
   sentinel** - `search` maps the API's sentinel to `null` (with a test pinning it), but
   `detail` dumped the raw response, so a posting whose deadline is simply not disclosed
