@@ -65,6 +65,12 @@ per-file diff commands.
 
 ### Changed
 
+- **`jobdanmark-search` search output drops presentation-only keys** - `coverImage`,
+  `companyLogo`, `companyLogoSvgMarkup`, `overlayColor`, and `silhouetteLogo` were ~40%
+  of a live payload (a 30-result response shrinks from ~30k to ~20k chars), fed into
+  agent context on every `/scrape` query, and unusable by an agent. The #340
+  compatibility duplicates (`companyName`, `publishedDate`, `applicationDeadline`) and
+  `slug` stay. Pinned in `tests/search-normalization.test.ts`.
 - **BREAKING (jobbank forks): `jobbank-search` search output emits `deadline` as
   `YYYY-MM-DD`** - the feed's `DD.MM.YYYY` parenthetical was passed through raw,
   contradicting the `/scrape` contract, the other portals, and the same CLI's own
