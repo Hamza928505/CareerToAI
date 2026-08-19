@@ -15,6 +15,14 @@ per-file diff commands.
 
 ### Added
 
+- **Cross-portal `/scrape` contract pin** (#344) - a repo-level test deriving the Step 2
+  search-output field list (`title`, `company`, `location`, `date`, `url`) from
+  `job-scraper/SKILL.md`'s own contract sentence and checking every installed portal
+  CLI's search source for it, so a portal that quietly stops emitting a contract field
+  (the failure class jobnet and jobdanmark actually shipped before #339/#340) fails CI
+  with a clean diff instead of degrading every `/scrape` run silently. The pin survived
+  the #347 output-shape changes unmodified - evidence the derived-from-spec design holds.
+  Contributed by @oscarbol09, the invited follow-up from #342's review.
 - **`freehire-search` gains `--no-description` for cheap discovery passes** - a default
   search hydrates full description bodies (~73% of the payload, ~20k tokens per query)
   while `/scrape` is told to pre-filter by title before reading bodies. The new flag
