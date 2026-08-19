@@ -120,6 +120,15 @@ per-file diff commands.
 
 ### Fixed
 
+- **`/html-report`'s funnel counts stages from history; the rejection rate stops
+  counting non-rejections** - the funnel was computed from current status, which is a
+  state, not a history: an application that interviewed and was then rejected never
+  counted as reaching Interview, so a finished search rendered as though nobody ever
+  interviewed. The funnel (Step 2 and chart 4) now derives stage-reached from current
+  status plus the `outcome.md` stage checkboxes Step 1.2 already merges. And the
+  rejection rate no longer counts `offer_declined` (a success) or `withdrawn`
+  (candidate-initiated) as rejections, nor unresolved Interview/Offer rows in its
+  denominator. Pinned by two new tests in `tests/test_html_report_command.py`.
 - **`jobdanmark-search detail`'s HTML fallback emits the same shapes as its JSON-LD
   branch** - a posting without JSON-LD returned `datePosted` as the page's raw
   `DD-MM-YYYY` text, `validThrough` as free text (including the literal `"Løbende"`,
