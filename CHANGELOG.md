@@ -49,6 +49,16 @@ per-file diff commands.
   "Compile example CV and cover letter" to two leg-suffixed names, so a branch-protection
   rule requiring the old name needs updating once.
 
+### Fixed
+
+- **`salary_lookup.py` never stripped the dotted "A.M.B.A." legal suffix** (#356) - the
+  `STRIP_PATTERNS` regex ended in `\.\b`, and a word boundary can't sit between a literal
+  dot and the space or end-of-string that follows it in real company names, so the
+  pattern was dead code: `"Arla Foods A.M.B.A."` normalized differently from
+  `"Arla Foods amba"` and fuzzy-matched at 86 instead of 100. The trailing dot is now
+  optional (`\.?\b`), both forms normalize identically, and two regression tests pin it.
+  Thanks @Ritik650.
+
 ## [1.6.0] - 2026-08-19
 
 ### Added
