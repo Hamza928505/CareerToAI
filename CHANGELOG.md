@@ -15,6 +15,7 @@ per-file diff commands.
 
 ### Added
 
+- **pypdf ATS text-layer fallback** - `/apply` Step 5d and `tools/verify_pdf.py` extract the CV PDF text layer with **pypdf** first (BSD, `pip install pypdf`) so Windows machines without Poppler still get a mechanical parseability check. Poppler `pdftotext -layout -enc UTF-8` remains the fallback; if both are missing the check still degrades to a visual keyword review. No extra cache or installer. `05-cv-templates.md` `framework_version` 1.4.2 → 1.4.3.
 - **CI now tests the full documented Python range** (#370) - the Python tool tests job
   runs a 3.10-3.14 version matrix instead of pinning 3.12, so both the documented 3.10
   minimum and the newest Python are continuously verified. Grew out of an independent
