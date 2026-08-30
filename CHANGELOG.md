@@ -13,6 +13,17 @@ per-file diff commands.
 
 ## [Unreleased]
 
+### Security
+
+- **`settings.json` no longer pre-approves `bun run` on arbitrary files** (#396) - the
+  template's permission allowlist granted `Bash(bun run:*)`, which auto-approved
+  `bun run <any file on disk>` in every fork. It is now one path-scoped entry per shipped
+  portal CLI, matching what each portal SKILL.md already declares. `/scrape` is unaffected
+  for all portals, including ones added by `/add-portal` - the job-scraper skill's own
+  `allowed-tools` carries the path-scoped wildcard that covers them during the workflow.
+  Running a portal CLI ad hoc outside a skill now prompts once, which is the intended
+  behavior for anything not on the reviewed list. Thanks @vkotaru.
+
 ### Fixed
 
 - **`/scrape` now persists each posting's publication date** (#390) - Step 2's contract guarantees a
