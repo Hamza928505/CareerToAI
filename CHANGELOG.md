@@ -51,6 +51,7 @@ per-file diff commands.
   as an absent one (`posted` empty, `date: null`, per the `seen_jobs.json` contract that
   #391 put this field on), and every other item survives. Pinned by three new cases in
   `search-normalization.test.ts`, each verified to fail on the unfixed code.
+
 - **`linkedin-search` rejects fractional numeric flags instead of silently changing
   the query** (#371) - bare `parseInt` truncated values before validation, so
   `--jobage 0.5` became `0` and silently omitted LinkedIn's `f_TPR` freshness filter
