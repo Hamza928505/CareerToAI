@@ -54,7 +54,12 @@ pageScript: /assets/editor.js
           <input type="text" data-path="profile.location" placeholder="Amman, Jordan">
         </label>
         <label>Pronouns <span class="optional">optional</span>
-          <input type="text" data-path="profile.pronouns" placeholder="they/them">
+          <select data-path="profile.pronouns">
+            <option value="">Not specified</option>
+            <option value="he/him">he/him</option>
+            <option value="she/her">she/her</option>
+          </select>
+          <small>Leave as Not specified to publish no pronouns at all.</small>
         </label>
       </div>
       <label>Email

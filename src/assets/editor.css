@@ -76,7 +76,8 @@
 }
 
 .editor-form input,
-.editor-form textarea {
+.editor-form textarea,
+.editor-form select {
   display: block;
   width: 100%;
   margin-top: 0.3rem;
@@ -90,8 +91,21 @@
   border-radius: var(--radius);
 }
 
+.editor-form select {
+  /* Native arrow, but the light/dark token colours rather than the OS default. */
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+                    linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position: calc(100% - 1.1rem) 55%, calc(100% - 0.75rem) 55%;
+  background-size: 0.35rem 0.35rem, 0.35rem 0.35rem;
+  background-repeat: no-repeat;
+  padding-right: 2rem;
+  cursor: pointer;
+}
+
 .editor-form input:focus,
-.editor-form textarea:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 2px var(--accent-soft); }
+.editor-form textarea:focus,
+.editor-form select:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 2px var(--accent-soft); }
 
 .editor-form textarea { resize: vertical; line-height: 1.55; }
 .editor-form input[type="file"] { padding: 0.4rem; font-size: 0.85rem; }

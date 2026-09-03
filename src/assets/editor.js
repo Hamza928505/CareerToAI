@@ -683,6 +683,9 @@ function showMessage(text, tone = "") {
 function init() {
   const form = root.querySelector("[data-form]");
   form.addEventListener("input", onInput);
+  // <select> fires "input" in modern browsers, but "change" is the reliable
+  // one; onInput ignores anything without a data-path, so file inputs are safe.
+  form.addEventListener("change", onInput);
   form.addEventListener("submit", (event) => event.preventDefault());
 
   for (const button of root.querySelectorAll("[data-add]")) {
