@@ -1,0 +1,18 @@
+{
+  "name": "TODO: Your Full Name",
+  "headline": "TODO: One-line professional headline, e.g. 'Cloud Infrastructure Engineer'",
+  "bio": "TODO: 2-4 sentences in plain prose. Write it the way you would want an AI assistant to summarize you to someone else: what you do, what you specialize in, what you are working toward. Avoid marketing language — state facts, because this text is read by machines as much as by people.",
+  "location": "TODO: City, Country (or delete this field)",
+  "email": "TODO: you@example.com",
+  "pronouns": "",
+  "jobTitle": "TODO: Current role title",
+  "worksFor": "TODO: Current employer (or delete this field)",
+  "links": [
+    { "label": "GitHub", "url": "https://github.com/TODO" },
+    { "label": "LinkedIn", "url": "https://www.linkedin.com/in/TODO" },
+    { "label": "Personal site", "url": "https://TODO.example.com" }
+  ],
+  "skills": [
+    "TODO: a skill you have that is not implied by any certificate"
+  ]
+}

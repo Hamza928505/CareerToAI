@@ -1,0 +1,23 @@
+{
+  "name": "career-to-ai",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "AI-readable personal profile and certificate vault. Static site, zero hosting cost.",
+  "scripts": {
+    "build": "eleventy",
+    "serve": "eleventy --serve",
+    "clean": "node -e \"fs.rmSync('_site',{recursive:true,force:true})\"",
+    "add-cert": "node scripts/add-cert.mjs",
+    "make-samples": "node scripts/make-sample-images.mjs"
+  },
+  "devDependencies": {
+    "@11ty/eleventy": "^3.0.0",
+    "@anthropic-ai/sdk": "^0.123.0",
+    "sharp": "^0.34.0",
+    "zod": "^4.5.4"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

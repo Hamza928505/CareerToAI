@@ -1,0 +1,6 @@
+{
+  "url": "https://hamza928505.github.io/CareerToAI/",
+  "title": "Profile & Certificate Vault",
+  "language": "en",
+  "note": "url is overridden automatically by the SITE_URL env var. GitHub Actions sets it from the live Pages URL, so this value only affects local builds."
+}

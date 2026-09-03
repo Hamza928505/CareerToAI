@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="{{ site.language }}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ title }}</title>
+<meta name="description" content="{{ description | metaTrim }}">
+<link rel="canonical" href="{{ page.url | absUrl }}">
+
+{# The opposite of LinkedIn's bot-blocking: every crawler is explicitly welcome. #}
+<meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+<meta name="googlebot" content="index, follow">
+<meta name="author" content="{{ profile.name }}">
+
+<meta property="og:type" content="{{ ogType | default('website') }}">
+<meta property="og:site_name" content="{{ profile.name }} — {{ site.title }}">
+<meta property="og:title" content="{{ title }}">
+<meta property="og:description" content="{{ description | metaTrim }}">
+<meta property="og:url" content="{{ page.url | absUrl }}">
+<meta property="og:locale" content="{{ site.language }}">
+{% if ogImage %}<meta property="og:image" content="{{ ogImage | absUrl }}">
+<meta property="og:image:alt" content="{{ ogImageAlt | default(title) }}">{% endif %}
+<meta name="twitter:card" content="{% if ogImage %}summary_large_image{% else %}summary{% endif %}">
+<meta name="twitter:title" content="{{ title }}">
+<meta name="twitter:description" content="{{ description | metaTrim }}">
+
+{# Signposts for agents that prefer plain text or raw JSON over HTML. #}
+<link rel="alternate" type="text/plain" href="{{ '/llms.txt' | absUrl }}" title="Plain-text profile summary">
+<link rel="alternate" type="application/json" href="{{ '/data/certificates.json' | absUrl }}" title="Certificate data as JSON">
+<link rel="sitemap" type="application/xml" href="{{ '/sitemap.xml' | absUrl }}">
+
+<script type="application/ld+json">
+{%- if schemaType == "person" -%}
+{{ profile | personJsonLd(certificates) | jsonld | safe }}
+{%- elif schemaType == "credential" -%}
+{{ certificate | credentialJsonLd(profile) | jsonld | safe }}
+{%- elif schemaType == "collection" -%}
+{{ certificates | collectionJsonLd(profile) | jsonld | safe }}
+{%- endif -%}
+</script>
+
+<link rel="stylesheet" href="{{ '/assets/style.css' | url }}">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to main content</a>
+
+<header class="site-header">
+  <nav aria-label="Primary">
+    <ul>
+      <li><a href="{{ '/' | url }}"{% if page.url == '/' %} aria-current="page"{% endif %}>Profile</a></li>
+      <li><a href="{{ '/certificates/' | url }}"{% if '/certificates/' in page.url %} aria-current="page"{% endif %}>Certificates</a></li>
+      <li><a href="{{ '/llms.txt' | url }}">llms.txt</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main id="main">
+{{ content | safe }}
+</main>
+
+<footer class="site-footer">
+  <p>
+    This page is built as static HTML so that any AI assistant or crawler can read it
+    without executing JavaScript. Machine-readable alternatives:
+    <a href="{{ '/llms.txt' | url }}">/llms.txt</a> (plain text),
+    <a href="{{ '/data/certificates.json' | url }}">/data/certificates.json</a> (raw data),
+    <a href="{{ '/sitemap.xml' | url }}">/sitemap.xml</a>.
+  </p>
+  <p><small>Last built <time datetime="{{ site.buildDate }}">{{ site.buildDay }}</time>.</small></p>
+</footer>
+</body>
+</html>

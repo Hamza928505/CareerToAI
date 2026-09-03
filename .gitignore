@@ -1,0 +1,20 @@
+# Secrets — never commit
+.env
+.env.*
+!.env.example
+
+# Full-resolution certificate originals stay on your machine only.
+# Only the downscaled, EXIF-stripped copies in src/certs/ are published.
+certs-source/*
+!certs-source/.gitkeep
+
+# Build output & deps
+_site/
+node_modules/
+.cache/
+*.log
+npm-debug.log*
+
+# OS noise
+.DS_Store
+Thumbs.db

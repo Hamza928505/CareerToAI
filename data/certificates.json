@@ -1,0 +1,36 @@
+[
+  {
+    "id": "aws-certified-solutions-architect-associate-2024",
+    "title": "AWS Certified Solutions Architect – Associate",
+    "issuer": "Amazon Web Services",
+    "dateIssued": "2024-03-15",
+    "dateExpires": "2027-03-15",
+    "credentialId": "SAA-C03-SAMPLE-0001",
+    "credentialUrl": "",
+    "description": "Validates the ability to design and deploy fault-tolerant, cost-optimized systems on AWS. Covers selecting appropriate compute, storage, networking and database services, designing for high availability across Availability Zones, and applying least-privilege IAM and VPC network isolation.",
+    "skills": ["AWS", "Cloud Architecture", "EC2", "VPC", "IAM", "S3", "High Availability", "Cost Optimization"],
+    "certificateImage": "/certs/aws-certified-solutions-architect-associate-2024.jpg",
+    "certificateImageWidth": 1200,
+    "certificateImageHeight": 849,
+    "sourceFileType": "image",
+    "extractedText": "AWS Certified Solutions Architect – Associate. This certifies that SAMPLE NAME has successfully completed the requirements to be recognized as an AWS Certified Solutions Architect – Associate. Issued March 15, 2024. Valid through March 15, 2027. Validation Number SAA-C03-SAMPLE-0001.",
+    "addedAt": "2024-03-20"
+  },
+  {
+    "id": "google-data-analytics-professional-certificate-2023",
+    "title": "Google Data Analytics Professional Certificate",
+    "issuer": "Google (via Coursera)",
+    "dateIssued": "2023-08-02",
+    "dateExpires": "",
+    "credentialId": "",
+    "credentialUrl": "",
+    "description": "An eight-course program covering the full data analysis lifecycle: framing a business question, cleaning and transforming messy datasets, analysing them in spreadsheets and SQL, and communicating findings through visualisation in Tableau and R.",
+    "skills": ["Data Analysis", "SQL", "R", "Tableau", "Spreadsheets", "Data Cleaning", "Data Visualization"],
+    "certificateImage": "/certs/google-data-analytics-professional-certificate-2023.jpg",
+    "certificateImageWidth": 1200,
+    "certificateImageHeight": 849,
+    "sourceFileType": "pdf",
+    "extractedText": "Google Data Analytics Professional Certificate. SAMPLE NAME has successfully completed the eight-course Google Data Analytics Professional Certificate. August 2, 2023.",
+    "addedAt": "2023-08-05"
+  }
+]

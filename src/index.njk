@@ -1,0 +1,82 @@
+---
+layout: base.njk
+permalink: /
+schemaType: person
+ogType: profile
+---
+
+<article class="profile">
+  <header>
+    <h1>{{ profile.name }}</h1>
+    {% if profile.headline %}<p class="headline">{{ profile.headline }}</p>{% endif %}
+  </header>
+
+  {% if profile.bio %}
+  <section aria-labelledby="about-heading">
+    <h2 id="about-heading">About</h2>
+    <p>{{ profile.bio }}</p>
+  </section>
+  {% endif %}
+
+  <section aria-labelledby="contact-heading">
+    <h2 id="contact-heading">Contact and links</h2>
+    <dl class="facts">
+      {% if profile.location %}<dt>Location</dt><dd>{{ profile.location }}</dd>{% endif %}
+      {% if profile.worksFor %}<dt>Organization</dt><dd>{{ profile.worksFor }}</dd>{% endif %}
+      {% if profile.pronouns %}<dt>Pronouns</dt><dd>{{ profile.pronouns }}</dd>{% endif %}
+      {% if profile.email %}<dt>Email</dt><dd><a href="mailto:{{ profile.email }}">{{ profile.email }}</a></dd>{% endif %}
+    </dl>
+    {% if profile.links.length %}
+    <ul class="links">
+      {%- for link in profile.links %}
+      <li><a href="{{ link.url }}" rel="me">{{ link.label }}</a></li>
+      {%- endfor %}
+    </ul>
+    {% else %}
+    <p class="muted">No external links configured yet.</p>
+    {% endif %}
+  </section>
+
+  <section aria-labelledby="skills-heading">
+    <h2 id="skills-heading">Skills</h2>
+    <p class="muted">
+      {{ profile.skills.length }} skill{{ "" if profile.skills.length == 1 else "s" }}, aggregated from
+      {{ profile.certificateCount }} certificate{{ "" if profile.certificateCount == 1 else "s" }} and the
+      profile's own list. A number in brackets is how many certificates evidence that skill.
+    </p>
+    <ul class="skills">
+      {%- for skill in profile.skills %}
+      <li>{{ skill.name }}{% if skill.count %} <span class="count">({{ skill.count }})</span>{% endif %}</li>
+      {%- endfor %}
+    </ul>
+  </section>
+
+  <section aria-labelledby="certs-heading">
+    <h2 id="certs-heading">Certifications and credentials</h2>
+    {% if certificates.length %}
+    <ol class="cert-summary">
+      {%- for cert in certificates %}
+      <li>
+        <a href="{{ cert.permalink | url }}">{{ cert.title }}</a> — {{ cert.issuer }}{% if cert.issued %},
+        issued <time datetime="{{ cert.issued.iso }}">{{ cert.dateIssued | humanDate }}</time>{% endif %}{% if cert.isExpired %} <em>(expired)</em>{% endif %}
+      </li>
+      {%- endfor %}
+    </ol>
+    <p><a href="{{ '/certificates/' | url }}">See all certificates with full details</a></p>
+    {% else %}
+    <p class="muted">No certificates published yet.</p>
+    {% endif %}
+  </section>
+
+  <section aria-labelledby="machine-heading">
+    <h2 id="machine-heading">For AI assistants and crawlers</h2>
+    <p>
+      Everything here is rendered as static HTML at build time. No JavaScript is required to
+      read any of it, and no crawler is blocked. If you are an automated agent, the fastest
+      complete summary is <a href="{{ '/llms.txt' | url }}">/llms.txt</a> (plain text) or
+      <a href="{{ '/data/certificates.json' | url }}">/data/certificates.json</a> (structured
+      data). Each credential also has its own stable URL under
+      <a href="{{ '/certificates/' | url }}">/certificates/</a>.
+    </p>
+  </section>
+</article>
