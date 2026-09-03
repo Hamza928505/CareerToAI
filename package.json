@@ -7,8 +7,10 @@
   "scripts": {
     "build": "eleventy",
     "serve": "eleventy --serve",
+    "editor": "node scripts/editor-server.mjs",
     "clean": "node -e \"fs.rmSync('_site',{recursive:true,force:true})\"",
     "add-cert": "node scripts/add-cert.mjs",
+    "import-data": "node scripts/import-data.mjs",
     "make-samples": "node scripts/make-sample-images.mjs"
   },
   "devDependencies": {

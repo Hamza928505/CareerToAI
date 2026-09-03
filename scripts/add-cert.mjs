@@ -5,50 +5,44 @@
  * the entry into data/certificates.json and publishes a display-resolution copy
  * of the image into src/certs/.
  *
- * This never runs in production. The deployed site is pre-built static files;
- * GitHub Pages could not execute this even if it wanted to. The API key lives
- * in .env, which is git-ignored and never read at build time.
+ * This is the terminal path. The same extraction is available with a button in
+ * /editor/ when `npm run editor` is running — both share
+ * lib/extract-certificate.mjs, so they draft identical fields.
+ *
+ * Never runs in production. The deployed site is pre-built static files, and
+ * the API key lives in .env, which is git-ignored and never read at build time.
  *
  *   npm run add-cert -- ./certs-source/aws.jpg
  *   npm run add-cert -- ./certs-source/coursera.pdf --image ./certs-source/preview.png
  *   npm run add-cert -- ./certs-source/aws.jpg --yes
  */
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import readline from "node:readline/promises";
 import { spawnSync } from "node:child_process";
-import os from "node:os";
 
-import Anthropic from "@anthropic-ai/sdk";
-import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import sharp from "sharp";
-import { z } from "zod";
 
 import {
   CERTS_JSON,
   PUBLISHED_CERT_DIR,
-  ROOT,
   loadCertificates,
   readJson,
   slugify,
   writeJson,
 } from "../lib/content.mjs";
-
-const DEFAULT_MODEL = "claude-opus-5";
-
-/** Long edge Claude sees. Bigger costs more tokens and buys no accuracy. */
-const ANALYSIS_MAX_EDGE = 1568;
+import {
+  Anthropic,
+  DEFAULT_MODEL,
+  IMAGE_TYPES,
+  buildSourceBlockFromFile,
+  extractCertificate,
+  loadEnv,
+} from "../lib/extract-certificate.mjs";
 
 /** Long edge published to the web. The original stays in certs-source/. */
 const PUBLISH_MAX_WIDTH = 1200;
-
-const IMAGE_TYPES = {
-  ".jpg": "image/jpeg",
-  ".jpeg": "image/jpeg",
-  ".png": "image/png",
-  ".gif": "image/gif",
-  ".webp": "image/webp",
-};
 
 const c = {
   bold: (s) => `\x1b[1m${s}\x1b[0m`,
@@ -63,24 +57,6 @@ const die = (msg) => {
   console.error(`\n${c.red("Error:")} ${msg}\n`);
   process.exit(1);
 };
-
-// ---------------------------------------------------------------------------
-// .env — parsed here rather than via a dependency so the tool has one less
-// moving part. Only KEY=VALUE lines, with optional quotes.
-// ---------------------------------------------------------------------------
-
-function loadEnv() {
-  const file = path.join(ROOT, ".env");
-  if (!fs.existsSync(file)) return;
-  for (const line of fs.readFileSync(file, "utf8").split(/\r?\n/)) {
-    const m = /^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$/.exec(line);
-    if (!m) continue;
-    const key = m[1];
-    let value = m[2].trim();
-    if (/^(["']).*\1$/s.test(value)) value = value.slice(1, -1);
-    if (process.env[key] === undefined) process.env[key] = value;
-  }
-}
 
 // ---------------------------------------------------------------------------
 // Arguments
@@ -107,7 +83,7 @@ ${c.bold("Add a certificate to the vault")}
 
   npm run add-cert -- <file> [options]
 
-  <file>            Certificate image (.jpg .jpeg .png .gif .webp) or .pdf
+  <file>            Certificate image (${Object.keys(IMAGE_TYPES).join(" ")}) or .pdf
 
 Options:
   --id <slug>       Use this id instead of one derived from the title.
@@ -121,145 +97,23 @@ Options:
 
 The API key is read from .env (ANTHROPIC_API_KEY). Originals are never copied
 into the repo — only a ${PUBLISH_MAX_WIDTH}px-wide, metadata-stripped copy in src/certs/.
+
+Prefer a form? Run ${c.cyan("npm run editor")} and use the browser editor instead.
 `;
 
 // ---------------------------------------------------------------------------
-// Extraction
+// Publishing the image
 // ---------------------------------------------------------------------------
-
-const ExtractionSchema = z.object({
-  title: z.string().describe("The credential name exactly as printed on the document."),
-  issuer: z
-    .string()
-    .describe("The organization that granted the credential, e.g. 'Amazon Web Services'."),
-  dateIssued: z
-    .string()
-    .describe("Issue date as YYYY-MM-DD, or YYYY-MM / YYYY if only that precision is shown. Empty string if absent."),
-  dateExpires: z
-    .string()
-    .describe("Expiry date in the same format, or empty string if the credential does not expire or no expiry is shown."),
-  credentialId: z
-    .string()
-    .describe("Printed validation, credential, registration or serial number. Empty string if none."),
-  credentialUrl: z
-    .string()
-    .describe("Verification URL printed on the document. Empty string if none."),
-  description: z
-    .string()
-    .describe("Two to four sentences on what the credential covers and what competence it evidences."),
-  skills: z
-    .array(z.string())
-    .describe("Four to twelve concrete skills or technologies the credential evidences, in Title Case."),
-  extractedText: z
-    .string()
-    .describe("Verbatim transcription of every piece of text visible on the document, as one paragraph."),
-});
-
-const SYSTEM_PROMPT = `You extract structured metadata from certificates, diplomas and professional credentials so they can be published on a personal profile site that AI assistants read.
-
-Rules:
-- Report only what the document shows, plus widely known public facts about that specific credential program. Never invent dates, ID numbers or issuers. If a field is not present, return an empty string.
-- Dates: prefer YYYY-MM-DD. If the document only shows a month or a year, return YYYY-MM or YYYY. Never guess a day that is not printed.
-- "description" is written in the third person about the credential itself, not about the person holding it. Describe what it covers and what competence it demonstrates. Do not include the holder's name, and do not use marketing language.
-- "skills" are concrete and specific: technologies, methods, domains. "AWS", "VPC", "Data Cleaning" — not "Teamwork" or "Hard Work". Title Case, no duplicates.
-- "extractedText" is a faithful transcription used for transparency and search. Preserve names, numbers and spellings exactly as printed, including the holder's name if it appears.`;
-
-async function extract({ client, model, source }) {
-  const response = await client.messages.parse({
-    model,
-    max_tokens: 8000,
-    system: SYSTEM_PROMPT,
-    output_config: {
-      effort: "medium",
-      format: zodOutputFormat(ExtractionSchema),
-    },
-    messages: [
-      {
-        role: "user",
-        content: [
-          source.block,
-          {
-            type: "text",
-            text: "Extract the metadata for this credential. Read every line of text on it, including small print, validation numbers and dates.",
-          },
-        ],
-      },
-    ],
-  });
-
-  if (response.stop_reason === "refusal") {
-    const detail = response.stop_details
-      ? ` (${response.stop_details.category ?? "unspecified"}: ${response.stop_details.explanation ?? ""})`
-      : "";
-    die(
-      `The model declined to process this document${detail}.\n` +
-      `  Nothing was written. If this is your own certificate, try again; if it keeps happening,\n` +
-      `  add the entry by hand in data/certificates.json.`
-    );
-  }
-
-  if (!response.parsed_output) {
-    die("The model's response did not match the expected schema. Nothing was written. Try re-running.");
-  }
-
-  return response.parsed_output;
-}
-
-// ---------------------------------------------------------------------------
-// Source file handling
-// ---------------------------------------------------------------------------
-
-/** Build the content block Claude reads, downscaling images to keep tokens sane. */
-async function buildSourceBlock(file) {
-  const ext = path.extname(file).toLowerCase();
-
-  if (ext === ".pdf") {
-    const bytes = fs.readFileSync(file);
-    if (bytes.length > 28 * 1024 * 1024) {
-      die(`PDF is ${(bytes.length / 1048576).toFixed(1)} MB; the API limit is 32 MB per request. Compress it first.`);
-    }
-    return {
-      kind: "pdf",
-      block: {
-        type: "document",
-        source: { type: "base64", media_type: "application/pdf", data: bytes.toString("base64") },
-      },
-    };
-  }
-
-  const mediaType = IMAGE_TYPES[ext];
-  if (!mediaType) {
-    die(`Unsupported file type "${ext}". Use ${Object.keys(IMAGE_TYPES).join(", ")} or .pdf.`);
-  }
-
-  const resized = await sharp(file)
-    .rotate()
-    .resize({ width: ANALYSIS_MAX_EDGE, height: ANALYSIS_MAX_EDGE, fit: "inside", withoutEnlargement: true })
-    .jpeg({ quality: 90 })
-    .toBuffer();
-
-  return {
-    kind: "image",
-    block: {
-      type: "image",
-      source: { type: "base64", media_type: "image/jpeg", data: resized.toString("base64") },
-    },
-  };
-}
 
 /**
  * Write the public copy: downscaled, re-encoded and metadata-stripped (sharp
  * drops EXIF unless told otherwise, so GPS tags and camera serials never ship).
- * Returns the fields to store on the certificate entry.
  */
 async function publishAsset({ id, sourceFile, imageOverride, sourceKind }) {
   fs.mkdirSync(PUBLISHED_CERT_DIR, { recursive: true });
 
   let imageSource = imageOverride || (sourceKind === "image" ? sourceFile : null);
-
-  if (!imageSource && sourceKind === "pdf") {
-    imageSource = renderPdfFirstPage(sourceFile);
-  }
+  if (!imageSource && sourceKind === "pdf") imageSource = renderPdfFirstPage(sourceFile);
 
   if (!imageSource) {
     // No way to make a picture, so publish the PDF itself and link to it.
@@ -343,9 +197,7 @@ async function review(draft) {
         continue;
       }
       result[key] =
-        key === "skills"
-          ? answer.split(",").map((s) => s.trim()).filter(Boolean)
-          : answer;
+        key === "skills" ? answer.split(",").map((s) => s.trim()).filter(Boolean) : answer;
     }
 
     console.log(c.dim("Transcribed text (kept verbatim, not editable here — edit data/certificates.json if needed):"));
@@ -381,8 +233,7 @@ async function confirmOverwrite(id) {
 
 async function main() {
   const opts = parseArgs(process.argv.slice(2));
-  if (opts.help) return console.log(USAGE);
-  if (!opts.file) return console.log(USAGE);
+  if (opts.help || !opts.file) return console.log(USAGE);
 
   loadEnv();
 
@@ -402,12 +253,19 @@ async function main() {
   const client = new Anthropic();
 
   console.log(`\n${c.bold("Reading")} ${path.relative(process.cwd(), file)} ${c.dim(`with ${model}…`)}`);
-  const source = await buildSourceBlock(file);
-  const draft = await extract({ client, model, source });
+
+  let source;
+  let draft;
+  try {
+    source = await buildSourceBlockFromFile(file);
+    draft = await extractCertificate({ client, model, source });
+  } catch (error) {
+    if (error instanceof Anthropic.APIError) die(`Anthropic API error ${error.status ?? ""}: ${error.message}`);
+    die(error.message);
+  }
   console.log(c.green("Extraction complete."));
 
   const reviewed = opts.yes ? draft : await review(draft);
-
   if (!reviewed.title.trim()) die("A certificate needs a title. Nothing was written.");
 
   const year = /^(\d{4})/.exec(reviewed.dateIssued || "")?.[1];
@@ -458,7 +316,7 @@ async function main() {
 ${c.green(index === -1 ? "Added" : "Updated")} ${c.bold(id)}
 
   data/certificates.json   ${total} certificate${total === 1 ? "" : "s"} total
-  src/certs${published.replace("/certs", "")}${published ? "" : "  (no asset published)"}
+  src${published}
   page                     /certificates/${id}/
 
 ${c.dim("The original stays where it is — certs-source/ is git-ignored, so only the")}

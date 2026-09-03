@@ -9,6 +9,11 @@ ogType: profile
   <header>
     <h1>{{ profile.name }}</h1>
     {% if profile.headline %}<p class="headline">{{ profile.headline }}</p>{% endif %}
+    {% if profile.location or profile.pronouns %}
+    <p class="muted">
+      {{ profile.location }}{% if profile.location and profile.pronouns %} · {% endif %}{{ profile.pronouns }}
+    </p>
+    {% endif %}
   </header>
 
   {% if profile.bio %}
@@ -18,12 +23,112 @@ ogType: profile
   </section>
   {% endif %}
 
+  {% if experience.length %}
+  <section aria-labelledby="experience-heading">
+    <h2 id="experience-heading">Experience</h2>
+    <ul class="entry-list">
+      {%- for role in experience %}
+      <li>
+        <article class="entry">
+          <h3>{{ role.title }}</h3>
+          <p class="entry-meta">
+            {{ role.organization }}{% if role.employmentType %} · {{ role.employmentType }}{% endif %}
+          </p>
+          <p class="entry-meta">
+            {% if role.started %}<time datetime="{{ role.started.iso }}">{{ role.dateRange }}</time>{% endif %}{% if role.location %} · {{ role.location }}{% endif %}
+          </p>
+          {% if role.description %}<p>{{ role.description }}</p>{% endif %}
+          {% if role.skills.length %}
+          <ul class="skills">
+            {%- for skill in role.skills %}<li>{{ skill }}</li>{%- endfor %}
+          </ul>
+          {% endif %}
+          {% if role.attachmentImage %}
+          <figure>
+            <img src="{{ role.attachmentImage | url }}"
+                 alt="Attachment for {{ role.title }} at {{ role.organization }}"
+                 {% if role.attachmentImageWidth %}width="{{ role.attachmentImageWidth }}" height="{{ role.attachmentImageHeight }}"{% endif %}
+                 loading="lazy" decoding="async">
+          </figure>
+          {% endif %}
+        </article>
+      </li>
+      {%- endfor %}
+    </ul>
+  </section>
+  {% endif %}
+
+  {% if profile.education.length %}
+  <section aria-labelledby="education-heading">
+    <h2 id="education-heading">Education</h2>
+    <ul class="entry-list">
+      {%- for entry in profile.education %}
+      <li>
+        <article class="entry">
+          <h3>{{ entry.school }}</h3>
+          {% if entry.degree or entry.fieldOfStudy %}
+          <p class="entry-meta">{{ entry.degree }}{% if entry.degree and entry.fieldOfStudy %}, {% endif %}{{ entry.fieldOfStudy }}</p>
+          {% endif %}
+          <p class="entry-meta">
+            {% if entry.industry %}{{ entry.industry }}{% endif %}{% if entry.industry and entry.dateRange %} · {% endif %}{% if entry.started %}<time datetime="{{ entry.started.iso }}">{{ entry.dateRange }}</time>{% endif %}
+          </p>
+          {% if entry.description %}<p>{{ entry.description }}</p>{% endif %}
+        </article>
+      </li>
+      {%- endfor %}
+    </ul>
+  </section>
+  {% endif %}
+
+  <section aria-labelledby="certs-heading">
+    <h2 id="certs-heading">Licenses &amp; certifications</h2>
+    {% if certificates.length %}
+    <ul class="entry-list">
+      {%- for cert in certificates %}
+      <li>
+        <article class="entry">
+          <h3><a href="{{ cert.permalink | url }}">{{ cert.title }}</a></h3>
+          <p class="entry-meta">{{ cert.issuer }}</p>
+          <p class="entry-meta">
+            {% if cert.issued %}Issued <time datetime="{{ cert.issued.iso }}">{{ cert.dateIssued | humanDate }}</time>{% endif %}{% if cert.expires %} · {{ "Expired" if cert.isExpired else "Expires" }} <time datetime="{{ cert.expires.iso }}">{{ cert.dateExpires | humanDate }}</time>{% endif %}{% if cert.credentialId %} · ID {{ cert.credentialId }}{% endif %}
+          </p>
+          {% if cert.description %}<p>{{ cert.description }}</p>{% endif %}
+          {% if cert.skills.length %}
+          <ul class="skills">
+            {%- for skill in cert.skills %}<li>{{ skill }}</li>{%- endfor %}
+          </ul>
+          {% endif %}
+        </article>
+      </li>
+      {%- endfor %}
+    </ul>
+    <p><a href="{{ '/certificates/' | url }}">See all certificates with full details</a></p>
+    {% else %}
+    <p class="muted">No certificates published yet.</p>
+    {% endif %}
+  </section>
+
+  <section aria-labelledby="skills-heading">
+    <h2 id="skills-heading">Skills</h2>
+    <p class="muted">
+      {{ profile.skills.length }} skill{{ "" if profile.skills.length == 1 else "s" }}, aggregated from
+      {{ profile.experienceCount }} role{{ "" if profile.experienceCount == 1 else "s" }},
+      {{ profile.certificateCount }} certificate{{ "" if profile.certificateCount == 1 else "s" }}
+      and the profile's own list. A number in brackets is how many entries evidence that skill.
+    </p>
+    <ul class="skills">
+      {%- for skill in profile.skills %}
+      <li>{{ skill.name }}{% if skill.count %} <span class="count">({{ skill.count }})</span>{% endif %}</li>
+      {%- endfor %}
+    </ul>
+  </section>
+
   <section aria-labelledby="contact-heading">
     <h2 id="contact-heading">Contact and links</h2>
     <dl class="facts">
-      {% if profile.location %}<dt>Location</dt><dd>{{ profile.location }}</dd>{% endif %}
+      {% if profile.jobTitle %}<dt>Current role</dt><dd>{{ profile.jobTitle }}</dd>{% endif %}
       {% if profile.worksFor %}<dt>Organization</dt><dd>{{ profile.worksFor }}</dd>{% endif %}
-      {% if profile.pronouns %}<dt>Pronouns</dt><dd>{{ profile.pronouns }}</dd>{% endif %}
+      {% if profile.location %}<dt>Location</dt><dd>{{ profile.location }}</dd>{% endif %}
       {% if profile.email %}<dt>Email</dt><dd><a href="mailto:{{ profile.email }}">{{ profile.email }}</a></dd>{% endif %}
     </dl>
     {% if profile.links.length %}
@@ -34,37 +139,6 @@ ogType: profile
     </ul>
     {% else %}
     <p class="muted">No external links configured yet.</p>
-    {% endif %}
-  </section>
-
-  <section aria-labelledby="skills-heading">
-    <h2 id="skills-heading">Skills</h2>
-    <p class="muted">
-      {{ profile.skills.length }} skill{{ "" if profile.skills.length == 1 else "s" }}, aggregated from
-      {{ profile.certificateCount }} certificate{{ "" if profile.certificateCount == 1 else "s" }} and the
-      profile's own list. A number in brackets is how many certificates evidence that skill.
-    </p>
-    <ul class="skills">
-      {%- for skill in profile.skills %}
-      <li>{{ skill.name }}{% if skill.count %} <span class="count">({{ skill.count }})</span>{% endif %}</li>
-      {%- endfor %}
-    </ul>
-  </section>
-
-  <section aria-labelledby="certs-heading">
-    <h2 id="certs-heading">Certifications and credentials</h2>
-    {% if certificates.length %}
-    <ol class="cert-summary">
-      {%- for cert in certificates %}
-      <li>
-        <a href="{{ cert.permalink | url }}">{{ cert.title }}</a> — {{ cert.issuer }}{% if cert.issued %},
-        issued <time datetime="{{ cert.issued.iso }}">{{ cert.dateIssued | humanDate }}</time>{% endif %}{% if cert.isExpired %} <em>(expired)</em>{% endif %}
-      </li>
-      {%- endfor %}
-    </ol>
-    <p><a href="{{ '/certificates/' | url }}">See all certificates with full details</a></p>
-    {% else %}
-    <p class="muted">No certificates published yet.</p>
     {% endif %}
   </section>
 

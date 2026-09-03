@@ -7,9 +7,15 @@
 <meta name="description" content="{{ description | metaTrim }}">
 <link rel="canonical" href="{{ page.url | absUrl }}">
 
+{% if noindex %}
+{# The editor is a private authoring tool, not profile content. Keeping it out
+   of the index means crawlers spend their budget on the pages that matter. #}
+<meta name="robots" content="noindex, nofollow">
+{% else %}
 {# The opposite of LinkedIn's bot-blocking: every crawler is explicitly welcome. #}
 <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
 <meta name="googlebot" content="index, follow">
+{% endif %}
 <meta name="author" content="{{ profile.name }}">
 
 <meta property="og:type" content="{{ ogType | default('website') }}">
@@ -29,17 +35,20 @@
 <link rel="alternate" type="application/json" href="{{ '/data/certificates.json' | absUrl }}" title="Certificate data as JSON">
 <link rel="sitemap" type="application/xml" href="{{ '/sitemap.xml' | absUrl }}">
 
+{% if schemaType %}
 <script type="application/ld+json">
 {%- if schemaType == "person" -%}
-{{ profile | personJsonLd(certificates) | jsonld | safe }}
+{{ profile | personJsonLd(certificates, experience) | jsonld | safe }}
 {%- elif schemaType == "credential" -%}
 {{ certificate | credentialJsonLd(profile) | jsonld | safe }}
 {%- elif schemaType == "collection" -%}
 {{ certificates | collectionJsonLd(profile) | jsonld | safe }}
 {%- endif -%}
 </script>
+{% endif %}
 
 <link rel="stylesheet" href="{{ '/assets/style.css' | url }}">
+{% if pageStyles %}<link rel="stylesheet" href="{{ pageStyles | url }}">{% endif %}
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to main content</a>
@@ -50,6 +59,7 @@
       <li><a href="{{ '/' | url }}"{% if page.url == '/' %} aria-current="page"{% endif %}>Profile</a></li>
       <li><a href="{{ '/certificates/' | url }}"{% if '/certificates/' in page.url %} aria-current="page"{% endif %}>Certificates</a></li>
       <li><a href="{{ '/llms.txt' | url }}">llms.txt</a></li>
+      <li><a href="{{ '/editor/' | url }}"{% if page.url == '/editor/' %} aria-current="page"{% endif %}>Editor</a></li>
     </ul>
   </nav>
 </header>
@@ -68,5 +78,6 @@
   </p>
   <p><small>Last built <time datetime="{{ site.buildDate }}">{{ site.buildDay }}</time>.</small></p>
 </footer>
+{% if pageScript %}<script type="module" src="{{ pageScript | url }}"></script>{% endif %}
 </body>
 </html>

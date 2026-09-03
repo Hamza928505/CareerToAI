@@ -1,35 +1,31 @@
-import { aggregateSkills, isPlaceholder, loadCertificates, PROFILE_JSON, readJson, real } from "../../lib/content.mjs";
+import {
+  PROFILE_JSON,
+  buildProfile,
+  isPlaceholder,
+  loadCertificates,
+  loadExperience,
+  readJson,
+} from "../../lib/content.mjs";
 
 export default () => {
   const raw = readJson(PROFILE_JSON);
-  const certificates = loadCertificates();
+  const profile = buildProfile(raw, {
+    certificates: loadCertificates(),
+    experience: loadExperience(),
+  });
 
-  // Placeholder links would render as dead <a> tags, so drop them and warn
-  // instead. Everything else falls back to "" via real().
-  const links = (raw.links || []).filter((l) => l && l.url && !/TODO/i.test(l.url));
+  // Placeholder links and TODO values are dropped by buildProfile rather than
+  // published; say which ones so a fresh clone knows what is still unset.
   const todos = Object.entries(raw)
     .filter(([, v]) => isPlaceholder(v))
-    .map(([k]) => k)
-    .concat((raw.links || []).length !== links.length ? ["links"] : [])
-    .concat((raw.skills || []).some(isPlaceholder) ? ["skills"] : []);
+    .map(([k]) => k);
+  if ((raw.links || []).length !== profile.links.length) todos.push("links");
+  if ((raw.skills || []).some(isPlaceholder)) todos.push("skills");
+  if ((raw.education || []).some((e) => isPlaceholder(e.school))) todos.push("education");
 
   if (todos.length) {
-    console.warn(`[profile] Still using placeholder values for: ${todos.join(", ")} — edit data/profile.json.`);
+    console.warn(`[profile] Still using placeholder values for: ${todos.join(", ")} — edit data/profile.json or use /editor/.`);
   }
 
-  return {
-    ...raw,
-    name: real(raw.name) || "Unnamed Profile",
-    headline: real(raw.headline),
-    bio: real(raw.bio),
-    location: real(raw.location),
-    email: real(raw.email),
-    jobTitle: real(raw.jobTitle),
-    worksFor: real(raw.worksFor),
-    pronouns: real(raw.pronouns),
-    links,
-    skills: aggregateSkills(raw.skills, certificates),
-    certificateCount: certificates.length,
-    hasPlaceholders: todos.length > 0,
-  };
+  return { ...profile, hasPlaceholders: todos.length > 0 };
 };

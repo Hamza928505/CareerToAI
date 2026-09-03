@@ -1,0 +1,128 @@
+---
+layout: base.njk
+permalink: /editor/
+noindex: true
+# A noindex page has no business in the sitemap.
+eleventyExcludeFromCollections: true
+pageTitle: Profile editor
+pageDescription: Local editing tool for this profile. Not profile content.
+pageStyles: /assets/editor.css
+pageScript: /assets/editor.js
+---
+
+<div class="editor" data-editor>
+  <header class="editor-intro">
+    <h1>Profile editor</h1>
+    <p class="lede">
+      Fill this in, and it becomes the site. Everything you type is saved in this browser
+      as you go, so a refresh or a closed tab loses nothing. Uploaded images are kept in
+      this browser too.
+    </p>
+    <p class="muted" data-mode-note>Checking how this page is running…</p>
+  </header>
+
+  <div class="editor-toolbar" role="group" aria-label="Save and export">
+    <span class="save-status" data-save-status aria-live="polite">Loading…</span>
+    <span class="toolbar-spacer"></span>
+    <button type="button" class="btn btn-primary" data-action="save-server" hidden>Save to data/</button>
+    <button type="button" class="btn" data-action="export">Download .json</button>
+    <button type="button" class="btn" data-action="import">Load .json</button>
+    <button type="button" class="btn btn-danger" data-action="reset">Clear all</button>
+    <input type="file" accept="application/json,.json" data-import-input hidden>
+  </div>
+
+  <p class="notice" data-message hidden></p>
+
+  <form class="editor-form" data-form autocomplete="on">
+
+    <fieldset>
+      <legend>Basics</legend>
+      <div class="grid-2">
+        <label>First name
+          <input type="text" data-path="profile.firstName" autocomplete="given-name">
+        </label>
+        <label>Last name
+          <input type="text" data-path="profile.lastName" autocomplete="family-name">
+        </label>
+      </div>
+      <label>Headline
+        <input type="text" data-path="profile.headline" placeholder="Cloud Infrastructure Engineer">
+        <small>One line under your name. Also used in the page title.</small>
+      </label>
+      <div class="grid-2">
+        <label>Location
+          <input type="text" data-path="profile.location" placeholder="Amman, Jordan">
+        </label>
+        <label>Pronouns <span class="optional">optional</span>
+          <input type="text" data-path="profile.pronouns" placeholder="they/them">
+        </label>
+      </div>
+      <label>Email
+        <input type="email" data-path="profile.email" autocomplete="email" placeholder="you@example.com">
+        <small>Published in the HTML, the JSON-LD and /llms.txt. Leave blank to publish no email.</small>
+      </label>
+    </fieldset>
+
+    <fieldset>
+      <legend>About</legend>
+      <label>About me
+        <textarea rows="7" data-path="profile.bio"
+          placeholder="Two to four sentences. Write it the way you would want an AI assistant to summarize you to someone else."></textarea>
+        <small>The single most-quoted piece of text when an assistant summarizes you. State facts, not marketing.</small>
+      </label>
+    </fieldset>
+
+    <fieldset>
+      <legend>Education</legend>
+      <div data-list="education" class="entry-editor-list"></div>
+      <button type="button" class="btn" data-add="education">+ Add education</button>
+    </fieldset>
+
+    <fieldset>
+      <legend>Experience</legend>
+      <div data-list="experience" class="entry-editor-list"></div>
+      <button type="button" class="btn" data-add="experience">+ Add position</button>
+    </fieldset>
+
+    <fieldset>
+      <legend>Licenses &amp; certifications</legend>
+      <div data-list="certificates" class="entry-editor-list"></div>
+      <button type="button" class="btn" data-add="certificates">+ Add certification</button>
+    </fieldset>
+
+    <fieldset>
+      <legend>Links</legend>
+      <div data-list="links" class="entry-editor-list"></div>
+      <button type="button" class="btn" data-add="links">+ Add link</button>
+    </fieldset>
+
+    <fieldset>
+      <legend>Extra skills</legend>
+      <p class="muted">
+        Skills that no role or certificate already covers. The site unions these with every
+        skill listed on a position or certification.
+      </p>
+      <div data-skills="profile.skills"></div>
+    </fieldset>
+  </form>
+
+  <section class="editor-help">
+    <h2>What happens to this data</h2>
+    <p>
+      Nothing here is uploaded anywhere by the page itself. Text is stored in this browser's
+      <code>localStorage</code> and images in its <code>IndexedDB</code>, both private to
+      this browser on this device.
+    </p>
+    <p>
+      <strong>Download .json</strong> gives you one file containing everything, images
+      included. To publish it, run <code>npm run import-data -- &lt;file&gt;</code> in the
+      repository, then commit and push — the site rebuilds from it.
+    </p>
+    <p data-local-help hidden>
+      Because you are running <code>npm run editor</code>, <strong>Save to data/</strong> is
+      available and skips the download entirely: it writes
+      <code>data/profile.json</code>, <code>data/experience.json</code>,
+      <code>data/certificates.json</code> and the images straight into the repository.
+    </p>
+  </section>
+</div>

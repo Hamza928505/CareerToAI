@@ -7,6 +7,9 @@
 export default {
   eleventyComputed: {
     title: (data) => {
+      // A page may state its own title in front matter as `pageTitle`; reading
+      // `data.title` here instead would be circular.
+      if (data.pageTitle) return data.pageTitle;
       if (data.certificate) {
         return `${data.certificate.title} — ${data.certificate.issuer} — ${data.profile.name}`;
       }
@@ -22,6 +25,7 @@ export default {
     },
 
     description: (data) => {
+      if (data.pageDescription) return data.pageDescription;
       if (data.certificate) {
         const when = data.certificate.issued ? ` Issued ${data.certificate.issued.iso}.` : "";
         return `${data.certificate.title}, issued by ${data.certificate.issuer} to ${data.profile.name}.${when} ${data.certificate.description}`;

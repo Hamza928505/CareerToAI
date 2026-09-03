@@ -10,7 +10,7 @@ export default class {
     };
   }
 
-  render({ profile, certificates, site }) {
-    return buildProfileText({ profile, certificates, site, abs: absoluteUrlFactory(site) });
+  render({ profile, certificates, experience, site }) {
+    return buildProfileText({ profile, certificates, experience, site, abs: absoluteUrlFactory(site) });
   }
 }

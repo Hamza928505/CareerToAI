@@ -1,0 +1,15 @@
+[
+  {
+    "id": "infrastructure-engineer-example-corp",
+    "title": "Infrastructure Engineer",
+    "organization": "Example Corp",
+    "employmentType": "Full-time",
+    "location": "Remote",
+    "startDate": "2023-04",
+    "endDate": "",
+    "description": "Sample entry so the Experience section renders on a fresh clone. Runs the team's AWS estate: Terraform modules for account and network baselines, a Kubernetes platform two dozen services deploy onto, and the on-call rotation that keeps it honest.",
+    "skills": ["Terraform", "Kubernetes", "AWS", "Incident Response", "CI/CD"],
+    "attachmentImage": "",
+    "addedAt": "2023-04-10"
+  }
+]

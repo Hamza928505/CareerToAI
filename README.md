@@ -5,9 +5,10 @@ LinkedIn blocks bot traffic; this does the opposite. Every page is pre-rendered 
 HTML, robots.txt welcomes every crawler by name, and the whole profile is also published
 as one dense plain-text file and as raw JSON.
 
-Certificates are added with a local tool that reads the image or PDF using a
-vision-capable Claude model, drafts the title, issuer, dates, description and skill tags,
-and lets you edit every field before it is saved.
+You fill it in through a LinkedIn-style editor at `/editor/` — name, education, about,
+experience, licenses and certifications — and it autosaves in your browser as you type.
+Certificates can also be read by a vision-capable Claude model, which drafts the title,
+issuer, dates, description and skill tags for you to edit before publishing.
 
 **Cost to run: nothing.** GitHub Pages hosts it free. The only thing you ever pay for is
 the handful of Anthropic API tokens spent when you add a certificate, on your own machine.
@@ -18,9 +19,10 @@ the handful of Anthropic API tokens spent when you add a certificate, on your ow
 
 - [How it works](#how-it-works)
 - [Quick start](#quick-start)
-- [Adding a certificate](#adding-a-certificate)
+- [The editor](#the-editor)
+- [Adding a certificate from the terminal](#adding-a-certificate-from-the-terminal)
 - [The API key](#the-api-key)
-- [Customizing your profile](#customizing-your-profile)
+- [Customizing your profile by hand](#customizing-your-profile-by-hand)
 - [Deploying to GitHub Pages](#deploying-to-github-pages)
 - [What makes it machine-readable](#what-makes-it-machine-readable)
 - [Data model](#data-model)
@@ -35,25 +37,32 @@ There are two completely separate halves, and keeping them separate is what make
 zero-cost, no-backend constraint hold:
 
 ```
-  ON YOUR MACHINE (authoring)                    ON GITHUB (publishing)
-  ─────────────────────────────                  ──────────────────────
-  certs-source/aws.jpg                           git push
-      │  (git-ignored, full resolution)              │
-      ▼                                              ▼
-  npm run add-cert -- certs-source/aws.jpg       GitHub Actions
-      │                                              │
-      ├─► Claude vision API ──► drafted fields       ├─► npm ci
-      ├─► you review and edit each field             ├─► npm run build (Eleventy)
-      ├─► data/certificates.json  (updated)          └─► deploy _site/ to Pages
-      └─► src/certs/aws.jpg  (1200px, EXIF stripped)     │
-                    │                                    ▼
-                    └──────── git commit ───────►  https://you.github.io/CareerToAI
+  AUTHORING (three ways in, one way out)         PUBLISHING (GitHub)
+  ──────────────────────────────────────         ───────────────────
+  /editor/ in your browser                       git push
+    autosaves to localStorage + IndexedDB            │
+    ├─ published site → Download .json               ▼
+    │                   npm run import-data      GitHub Actions
+    ├─ npm run editor → Save to data/  ──┐           │
+    │                                    │           ├─► npm ci
+  npm run add-cert -- certs-source/x.jpg │           ├─► npm run build (Eleventy)
+    Claude reads it, you edit, it saves ─┤           └─► deploy _site/ to Pages
+                                         │                │
+  hand-editing data/*.json ──────────────┤                ▼
+                                         ▼      https://you.github.io/CareerToAI
+                        data/profile.json
+                        data/experience.json
+                        data/certificates.json
+                        src/certs/*.jpg  src/media/*.jpg
+                                         │
+                                  git commit
 ```
 
-The deployed site is nothing but static files. There is no server, no database, and no
-upload form — a static host cannot accept writes, so adding a certificate is always a
-local step followed by a commit. The Anthropic API is called **only** by the local
-authoring script, never at build time and never by a visitor.
+The deployed site is nothing but static files. There is no server and no database — a
+static host cannot accept writes, so publishing is always a commit. The editor is the one
+page with JavaScript on it, it is marked `noindex`, and it only ever writes to your own
+browser; every profile page is still pre-rendered HTML. The Anthropic API is called
+**only** from your machine, never at build time and never by a visitor.
 
 ---
 
@@ -62,8 +71,12 @@ authoring script, never at build time and never by a visitor.
 ```bash
 npm install          # installs Eleventy + the local authoring tools
 npm run make-samples # draws placeholder images for the two sample certificates
-npm run serve        # http://localhost:8080
+npm run editor       # http://localhost:8081/CareerToAI/editor/
 ```
+
+`npm run editor` is the one to start with: it builds the site, serves it, and opens the
+editor in a mode that can write straight into the repository. If you only want to look at
+the site, `npm run serve` runs the plain Eleventy dev server with live reload on port 8080.
 
 You will see a site built from the two sample certificates in `data/certificates.json`
 and the placeholder profile in `data/profile.json`. The build prints a warning listing
@@ -71,14 +84,65 @@ every field still holding a `TODO:` value.
 
 Then:
 
-1. Edit `data/profile.json` — see [Customizing your profile](#customizing-your-profile).
-2. Delete the two sample entries from `data/certificates.json` and the two sample images
-   from `src/certs/` when you are ready to publish for real.
-3. Add your own certificates — see below.
+1. Open the editor and fill in your name, about, education, experience and certifications.
+2. Press **Save to data/** (or **Download .json** and run `npm run import-data`).
+3. Delete anything left over from the samples, then commit and push.
 
 ---
 
-## Adding a certificate
+## The editor
+
+`/editor/` is a LinkedIn-style form for everything the site publishes: your name,
+headline, location and email; an About paragraph; Education; Experience; Licenses &
+certifications; links; and any extra skills. Repeatable sections have **+ Add** buttons,
+and skills are entered as chips — type one and press <kbd>Enter</kbd>.
+
+**Nothing is ever lost to a refresh.** Every keystroke is saved to this browser's
+`localStorage` after a short pause, and uploaded images go into its `IndexedDB` (which,
+unlike `localStorage`'s ~5MB ceiling, can hold certificate scans). The status in the
+toolbar tells you when the last save landed. Both stores are private to that browser on
+that device — the page uploads nothing on its own.
+
+It runs in one of two modes, and the note under the heading tells you which:
+
+### Local mode — `npm run editor`
+
+The recommended way to work. A small Node server (`scripts/editor-server.mjs`, bound to
+`127.0.0.1` only) builds the site, serves it on port 8081, and adds two buttons:
+
+- **Save to data/** writes `data/profile.json`, `data/experience.json`,
+  `data/certificates.json` and every uploaded image into `src/certs/` and `src/media/`,
+  then rebuilds. No download, no copying files around — just commit and push afterwards.
+- **Extract with AI** appears on a certificate once you attach an image. It sends that
+  image to Claude and fills in *only the fields you have left blank*, so it never
+  overwrites something you typed. This button exists only in local mode, because the
+  API key is read from `.env` by the Node server and must never be shipped to a browser.
+
+### Published mode — `/editor/` on the live site
+
+The same page, deployed so you can edit from your phone. It cannot write to the
+repository (no static host can), so it gives you **Download .json** instead — one file
+containing all your text *and* your images. Feed it back in with:
+
+```bash
+npm run import-data -- ./careertoai-data.json
+git add -A && git commit -m "Update profile" && git push
+```
+
+**Load .json** restores an export into the editor, which is also how you move your
+work-in-progress between devices.
+
+> The editor is marked `noindex, nofollow` and is left out of `sitemap.xml`. It is the
+> only page on the site that runs JavaScript; every profile page is still pre-rendered
+> static HTML, so nothing about AI readability changes.
+
+> **Publishing is still a git push.** The editor writes to your browser, and in local mode
+> to your working tree. Neither one deploys anything. Until you commit and push, the live
+> site shows the last version you pushed.
+
+---
+
+## Adding a certificate from the terminal
 
 Put the original file anywhere; `certs-source/` exists for this and is git-ignored.
 
@@ -140,9 +204,16 @@ Installing poppler: `brew install poppler` (macOS), `apt install poppler-utils` 
 
 ### Editing or removing a certificate
 
-`data/certificates.json` is a plain array — edit it by hand any time. Re-running
-`add-cert` with `--id <existing-id>` re-extracts and overwrites that entry. To remove a
-certificate, delete its object from the array and its image from `src/certs/`.
+Easiest in `/editor/`. Otherwise `data/certificates.json` is a plain array — edit it by
+hand any time. Re-running `add-cert` with `--id <existing-id>` re-extracts and overwrites
+that entry. To remove a certificate, delete its object from the array and its image from
+`src/certs/`.
+
+> `npm run import-data` and the editor's **Save to data/** button both **replace**
+> `data/profile.json`, `data/experience.json` and `data/certificates.json` wholesale — an
+> export is the complete picture, not a patch. If you added a certificate with
+> `add-cert` in the terminal, load the current state into the editor before saving over
+> it, or the terminal-added entry will be dropped.
 
 ---
 
@@ -172,21 +243,35 @@ ANTHROPIC_API_KEY=sk-ant-...
 
 ---
 
-## Customizing your profile
+## Customizing your profile by hand
 
-Everything about you lives in `data/profile.json`:
+`/editor/` is the easy path; this is what it writes. Everything about you lives in
+`data/profile.json`:
 
 | Field       | Notes |
 |-------------|-------|
-| `name`      | Used in the `<h1>`, every `<title>`, and schema.org `Person.name`. |
+| `firstName`, `lastName` | Joined into the `<h1>`, every `<title>`, and schema.org `Person.name`. |
 | `headline`  | One line under your name. Also appended to the home page `<title>`. |
 | `bio`       | 2–4 sentences of plain prose. This is the single most-quoted piece of text when an AI summarizes you — write it as fact, not marketing. |
 | `location`  | Free text, e.g. `"Amman, Jordan"`. |
 | `email`     | Rendered as a `mailto:` link and included in JSON-LD and `/llms.txt`. Leave the `TODO:` value in place to publish no email at all. |
 | `pronouns`  | Optional; shown on the profile when set. |
-| `jobTitle`, `worksFor` | Optional; feed `Person.jobTitle` / `Person.worksFor`. |
+| `jobTitle`, `worksFor` | Optional. Left blank, they fall back to whichever Experience entry has no end date, so your current role only has to be typed once. |
+| `education` | Array of `{ school, industry, degree, fieldOfStudy, startDate, endDate, description }`. Emitted as schema.org `alumniOf`. An entry whose `school` is still a `TODO:` value is dropped. |
 | `links`     | `{ "label", "url" }` pairs, rendered with `rel="me"` and emitted as `sameAs`. Any URL containing `TODO` is dropped from the build with a warning. |
-| `skills`    | Only skills **not** already implied by a certificate. The site unions this with every certificate's skills, deduplicates case-insensitively, and sorts by how many certificates evidence each one. |
+| `skills`    | Only skills **not** already implied by a role or certificate. The site unions this with the skills on every Experience entry and every certificate, deduplicates case-insensitively, and sorts by how many entries evidence each one. |
+
+`data/experience.json` is a separate array — one object per position:
+
+| Field | Notes |
+|---|---|
+| `id` | URL-safe slug, derived from title + organization. |
+| `title`, `organization` | Job title and employer. |
+| `employmentType`, `location` | Optional, e.g. `"Full-time"`, `"Remote"`. |
+| `startDate`, `endDate` | `YYYY-MM` (or `YYYY-MM-DD` / `YYYY`). **An empty `endDate` means the role is current** — it renders as "– Present" and drives the `jobTitle` fallback. |
+| `description` | Free prose about the role. |
+| `skills` | Feeds the role's own list and the aggregated profile list. |
+| `attachmentImage` | Optional image under `/media/`, published the same way certificate images are. |
 
 Any string field left starting with `TODO:` is treated as unset: it is omitted from the
 page, the JSON-LD and the plain-text summary rather than published as a placeholder.
@@ -262,16 +347,20 @@ next run.
 
 This is the part that matters, so it is deliberately over-provisioned:
 
-- **Content is in the HTML.** Eleventy renders every page at build time. There is no
-  client-side JavaScript anywhere on the site — not one `<script>` tag beyond the JSON-LD
-  data block. An AI tool that fetches raw HTML without executing JS gets the full content.
+- **Content is in the HTML.** Eleventy renders every page at build time. No profile page
+  runs any JavaScript — not one `<script>` tag beyond the JSON-LD data block. An AI tool
+  that fetches raw HTML without executing JS gets the full content. (`/editor/` is the one
+  exception: it is an authoring tool, it is `noindex`, and it publishes nothing.)
 - **`/llms.txt` and `/about.txt`** — the entire profile as one dense plain-text document:
-  bio, contact, the complete skill list (both as bullets and as one comma-separated line),
-  and every certificate with issuer, dates, credential ID, skills, description and the
-  transcribed certificate text. One fetch answers "what do you know about this person".
-- **JSON-LD in every `<head>`** — schema.org `Person` on the home page with `hasCredential`
-  linking to an `EducationalOccupationalCredential` node per certificate; the credential
-  plus its holder on each detail page; a `CollectionPage` + `ItemList` on the index.
+  bio, contact, education, every position with dates and skills, the complete skill list
+  (both as bullets and as one comma-separated line), and every certificate with issuer,
+  dates, credential ID, skills, description and the transcribed certificate text. One
+  fetch answers "what do you know about this person".
+- **JSON-LD in every `<head>`** — schema.org `Person` on the home page carrying
+  `hasCredential` (one `EducationalOccupationalCredential` per certificate), `alumniOf`
+  (one `EducationalOrganization` per education entry) and `hasOccupation` (one
+  `Occupation` per role, with employer, dates and skills); the credential plus its holder
+  on each detail page; a `CollectionPage` + `ItemList` on the certificates index.
 - **Raw JSON at `/data/certificates.json` and `/data/profile.json`** for agents that would
   rather not parse anything.
 - **A stable URL per credential** at `/certificates/<id>/`, so a single certificate can be
@@ -335,14 +424,23 @@ required; everything else degrades gracefully when empty.
 | `sourceFileType` | `"image"` or `"pdf"` — what the model read. |
 | `extractedText` | Kept verbatim and shown on the detail page so the summary can be checked against the source. |
 
+`data/experience.json` and the `education` array inside `data/profile.json` are documented
+in [Customizing your profile by hand](#customizing-your-profile-by-hand).
+
+The editor's export file (`careertoai-data.json`) is a different, self-contained shape —
+`{ version, profile, experience, certificates, images }`, where `images` holds every
+uploaded file as a data URL. `npm run import-data` is what turns it back into the three
+files above plus the images in `src/certs/` and `src/media/`.
+
 ---
 
 ## Project layout
 
 ```
 data/
-  profile.json          You. Edit by hand.
-  certificates.json     Written by add-cert; safe to edit by hand.
+  profile.json          You: name, about, education, links, extra skills.
+  experience.json       Work history.
+  certificates.json     Licenses & certifications.
   site.json             Fallback site URL for local builds.
 certs-source/           Full-resolution originals. Git-ignored, never published.
 lib/
@@ -350,22 +448,30 @@ lib/
   site.mjs              Resolves SITE_URL into origin + path prefix.
   jsonld.mjs            schema.org graph builders.
   plaintext.mjs         Builds /llms.txt and /about.txt.
+  apply-data.mjs        Turns an editor export into data files + images.
+  extract-certificate.mjs  Claude vision extraction, shared by CLI and editor.
 scripts/
-  add-cert.mjs          The local authoring tool.
-  make-sample-images.mjs Draws placeholder images for the sample data.
+  editor-server.mjs     Local helper: serves /editor/, saves, AI extraction.
+  import-data.mjs       Imports a downloaded careertoai-data.json.
+  add-cert.mjs          Terminal path for adding one certificate.
+  make-sample-images.mjs  Draws placeholder images for the sample data.
 src/
-  _data/                Eleventy global data (site, profile, certificates).
+  _data/                Eleventy global data (site, profile, certificates, experience).
   _includes/base.njk    The HTML shell: meta, Open Graph, JSON-LD, nav, footer.
   src.11tydata.js       Computes each page's title/description/OG image.
   index.njk             Home / profile page.
   certificates.njk      /certificates/ index.
   certificate.njk       One page per certificate, via pagination.
+  editor.njk            /editor/ — noindex authoring form.
   llms.11ty.js          /llms.txt
   about.11ty.js         /about.txt
   robots.11ty.js        /robots.txt
   sitemap.11ty.js       /sitemap.xml
-  assets/style.css      Presentation only.
-  certs/                Published, downscaled certificate images. Committed.
+  assets/style.css      Site presentation.
+  assets/editor.css     Editor presentation.
+  assets/editor.js      The editor. The only JavaScript on the site.
+  certs/                Published certificate images. Committed.
+  media/                Published experience attachments. Committed.
 eleventy.config.mjs     Build config, filters, passthrough copies.
 _site/                  Build output. Git-ignored.
 ```
@@ -374,9 +480,11 @@ _site/                  Build output. Git-ignored.
 
 | Command | Does |
 |---|---|
-| `npm run serve` | Local dev server with live reload at `http://localhost:8080`. |
+| `npm run editor` | Build + serve on `http://localhost:8081`, with the editor able to write files and run AI extraction. |
+| `npm run serve` | Plain Eleventy dev server with live reload at `http://localhost:8080`. |
 | `npm run build` | Builds to `_site/`. |
-| `npm run add-cert -- <file>` | Add or update a certificate. |
+| `npm run import-data -- <file>` | Import a `careertoai-data.json` downloaded from the editor. |
+| `npm run add-cert -- <file>` | Add or update one certificate from the terminal. |
 | `npm run make-samples` | Generate placeholder images for sample certificates. |
 | `npm run clean` | Delete `_site/`. |
 
@@ -407,6 +515,24 @@ with `package.json`. Run `npm install` locally and commit the lockfile.
 
 **No preview image for a PDF** — install poppler-utils, or pass `--image <file>`. See
 [PDFs](#pdfs).
+
+**The editor says "Could not save to this browser"** — site data is blocked, you are in a
+private window, or the quota is full. Press **Download .json** straight away so nothing is
+lost, then fix the browser setting and use **Load .json** to restore.
+
+**Edits in the editor are not on the live site** — the editor writes to your browser, and
+in local mode to your working tree. Publishing is still `git add -A && git commit && git push`.
+
+**"Save to data/" is missing** — you are on the published site, or the local helper is not
+running. Start it with `npm run editor` and open the URL it prints.
+
+**"Extract with AI" is missing** — it only appears in local mode, on a certification that
+already has an image attached, and only when `ANTHROPIC_API_KEY` is set in `.env`. The
+server prints which of those is true at startup.
+
+**A certificate added with `add-cert` disappeared after saving from the editor** — the
+editor saves its whole state, replacing the data files. Load the current data into the
+editor before saving over it, or add certificates in one place only.
 
 **An AI assistant still says it cannot read the site** — check the deployment finished
 (Actions tab), then confirm `curl -s <your-url>/llms.txt` returns the profile. Some tools

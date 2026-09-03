@@ -1,18 +1,29 @@
 {
-  "name": "TODO: Your Full Name",
+  "firstName": "TODO: First",
+  "lastName": "TODO: Last",
   "headline": "TODO: One-line professional headline, e.g. 'Cloud Infrastructure Engineer'",
-  "bio": "TODO: 2-4 sentences in plain prose. Write it the way you would want an AI assistant to summarize you to someone else: what you do, what you specialize in, what you are working toward. Avoid marketing language — state facts, because this text is read by machines as much as by people.",
-  "location": "TODO: City, Country (or delete this field)",
-  "email": "TODO: you@example.com",
   "pronouns": "",
-  "jobTitle": "TODO: Current role title",
-  "worksFor": "TODO: Current employer (or delete this field)",
+  "location": "TODO: City, Country",
+  "email": "TODO: you@example.com",
+  "bio": "TODO: 2-4 sentences in plain prose. Write it the way you would want an AI assistant to summarize you to someone else: what you do, what you specialize in, what you are working toward. Avoid marketing language — state facts, because this text is read by machines as much as by people.",
+  "jobTitle": "",
+  "worksFor": "",
+  "education": [
+    {
+      "school": "TODO: University name",
+      "industry": "TODO: Industry or field, e.g. 'Software Engineering'",
+      "degree": "",
+      "fieldOfStudy": "",
+      "startDate": "",
+      "endDate": "",
+      "description": ""
+    }
+  ],
   "links": [
     { "label": "GitHub", "url": "https://github.com/TODO" },
-    { "label": "LinkedIn", "url": "https://www.linkedin.com/in/TODO" },
-    { "label": "Personal site", "url": "https://TODO.example.com" }
+    { "label": "LinkedIn", "url": "https://www.linkedin.com/in/TODO" }
   ],
   "skills": [
-    "TODO: a skill you have that is not implied by any certificate"
+    "TODO: a skill not implied by any certificate or role"
   ]
 }

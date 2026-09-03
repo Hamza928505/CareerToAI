@@ -8,10 +8,12 @@ export default function (eleventyConfig) {
   // Certificate images and the stylesheet ship as-is.
   eleventyConfig.addPassthroughCopy({ "src/assets": "assets" });
   eleventyConfig.addPassthroughCopy({ "src/certs": "certs" });
+  eleventyConfig.addPassthroughCopy({ "src/media": "media" });
   // Publish the raw data too — an AI agent that would rather parse JSON than
   // HTML can fetch /data/certificates.json directly.
   eleventyConfig.addPassthroughCopy({ "data/certificates.json": "data/certificates.json" });
   eleventyConfig.addPassthroughCopy({ "data/profile.json": "data/profile.json" });
+  eleventyConfig.addPassthroughCopy({ "data/experience.json": "data/experience.json" });
 
   eleventyConfig.addWatchTarget("./data/");
   eleventyConfig.addWatchTarget("./lib/");
@@ -27,7 +29,7 @@ export default function (eleventyConfig) {
 
   // Structured data is built in lib/jsonld.mjs and injected into <head> by the
   // base layout, keyed off each page's `schemaType` front matter.
-  eleventyConfig.addFilter("personJsonLd", (profile, certificates) => personGraph(profile, certificates, abs));
+  eleventyConfig.addFilter("personJsonLd", (profile, certificates, experience) => personGraph(profile, certificates, experience, abs));
   eleventyConfig.addFilter("credentialJsonLd", (cert, profile) => credentialGraph(cert, profile, abs));
   eleventyConfig.addFilter("collectionJsonLd", (certificates, profile) => collectionGraph(certificates, profile, abs));
 
