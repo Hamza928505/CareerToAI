@@ -347,24 +347,28 @@ next run.
 
 This is the part that matters, so it is deliberately over-provisioned:
 
-- **Content is in the HTML.** Eleventy renders every page at build time. No profile page
-  runs any JavaScript — not one `<script>` tag beyond the JSON-LD data block. An AI tool
-  that fetches raw HTML without executing JS gets the full content. (`/editor/` is the one
-  exception: it is an authoring tool, it is `noindex`, and it publishes nothing.)
+- **Content is in the HTML.** Eleventy renders the profile at build time. It runs no
+  JavaScript — not one `<script>` tag beyond the JSON-LD data block. An AI tool that
+  fetches raw HTML without executing JS gets everything in a single request. (`/editor/`
+  is the one exception: it is an authoring tool, it is `noindex`, and it publishes
+  nothing.) Certificate transcriptions sit inside `<details>` elements, so they are
+  collapsed on screen but fully present in the markup.
 - **`/llms.txt` and `/about.txt`** — the entire profile as one dense plain-text document:
   bio, contact, education, every position with dates and skills, the complete skill list
-  (both as bullets and as one comma-separated line), and every certificate with issuer,
+  (both as bullets and as one comma-separated line), and every certification with issuer,
   dates, credential ID, skills, description and the transcribed certificate text. One
   fetch answers "what do you know about this person".
-- **JSON-LD in every `<head>`** — schema.org `Person` on the home page carrying
-  `hasCredential` (one `EducationalOccupationalCredential` per certificate), `alumniOf`
-  (one `EducationalOrganization` per education entry) and `hasOccupation` (one
-  `Occupation` per role, with employer, dates and skills); the credential plus its holder
-  on each detail page; a `CollectionPage` + `ItemList` on the certificates index.
+- **One JSON-LD graph in the `<head>`** — schema.org `Person` carrying `hasCredential`
+  (one `EducationalOccupationalCredential` per certificate, defined inline in the same
+  graph), `alumniOf` (one `EducationalOrganization` per education entry) and
+  `hasOccupation` (one `Occupation` per role, with employer, dates and skills). Every
+  `@id` resolves to a fragment defined in the same document, and each one matches a real
+  `id=` anchor in the HTML.
 - **Raw JSON at `/data/certificates.json` and `/data/profile.json`** for agents that would
   rather not parse anything.
-- **A stable URL per credential** at `/certificates/<id>/`, so a single certificate can be
-  cited and fetched directly.
+- **A fragment per credential** at `#credential-<id>` on the profile page, so a single
+  certification can still be linked to directly. There is no separate page per credential
+  — the whole profile is one document.
 - **Semantic HTML** — `<article>`, `<section aria-labelledby>`, real heading hierarchy,
   `<dl>` for facts, `<ul>` for skills, and `<time datetime="…">` for every date.
 - **Complete meta coverage** — descriptive `<title>`, `<meta name="description">`,
@@ -383,7 +387,7 @@ curl -s https://you.github.io/<repo>/ | grep -c "<h1>"       # content is in the
 curl -s https://you.github.io/<repo>/llms.txt | head -40
 ```
 
-Paste a certificate URL into Google's Rich Results Test to validate the JSON-LD.
+Paste the profile URL into Google's Rich Results Test to validate the JSON-LD.
 
 ---
 
@@ -415,14 +419,14 @@ required; everything else degrades gracefully when empty.
 
 | Field | Purpose |
 |---|---|
-| `id` | URL slug and stable identity. Changing it changes the page's URL. |
+| `id` | Stable identity, and the `#credential-<id>` anchor on the profile page. Changing it changes that anchor. |
 | `dateIssued`, `dateExpires` | `YYYY-MM-DD`, or `YYYY-MM` / `YYYY` when the certificate only shows that much. Empty string for none. A past `dateExpires` marks the credential expired on the site. |
 | `credentialUrl` | Public verification link, if the issuer provides one. |
 | `skills` | Feeds the per-certificate list, the aggregated profile list, and `competencyRequired` in JSON-LD. |
 | `certificateImage` | Root-relative path under `/certs/`. Empty if only a PDF was published. |
 | `certificateFile` | Set instead of `certificateImage` when a PDF is published directly. |
 | `sourceFileType` | `"image"` or `"pdf"` — what the model read. |
-| `extractedText` | Kept verbatim and shown on the detail page so the summary can be checked against the source. |
+| `extractedText` | Kept verbatim and shown on the profile in a collapsed `<details>` block, so the summary can be checked against the source. |
 
 `data/experience.json` and the `education` array inside `data/profile.json` are documented
 in [Customizing your profile by hand](#customizing-your-profile-by-hand).
@@ -459,9 +463,7 @@ src/
   _data/                Eleventy global data (site, profile, certificates, experience).
   _includes/base.njk    The HTML shell: meta, Open Graph, JSON-LD, nav, footer.
   src.11tydata.js       Computes each page's title/description/OG image.
-  index.njk             Home / profile page.
-  certificates.njk      /certificates/ index.
-  certificate.njk       One page per certificate, via pagination.
+  index.njk             The profile. The entire public site is this one page.
   editor.njk            /editor/ — noindex authoring form.
   llms.11ty.js          /llms.txt
   about.11ty.js         /about.txt
@@ -503,12 +505,8 @@ It lists exactly which fields are still `TODO:`.
 to silence it.
 
 **Links break on the deployed site** — every internal link must go through Eleventy's
-`url` filter (`{{ '/certificates/' | url }}`), which applies the `/<repo>/` prefix. A
-hardcoded `href="/certificates/"` will 404 on a project site.
-
-**A certificate is missing from the sitemap** — `certificate.njk` needs
-`addAllPagesToCollections: true` in its `pagination` block; without it Eleventy adds only
-the first paginated page to `collections.all`.
+`url` filter (`{{ '/llms.txt' | url }}`), which applies the `/<repo>/` prefix. A
+hardcoded `href="/llms.txt"` will 404 on a project site.
 
 **`npm ci` fails in Actions** — `package-lock.json` is not committed, or is out of sync
 with `package.json`. Run `npm install` locally and commit the lockfile.

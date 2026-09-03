@@ -19,7 +19,7 @@ export default class {
     // eleventyExcludeFromCollections, so they are added by hand below.
     const entries = collections.all.map((item) => ({
       loc: abs(item.url),
-      priority: item.url === "/" ? "1.0" : item.url === "/certificates/" ? "0.9" : "0.8",
+      priority: item.url === "/" ? "1.0" : "0.8",
     }));
 
     // The text summaries are primary entry points for AI agents, not an

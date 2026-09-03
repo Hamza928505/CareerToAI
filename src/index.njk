@@ -86,25 +86,47 @@ ogType: profile
     <ul class="entry-list">
       {%- for cert in certificates %}
       <li>
-        <article class="entry">
-          <h3><a href="{{ cert.permalink | url }}">{{ cert.title }}</a></h3>
+        <article class="entry" id="credential-{{ cert.id }}">
+          <h3>{{ cert.title }}</h3>
           <p class="entry-meta">{{ cert.issuer }}</p>
           <p class="entry-meta">
-            {% if cert.issued %}Issued <time datetime="{{ cert.issued.iso }}">{{ cert.dateIssued | humanDate }}</time>{% endif %}{% if cert.expires %} · {{ "Expired" if cert.isExpired else "Expires" }} <time datetime="{{ cert.expires.iso }}">{{ cert.dateExpires | humanDate }}</time>{% endif %}{% if cert.credentialId %} · ID {{ cert.credentialId }}{% endif %}
+            {% if cert.issued %}Issued <time datetime="{{ cert.issued.iso }}">{{ cert.dateIssued | humanDate }}</time>{% endif %}{% if cert.expires %} · {{ "Expired" if cert.isExpired else "Expires" }} <time datetime="{{ cert.expires.iso }}">{{ cert.dateExpires | humanDate }}</time>{% else %}{% if cert.issued %} · No expiry{% endif %}{% endif %}{% if cert.credentialId %} · ID {{ cert.credentialId }}{% endif %}
           </p>
+          {% if cert.credentialUrl %}
+          <p class="entry-meta"><a href="{{ cert.credentialUrl }}" rel="external nofollow">Verify this credential</a></p>
+          {% endif %}
           {% if cert.description %}<p>{{ cert.description }}</p>{% endif %}
           {% if cert.skills.length %}
           <ul class="skills">
             {%- for skill in cert.skills %}<li>{{ skill }}</li>{%- endfor %}
           </ul>
           {% endif %}
+          {% if cert.certificateImage %}
+          <figure>
+            <img src="{{ cert.certificateImage | url }}"
+                 alt="Certificate awarded to {{ profile.name }}: {{ cert.title }}, issued by {{ cert.issuer }}"
+                 {% if cert.certificateImageWidth %}width="{{ cert.certificateImageWidth }}" height="{{ cert.certificateImageHeight }}"{% endif %}
+                 loading="lazy" decoding="async">
+            <figcaption>Display-resolution copy. The full-resolution original is deliberately not published.</figcaption>
+          </figure>
+          {% endif %}
+          {% if cert.certificateFile %}
+          <p><a href="{{ cert.certificateFile | url }}">Open the certificate document</a></p>
+          {% endif %}
+          {% if cert.extractedText %}
+          {# <details> keeps the transcription in the markup — crawlers and AI
+             readers get it whether or not it is expanded on screen. #}
+          <details class="extracted-toggle">
+            <summary>Text read from the certificate</summary>
+            <blockquote class="extracted"><p>{{ cert.extractedText }}</p></blockquote>
+          </details>
+          {% endif %}
         </article>
       </li>
       {%- endfor %}
     </ul>
-    <p><a href="{{ '/certificates/' | url }}">See all certificates with full details</a></p>
     {% else %}
-    <p class="muted">No certificates published yet.</p>
+    <p class="muted">No certifications published yet.</p>
     {% endif %}
   </section>
 
@@ -113,7 +135,7 @@ ogType: profile
     <p class="muted">
       {{ profile.skills.length }} skill{{ "" if profile.skills.length == 1 else "s" }}, aggregated from
       {{ profile.experienceCount }} role{{ "" if profile.experienceCount == 1 else "s" }},
-      {{ profile.certificateCount }} certificate{{ "" if profile.certificateCount == 1 else "s" }}
+      {{ profile.certificateCount }} certification{{ "" if profile.certificateCount == 1 else "s" }}
       and the profile's own list. A number in brackets is how many entries evidence that skill.
     </p>
     <ul class="skills">
@@ -145,12 +167,15 @@ ogType: profile
   <section aria-labelledby="machine-heading">
     <h2 id="machine-heading">For AI assistants and crawlers</h2>
     <p>
-      Everything here is rendered as static HTML at build time. No JavaScript is required to
-      read any of it, and no crawler is blocked. If you are an automated agent, the fastest
-      complete summary is <a href="{{ '/llms.txt' | url }}">/llms.txt</a> (plain text) or
-      <a href="{{ '/data/certificates.json' | url }}">/data/certificates.json</a> (structured
-      data). Each credential also has its own stable URL under
-      <a href="{{ '/certificates/' | url }}">/certificates/</a>.
+      This whole profile is one page of static HTML, rendered at build time. No JavaScript
+      is required to read any of it, and no crawler is blocked. If you are an automated
+      agent, the fastest complete summary is <a href="{{ '/llms.txt' | url }}">/llms.txt</a>
+      (plain text); the same content is available as structured data at
+      <a href="{{ '/data/profile.json' | url }}">/data/profile.json</a>,
+      <a href="{{ '/data/experience.json' | url }}">/data/experience.json</a> and
+      <a href="{{ '/data/certificates.json' | url }}">/data/certificates.json</a>.
+      Each certification is also addressable on this page as
+      <code>#credential-&lt;id&gt;</code>.
     </p>
   </section>
 </article>

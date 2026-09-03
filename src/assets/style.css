@@ -125,7 +125,6 @@ p { margin: 0 0 1rem; }
 
 .lede { color: var(--muted); }
 .muted { color: var(--muted); font-size: 0.9rem; }
-.issuer { color: var(--muted); margin: 0 0 0.75rem; }
 
 .notice {
   background: var(--accent-soft);
@@ -198,75 +197,7 @@ code {
 
 .skills .count { color: var(--muted); }
 
-.skills-heading {
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--muted);
-}
-
-.cert-summary { padding-left: 1.25rem; }
-.cert-summary li { margin-bottom: 0.5rem; }
-
-/* ---------- Certificate cards ---------- */
-
-.cert-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: grid;
-  gap: 1.5rem;
-}
-
-.cert-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  overflow: hidden;
-}
-
-.cert-card h2 {
-  margin-top: 0;
-  border: 0;
-  padding: 0;
-  font-size: 1.1rem;
-}
-
-.cert-card h2 a { text-decoration: none; }
-.cert-card h2 a:hover { text-decoration: underline; }
-
-.cert-card-body { padding: 1.25rem; }
-
-.cert-card .thumb {
-  display: block;
-  border-bottom: 1px solid var(--border);
-  background: var(--accent-soft);
-}
-
-.cert-card .thumb img {
-  display: block;
-  width: 100%;
-  height: auto;
-  max-height: 15rem;
-  object-fit: cover;
-  object-position: center top;
-}
-
-/* ---------- Certificate detail ---------- */
-
-.breadcrumb { font-size: 0.85rem; margin-bottom: 1.25rem; }
-
-.breadcrumb ol {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  color: var(--muted);
-}
-
-.breadcrumb li + li::before { content: "/ "; color: var(--border); }
+/* ---------- Certificate media and transcription ---------- */
 
 figure { margin: 0 0 1rem; }
 
@@ -325,3 +256,17 @@ figcaption {
 
 .entry-meta + p { margin-top: 0.75rem; }
 .entry figure { margin-top: 0.75rem; max-width: 22rem; }
+
+.extracted-toggle {
+  margin-top: 0.75rem;
+  font-size: 0.9rem;
+}
+
+.extracted-toggle summary {
+  cursor: pointer;
+  color: var(--muted);
+  padding: 0.2rem 0;
+}
+
+.extracted-toggle summary:hover { color: var(--accent); }
+.extracted-toggle[open] summary { margin-bottom: 0.5rem; }

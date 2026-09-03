@@ -35,15 +35,9 @@
 <link rel="alternate" type="application/json" href="{{ '/data/certificates.json' | absUrl }}" title="Certificate data as JSON">
 <link rel="sitemap" type="application/xml" href="{{ '/sitemap.xml' | absUrl }}">
 
-{% if schemaType %}
+{% if schemaType == "person" %}
 <script type="application/ld+json">
-{%- if schemaType == "person" -%}
-{{ profile | personJsonLd(certificates, experience) | jsonld | safe }}
-{%- elif schemaType == "credential" -%}
-{{ certificate | credentialJsonLd(profile) | jsonld | safe }}
-{%- elif schemaType == "collection" -%}
-{{ certificates | collectionJsonLd(profile) | jsonld | safe }}
-{%- endif -%}
+{{- profile | personJsonLd(certificates, experience) | jsonld | safe -}}
 </script>
 {% endif %}
 
@@ -56,8 +50,6 @@
 <header class="site-header">
   <nav aria-label="Primary">
     <ul>
-      <li><a href="{{ '/' | url }}"{% if page.url == '/' %} aria-current="page"{% endif %}>Profile</a></li>
-      <li><a href="{{ '/certificates/' | url }}"{% if '/certificates/' in page.url %} aria-current="page"{% endif %}>Certificates</a></li>
       <li><a href="{{ '/llms.txt' | url }}">llms.txt</a></li>
       <li><a href="{{ '/editor/' | url }}"{% if page.url == '/editor/' %} aria-current="page"{% endif %}>Editor</a></li>
     </ul>
@@ -72,9 +64,8 @@
   <p>
     This page is built as static HTML so that any AI assistant or crawler can read it
     without executing JavaScript. Machine-readable alternatives:
-    <a href="{{ '/llms.txt' | url }}">/llms.txt</a> (plain text),
-    <a href="{{ '/data/certificates.json' | url }}">/data/certificates.json</a> (raw data),
-    <a href="{{ '/sitemap.xml' | url }}">/sitemap.xml</a>.
+    <a href="{{ '/llms.txt' | url }}">/llms.txt</a> (plain text) and
+    <a href="{{ '/data/certificates.json' | url }}">/data/certificates.json</a> (raw data).
   </p>
   <p><small>Last built <time datetime="{{ site.buildDate }}">{{ site.buildDay }}</time>.</small></p>
 </footer>

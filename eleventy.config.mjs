@@ -1,5 +1,5 @@
 import { formatDate } from "./lib/content.mjs";
-import { collectionGraph, credentialGraph, personGraph } from "./lib/jsonld.mjs";
+import { personGraph } from "./lib/jsonld.mjs";
 import { resolveSite } from "./lib/site.mjs";
 
 const site = resolveSite();
@@ -28,10 +28,8 @@ export default function (eleventyConfig) {
   };
 
   // Structured data is built in lib/jsonld.mjs and injected into <head> by the
-  // base layout, keyed off each page's `schemaType` front matter.
+  // base layout. The profile is a single page, so one graph covers the whole site.
   eleventyConfig.addFilter("personJsonLd", (profile, certificates, experience) => personGraph(profile, certificates, experience, abs));
-  eleventyConfig.addFilter("credentialJsonLd", (cert, profile) => credentialGraph(cert, profile, abs));
-  eleventyConfig.addFilter("collectionJsonLd", (certificates, profile) => collectionGraph(certificates, profile, abs));
 
   /** "2024-03-15" -> "15 March 2024"; also handles "2024-03" and "2024". */
   eleventyConfig.addFilter("humanDate", (value) => formatDate(value));
