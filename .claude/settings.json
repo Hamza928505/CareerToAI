@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(job-application-assistant)",
+      "Skill(gju-internship)",
+      "Bash(bun run job-search/.agents/skills/jobbank-search/cli/src/cli.ts:*)",
+      "Bash(bun run job-search/.agents/skills/jobdanmark-search/cli/src/cli.ts:*)",
+      "Bash(bun run job-search/.agents/skills/jobindex-search/cli/src/cli.ts:*)",
+      "Bash(bun run job-search/.agents/skills/jobnet-search/cli/src/cli.ts:*)",
+      "Bash(bun run job-search/.agents/skills/linkedin-search/cli/src/cli.ts:*)",
+      "Bash(bun run job-search/.agents/skills/freehire-search/cli/src/cli.ts:*)",
+      "Bash(python job-search/salary_lookup.py:*)",
+      "Bash(python3 job-search/salary_lookup.py:*)",
+      "Bash(python job-search/tools/verify_pdf.py:*)",
+      "Bash(python3 job-search/tools/verify_pdf.py:*)",
+      "Bash(pdftotext:*)"
+    ]
+  }
+}
