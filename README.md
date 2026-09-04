@@ -27,6 +27,7 @@ the handful of Anthropic API tokens spent when you add a certificate, on your ow
 - [What makes it machine-readable](#what-makes-it-machine-readable)
 - [Data model](#data-model)
 - [Project layout](#project-layout)
+- [The job-search framework](#the-job-search-framework)
 - [Troubleshooting](#troubleshooting)
 
 ---
@@ -476,6 +477,16 @@ src/
   media/                Published experience attachments. Committed.
 eleventy.config.mjs     Build config, filters, passthrough copies.
 _site/                  Build output. Git-ignored.
+job-search/             The ai-job-search framework, vendored as a git subtree.
+                        Self-contained: Python + Bun, its own .gitignore and
+                        CLAUDE.md. See "The job-search framework" below.
+.claude/
+  skills/gju-internship/          The GJU German Year workflow. Written here.
+  skills/job-application-assistant/  Upstream's profile + evaluation skill.
+  skills/job-scraper/             Portal search across the CLIs in job-search/.
+  skills/upskill/                 Skill-gap analysis over tracked postings.
+  commands/                       Slash commands. See the table below.
+  NOTICE.md                       Attribution and what came from where.
 ```
 
 ### Commands
@@ -489,6 +500,85 @@ _site/                  Build output. Git-ignored.
 | `npm run add-cert -- <file>` | Add or update one certificate from the terminal. |
 | `npm run make-samples` | Generate placeholder images for sample certificates. |
 | `npm run clean` | Delete `_site/`. |
+
+---
+
+## The job-search framework
+
+`job-search/` holds [ai-job-search](https://github.com/MadsLorentzen/ai-job-search)
+(MIT), merged in as a git subtree with its full history. It is a separate toolchain
+from the site: Python for the tools and tests, Bun for the portal CLIs, LaTeX for the
+CV and cover-letter templates. Nothing in it is needed to build or deploy the site,
+and `npm run build` never touches it.
+
+```
+job-search/
+  .agents/skills/*-search/cli/  Six portal search CLIs (Bun + TypeScript):
+                                LinkedIn, Jobindex, Jobnet, Jobbank,
+                                JobDanmark, Freehire.
+  tools/                        verify_pdf, robots_check, security_guards,
+                                salary conversion, skill linting.
+  tests/                        ~30 pytest files covering the tools and commands.
+  cv/, cover_letters/           LaTeX templates (moderncv + a cover class).
+  documents/                    Where you drop your CV, diplomas, references.
+                                Contents are git-ignored; structure is tracked.
+  salary_lookup.py              Danish salary lookup.
+  CLAUDE.md                     Upstream's candidate profile, still placeholders.
+```
+
+### The two workflows
+
+Both are available; they answer different questions.
+
+| | `gju-internship` | `job-application-assistant` |
+|---|---|---|
+| Written for | A GJU student on a German student visa | A general job seeker, Danish market |
+| Source of truth | `data/profile.json` + `src/assets/gy-internships/` | `.claude/skills/job-application-assistant/01-candidate-profile.md` |
+| Output | German `Anschreiben`, rows in `internship-tracker.xlsx` | Tailored LaTeX CV + cover letter PDFs |
+| Status | In use, filled in | Vendored, still full of `[PLACEHOLDER]` tokens |
+
+`/apply`, `/rank` and `/outcome` are the GJU versions — they were rewritten for the
+German Year rules before this merge, and they win the name. Upstream's originals are
+preserved unedited at `job-search/.claude/commands/`. Run `/setup` if you want to fill
+in the upstream profile and use its CV pipeline too.
+
+### Commands from the framework
+
+| Command | Does |
+|---|---|
+| `/setup` | Fills in the `job-application-assistant` profile from your documents. |
+| `/interview` | Prepares for an interview on a tracked application. |
+| `/expand` | Pulls competencies out of documents and your online presence. |
+| `/add-portal` | Generates a new portal-search CLI for your local market. |
+| `/add-template` | Registers a custom CV or cover-letter template. |
+| `/html-report` | Builds an application tracker dashboard. |
+| `/gmail-sync` | Syncs application status from Gmail. |
+| `/notion-sync` | Pushes ranked jobs to a Notion database. |
+| `/reset` | Clears the candidate profile data. |
+
+### Running its tools
+
+The framework's paths are relative to `job-search/`, so run it from there:
+
+```bash
+cd job-search
+pip install -r requirements.txt   # if present; otherwise the stdlib suffices
+python -m pytest tests/
+bun run .agents/skills/linkedin-search/cli/src/cli.ts search --help
+```
+
+### Pulling upstream updates
+
+The subtree keeps its history, so updates still merge:
+
+```bash
+git fetch ai-job-search
+git merge -s subtree --allow-unrelated-histories ai-job-search/master
+```
+
+Files under `job-search/` are kept byte-identical to upstream so this stays clean.
+The copies surfaced in `.claude/` differ only by a `job-search/` path prefix; if a
+merge changes one upstream, re-copy it and re-apply the prefix.
 
 ---
 
