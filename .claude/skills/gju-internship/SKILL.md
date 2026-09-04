@@ -54,8 +54,8 @@ Given a posting (URL or pasted text):
    Drafting is the expensive half and the student decides whether to spend it.
 4. **Draft the Anschreiben** — `03-anschreiben.md`. Drafter writes, reviewer
    critiques against Part 2's own checklist, drafter revises.
-5. **Record it** — add a row to `internship-tracker.xlsx` and archive the posting
-   text. See `/apply` Step 6.
+5. **Record it** — add a row to `data/tracker.csv` and archive the posting text.
+   See `/apply` Step 6.
 
 Then, as the search runs:
 
@@ -72,8 +72,10 @@ Then, as the search runs:
 | `/rank` | What to do today — overdue follow-ups first, then best unsent |
 | `/outcome <company> <what happened>` | Update the row and draw the lesson |
 
-None of them run `npm run tracker`. That command rewrites
-`internship-tracker.xlsx` from scratch and would discard every row you have added.
+They record into `data/tracker.csv`, the one tracker in this repo, shaped by
+`data/tracker-schema.json`. `npm run tracker` re-renders
+`internship-tracker.xlsx` from that CSV and is safe to run whenever the rows or
+the profile change.
 
 The CV is deliberately **not** generated. GJU Part 1 requires a tabular German
 `Lebenslauf` in Word with a photo top-right, `MM/YYYY` dates and a handwritten

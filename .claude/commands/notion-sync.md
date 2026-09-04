@@ -1,6 +1,17 @@
 # /notion-sync - Push Ranked Jobs and Applications to a Notion Database
 
-You are publishing a **read-only view** of the job search into the user's Notion workspace: one database row per job, with a detailed page per shortlisted match. The repo files stay the system of record - `job-search/job_scraper/seen_jobs.json` owns scraped/ranked jobs and `job_search_tracker.csv` owns applications. Notion is a disposable presentation layer on top of them; nothing ever syncs back.
+<!-- PROJECT SPINE — the three files this repo agrees on:
+     · profile  .claude/skills/job-application-assistant/01-candidate-profile.md
+                GENERATED from data/*.json by `npm run profile`. Never hand-edit it;
+                edit the JSON (or use /editor/) and re-run. A fact that is not in
+                data/ does not go in a CV, a letter or an interview answer.
+     · tracker  data/tracker.csv — one row per application. internship-tracker.xlsx
+                is rendered from it by `npm run tracker`, which is safe to re-run.
+     · statuses data/tracker-schema.json → statuses. The only status vocabulary.
+     Code the framework ships — tools/, tests/, templates/, .agents/ portal CLIs,
+     documents/ — lives under job-search/. See CLAUDE.md. -->
+
+You are publishing a **read-only view** of the job search into the user's Notion workspace: one database row per job, with a detailed page per shortlisted match. The repo files stay the system of record - `job-search/job_scraper/seen_jobs.json` owns scraped/ranked jobs and `data/tracker.csv` owns applications. Notion is a disposable presentation layer on top of them; nothing ever syncs back.
 
 This command requires the **Notion MCP server** (OAuth). It reads state, upserts pages, and stops - it never ranks, applies, or edits repo files. Notion is the in-tree reference binding; the sync contract itself is tool-agnostic (see "Adapting to Another Tool" at the end - only the two sections marked *(Notion binding)* are tool-specific).
 
@@ -38,7 +49,7 @@ The command is **silently optional**: when the destination is not reachable, the
 
 Validate the cheap, local precondition before creating anything external. A run with nothing to sync must exit with **zero side effects** - no database created, no state file written.
 
-1. Read `job-search/job_scraper/seen_jobs.json` and `job_search_tracker.csv` (either may be missing).
+1. Read `job-search/job_scraper/seen_jobs.json` and `data/tracker.csv` (either may be missing).
 2. Select `seen_jobs.json` entries with status `ranked` whose `rank_score` meets the threshold from Step 0. `--all` lifts the threshold entirely.
 3. Every tracker row joins the sync set (an applied-to job always syncs, ranked or not), matched to `seen_jobs.json` entries case-insensitively on company + role where possible. Tracker rows with no `seen_jobs.json` entry sync too - build their Key as `<company>_<role>` lowercased with underscores.
 4. **Status precedence:** the tracker wins. A job that is `ranked` in `seen_jobs.json` but `interview` in the tracker syncs as `interview`. Jobs only in `seen_jobs.json` keep their stored status. **Deadline precedence: the tracker wins too** - the tracker's `deadline` (written by `/apply` from the posting the application was actually built on) overrides the `seen_jobs.json` value; jobs only in `seen_jobs.json` keep the scraper's stored deadline. Omit the property when neither states one, and **never reconcile the two by picking the earlier or later date** - both were read from the posting at different times, and the safe-looking `min()` substitutes a date the user never applied against.
@@ -147,3 +158,11 @@ The sync contract is tool-agnostic; only the two sections marked *(Notion bindin
 - **Step 3** (locate/create the database) for the equivalent container in the target tool, using the same property table and a renamed sync-state file
 
 Like the portal skills, tool bindings beyond this Notion reference live in forks, where their maintainers can test them against a live workspace.
+
+---
+
+## In this project
+
+- The sync set is built from `data/tracker.csv`; the Notion status property uses the
+  values in `data/tracker-schema.json` verbatim.
+- Sync state stays at `job-search/job_scraper/notion_sync.json`.

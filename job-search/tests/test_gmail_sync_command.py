@@ -14,7 +14,11 @@ import unittest
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
-GMAIL_SYNC = REPO / ".claude" / "commands" / "gmail-sync.md"
+# .claude/ and .gitignore live at the repository root; this framework is a
+# subdirectory of it. See ../CLAUDE.md for the shared spine.
+PROJECT_ROOT = REPO.parent
+
+GMAIL_SYNC = PROJECT_ROOT / ".claude" / "commands" / "gmail-sync.md"
 
 
 class TestGmailQueryOperators(unittest.TestCase):

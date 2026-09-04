@@ -2,6 +2,17 @@
 framework_version: 1.4.3
 ---
 
+<!-- PROJECT SPINE — the three files this repo agrees on:
+     · profile  .claude/skills/job-application-assistant/01-candidate-profile.md
+                GENERATED from data/*.json by `npm run profile`. Never hand-edit it;
+                edit the JSON (or use /editor/) and re-run. A fact that is not in
+                data/ does not go in a CV, a letter or an interview answer.
+     · tracker  data/tracker.csv — one row per application. internship-tracker.xlsx
+                is rendered from it by `npm run tracker`, which is safe to re-run.
+     · statuses data/tracker-schema.json → statuses. The only status vocabulary.
+     Code the framework ships — tools/, tests/, templates/, .agents/ portal CLIs,
+     documents/ — lives under job-search/. See CLAUDE.md. -->
+
 # CV Templates and Tailoring Guide
 
 <!-- SETUP: Profile statements and section ordering are personalized by running /setup -->
@@ -369,3 +380,11 @@ The section order varies by role type:
 4. Professional Experience (reverse chronological)
 5. Publications & Awards
 6. References
+
+---
+
+## In this project
+
+- Facts come from `01-candidate-profile.md`. A fact that is not in `data/` does not go
+  on the CV — add it to the data and re-run `npm run profile`.
+- `tools/verify_pdf.py` is `job-search/tools/verify_pdf.py`.

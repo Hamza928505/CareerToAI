@@ -20,6 +20,7 @@ the handful of Anthropic API tokens spent when you add a certificate, on your ow
 - [How it works](#how-it-works)
 - [Quick start](#quick-start)
 - [The editor](#the-editor)
+- [The workspace](#the-workspace)
 - [Adding a certificate from the terminal](#adding-a-certificate-from-the-terminal)
 - [The API key](#the-api-key)
 - [Customizing your profile by hand](#customizing-your-profile-by-hand)
@@ -140,6 +141,29 @@ work-in-progress between devices.
 > **Publishing is still a git push.** The editor writes to your browser, and in local mode
 > to your working tree. Neither one deploys anything. Until you commit and push, the live
 > site shows the last version you pushed.
+
+---
+
+## The workspace
+
+`/workspace/` is the page a student actually works from. It has five parts:
+
+- **Where things stand** — how many applications are tracked, open, waiting to be
+  sent, and at interview.
+- **Run a task** — buttons for the four deterministic steps (`npm run profile`,
+  `tracker`, `skills:harvest`, `build`), with their output streamed into the page.
+- **Ask Claude Code** — copy-ready `/apply`, `/rank`, `/outcome`, `/interview` and
+  `/upskill` commands. These read postings and write German, so they need Claude
+  Code; a web page cannot run them.
+- **Check a posting** — the GJU eligibility checker. Enter duration, country, pay
+  and working language and it scores against `data/gju-rules.json`, the same file
+  the workbook's Fit % formula uses, and names the rule behind every flag.
+- **Your tracker** — your rows, read live from `data/tracker.csv`, plus a form to
+  add one by hand.
+
+Everything except the checker needs `npm run editor`: a static host cannot write
+your files or run a command. Opened on the published site, the page says so and
+disables those controls rather than failing when you press them.
 
 ---
 
@@ -511,6 +535,29 @@ from the site: Python for the tools and tests, Bun for the portal CLIs, LaTeX fo
 CV and cover-letter templates. Nothing in it is needed to build or deploy the site,
 and `npm run build` never touches it.
 
+It is not, however, a separate project. The site and the job search share one spine —
+one profile, one tracker, one status vocabulary — described in [CLAUDE.md](CLAUDE.md):
+
+| Spine file | Owns | Generated from it |
+|---|---|---|
+| `data/profile.json`, `experience.json`, `certificates.json`, `profile-extras.json` | Who you are | the site's pages, and the framework's `01-candidate-profile.md` (`npm run profile`) |
+| `data/tracker.csv` | Every application, one row each | `internship-tracker.xlsx` (`npm run tracker`) |
+| `data/tracker-schema.json` | Tracker columns, and the only status vocabulary | the workbook's columns and validation |
+
+So the editor at `/editor/` is where you keep your profile current, and `/apply`,
+`/rank`, `/interview` and `/upskill` all argue from what it wrote.
+
+The repository keeps **one** of each project file at the root — `README.md`,
+`CLAUDE.md`, `AGENTS.md`, `CHANGELOG.md`, `CONTRIBUTING.md`, `SECURITY.md`,
+`SETUP.md`, `LICENSE`, `package.json`, `.gitignore`, `.env.example`, one `.claude/`
+and one `.github/`. `job-search/` holds the framework's code only: `tools/`,
+`tests/`, `templates/`, `cv/`, `cover_letters/`, `documents/` and the six portal
+CLIs under `.agents/skills/*/cli/`, which keep their own `package.json` because
+they are independent Bun packages.
+
+`data/tracker.csv` is gitignored — it holds employers' contact details and this site
+is public. `data/tracker.example.csv` carries the header.
+
 ```
 job-search/
   .agents/skills/*-search/cli/  Six portal search CLIs (Bun + TypeScript):
@@ -523,7 +570,6 @@ job-search/
   documents/                    Where you drop your CV, diplomas, references.
                                 Contents are git-ignored; structure is tracked.
   salary_lookup.py              Danish salary lookup.
-  CLAUDE.md                     Upstream's candidate profile, still placeholders.
 ```
 
 ### The two workflows
@@ -533,14 +579,23 @@ Both are available; they answer different questions.
 | | `gju-internship` | `job-application-assistant` |
 |---|---|---|
 | Written for | A GJU student on a German student visa | A general job seeker, Danish market |
-| Source of truth | `data/profile.json` + `src/assets/gy-internships/` | `.claude/skills/job-application-assistant/01-candidate-profile.md` |
-| Output | German `Anschreiben`, rows in `internship-tracker.xlsx` | Tailored LaTeX CV + cover letter PDFs |
-| Status | In use, filled in | Vendored, still full of `[PLACEHOLDER]` tokens |
+| Rules from | `src/assets/gy-internships/` | `04-job-evaluation.md` |
+| Output | German `Anschreiben` | Tailored LaTeX CV + cover letter PDFs |
+| Profile | `.claude/skills/job-application-assistant/01-candidate-profile.md`, generated from `data/*.json` | the same file |
+| Tracker | `data/tracker.csv` | the same file |
+
+Both now read the same profile and write the same tracker — that is what makes them
+one project rather than two. The GJU skill outranks the general one for a German Year
+internship, because its eligibility rules are hard gates rather than scoring inputs.
 
 `/apply`, `/rank` and `/outcome` are the GJU versions — they were rewritten for the
-German Year rules before this merge, and they win the name. Upstream's originals are
-preserved unedited at `job-search/.claude/commands/`. Run `/setup` if you want to fill
-in the upstream profile and use its CV pipeline too.
+German Year rules, and they win the name. Every other command at `.claude/commands/`
+is upstream's text with an **In this project** section at the end carrying the local
+overrides, so the difference from upstream stays legible in one place.
+
+Because there is now a single `.claude/`, upstream can no longer be re-synced
+file-for-file. `.github/workflows/upstream-watch.yml` still reports what changed
+upstream; adopting a change is a manual port into the root tree.
 
 ### Commands from the framework
 

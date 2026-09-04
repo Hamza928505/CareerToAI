@@ -1,0 +1,323 @@
+---
+layout: base.njk
+title: Workspace — run your internship search
+description: One place to check your application tracker, score a posting against the GJU German Year rules, and run the build steps that keep your profile and tracker in sync.
+permalink: /workspace/
+noindex: true
+pageStyles: /assets/workspace.css
+pageScript: /assets/workspace.js
+eleventyExcludeFromCollections: true
+---
+
+<div class="ws-head hero">
+  <div>
+    <span class="eyebrow">Workspace</span>
+    <h1>Run your <span class="hero-accent">internship search</span></h1>
+    <p class="lede">
+      Your tracker, the GJU rules, and every command that keeps your profile and
+      workbook in step — in one place.
+    </p>
+  </div>
+  <p class="mode" id="mode" data-state="checking">
+    <span class="pill pill--idle" id="mode-pill">Checking…</span>
+  </p>
+</div>
+
+<div class="notice" id="published-notice" hidden>
+  <p>
+    <strong>You are on the published site.</strong> It is static — a web page on
+    GitHub Pages cannot write to your files or run a command on your machine, so
+    the buttons below are disabled and the tracker is empty here.
+  </p>
+  <p>
+    To use the workspace for real, run <code>npm run editor</code> in the project
+    folder and open the address it prints. Everything on this page then works
+    against your own files. The eligibility checker below works either way.
+  </p>
+</div>
+
+<!-- ---------------------------------------------------------------- Overview -->
+<section aria-labelledby="overview-h">
+  <h2 id="overview-h">Where things stand</h2>
+
+  <div class="stat-row" id="stats">
+    <div class="stat">
+      <span class="stat-label">Tracked</span>
+      <span class="stat-value" id="stat-total">—</span>
+      <span class="stat-note">applications in <code>data/tracker.csv</code></span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">Still open</span>
+      <span class="stat-value" id="stat-open">—</span>
+      <span class="stat-note">not yet accepted, rejected or withdrawn</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">To apply</span>
+      <span class="stat-value" id="stat-toapply">—</span>
+      <span class="stat-note">decided, not sent</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">Interviews</span>
+      <span class="stat-value" id="stat-interview">—</span>
+      <span class="stat-note">invited or already sat</span>
+    </div>
+  </div>
+</section>
+
+<!-- ------------------------------------------------------------ Run a task -->
+<section aria-labelledby="tasks-h">
+  <h2 id="tasks-h">Run a task</h2>
+  <p class="lede">
+    These are the deterministic steps — no AI, no network. Each one reads
+    <code>data/</code> and writes a generated file.
+  </p>
+
+  <div class="grid task-grid">
+    <article class="card task" data-task="profile">
+      <span class="eyebrow">npm run profile</span>
+      <h3>Rebuild the candidate profile</h3>
+      <p>
+        Regenerates <code>01-candidate-profile.md</code> from your profile JSON, so
+        every cover letter and interview answer argues from current facts.
+      </p>
+      <button class="btn btn--primary" type="button" data-run="profile">Run</button>
+    </article>
+
+    <article class="card task" data-task="tracker">
+      <span class="eyebrow">npm run tracker</span>
+      <h3>Rebuild the workbook</h3>
+      <p>
+        Renders <code>internship-tracker.xlsx</code> from your tracker rows, with
+        every Fit&nbsp;% and Check formula recomputed. Safe to re-run.
+      </p>
+      <button class="btn btn--primary" type="button" data-run="tracker">Run</button>
+    </article>
+
+    <article class="card task" data-task="skills">
+      <span class="eyebrow">npm run skills:harvest</span>
+      <h3>Harvest advert skills</h3>
+      <p>
+        Pulls the requirements out of every tracked posting into your skill pool,
+        so the editor suggests the words employers actually use.
+      </p>
+      <button class="btn" type="button" data-run="skills">Run</button>
+    </article>
+
+    <article class="card task" data-task="build">
+      <span class="eyebrow">npm run build</span>
+      <h3>Rebuild this site</h3>
+      <p>
+        Regenerates <code>_site/</code> so the published profile matches what is in
+        <code>data/</code> right now.
+      </p>
+      <button class="btn" type="button" data-run="build">Run</button>
+    </article>
+  </div>
+
+  <div class="log-wrap" id="log-wrap" hidden>
+    <div class="log-head">
+      <span class="eyebrow" id="log-title">Output</span>
+      <button class="btn" type="button" id="log-close">Close</button>
+    </div>
+    <pre class="log" id="log" tabindex="0" aria-live="polite" aria-atomic="false"></pre>
+  </div>
+</section>
+
+<!-- ------------------------------------------------------- Ask Claude Code -->
+<section aria-labelledby="claude-h">
+  <h2 id="claude-h">Ask Claude Code</h2>
+  <p class="lede">
+    These read a posting, weigh it and write German for you, so they need Claude
+    Code — a web page cannot do them. Copy one, paste it into your terminal
+    session in this folder.
+  </p>
+
+  <ul class="cmd-list">
+    <li class="cmd">
+      <div>
+        <code class="cmd-text">/apply &lt;url or pasted advert&gt;</code>
+        <p>Checks eligibility, scores the fit, drafts the Anschreiben, records the row.</p>
+      </div>
+      <button class="btn" type="button" data-copy="/apply ">Copy</button>
+    </li>
+    <li class="cmd">
+      <div>
+        <code class="cmd-text">/rank</code>
+        <p>What deserves attention today — overdue follow-ups first, then best unsent.</p>
+      </div>
+      <button class="btn" type="button" data-copy="/rank">Copy</button>
+    </li>
+    <li class="cmd">
+      <div>
+        <code class="cmd-text">/outcome &lt;company&gt; &lt;what happened&gt;</code>
+        <p>Records the result and draws the lesson from it.</p>
+      </div>
+      <button class="btn" type="button" data-copy="/outcome ">Copy</button>
+    </li>
+    <li class="cmd">
+      <div>
+        <code class="cmd-text">/interview &lt;company&gt;</code>
+        <p>Builds a prep pack from the archived posting and what you submitted.</p>
+      </div>
+      <button class="btn" type="button" data-copy="/interview ">Copy</button>
+    </li>
+    <li class="cmd">
+      <div>
+        <code class="cmd-text">/upskill</code>
+        <p>The gap between what the adverts ask for and what your profile holds.</p>
+      </div>
+      <button class="btn" type="button" data-copy="/upskill">Copy</button>
+    </li>
+  </ul>
+</section>
+
+<!-- ------------------------------------------------------ Eligibility check -->
+<section aria-labelledby="check-h">
+  <h2 id="check-h">Check a posting against the GJU rules</h2>
+  <p class="lede">
+    The same thresholds the tracker scores with, read from
+    <code>data/gju-rules.json</code>. This runs in your browser and sends nothing
+    anywhere.
+  </p>
+
+  <form class="card checker" id="checker" novalidate>
+    <div class="field-row">
+      <p class="field">
+        <label for="f-weeks">Duration in weeks <span aria-hidden="true">*</span></label>
+        <input type="number" id="f-weeks" name="weeks" min="1" max="52" inputmode="numeric" required>
+        <span class="help">GJU requires at least {{ gju.rules.minWeeks }} weeks.</span>
+      </p>
+
+      <p class="field">
+        <label for="f-country">Country <span aria-hidden="true">*</span></label>
+        <select id="f-country" name="country" required>
+          <option value="">Choose…</option>
+          {% for c in gju.countries %}<option value="{{ c[0] }}">{{ c[0] }}</option>{% endfor %}
+        </select>
+        <span class="help">Anywhere outside the German-speaking countries needs approval.</span>
+      </p>
+    </div>
+
+    <div class="field-row">
+      <p class="field">
+        <label for="f-paid">Paid?</label>
+        <select id="f-paid" name="paid">
+          <option value="">Not stated</option>
+          <option value="Yes">Yes</option>
+          <option value="No">No — unpaid</option>
+        </select>
+      </p>
+
+      <p class="field">
+        <label for="f-pay">Pay, EUR per month</label>
+        <input type="number" id="f-pay" name="pay" min="0" step="10" inputmode="numeric">
+        <span class="help">A visa extension asks you to prove {{ gju.rules.minMonthlySalary }} EUR/month.</span>
+      </p>
+
+      <p class="field">
+        <label for="f-language">Working language</label>
+        <select id="f-language" name="language">
+          <option value="">Not stated</option>
+          <option value="English">English</option>
+          <option value="Both">Both</option>
+          <option value="German">German only</option>
+        </select>
+      </p>
+    </div>
+
+    <p class="field">
+      <label for="f-german">Your German level</label>
+      <select id="f-german" name="german">
+        <option value="A1">A1</option><option value="A2">A2</option>
+        <option value="B1">B1</option><option value="B2" selected>B2</option>
+        <option value="C1">C1</option><option value="C2">C2</option>
+      </select>
+      <span class="help">German-only postings score full marks from B2 upward.</span>
+    </p>
+
+    <div class="checker-actions">
+      <button class="btn btn--primary" type="submit">Check it</button>
+      <button class="btn" type="reset">Clear</button>
+    </div>
+  </form>
+
+  <div id="verdict" class="verdict" hidden aria-live="polite"></div>
+</section>
+
+<!-- --------------------------------------------------------------- Tracker -->
+<section aria-labelledby="tracker-h">
+  <h2 id="tracker-h">Your tracker</h2>
+  <p class="lede">
+    Read live from <code>data/tracker.csv</code>. It stays on your machine — it
+    holds employers' contact details, so it is never committed or published.
+  </p>
+
+  <div id="tracker-empty" class="empty">
+    <p>Nothing tracked yet. Run <code>/apply</code> on a posting, or add a row below.</p>
+  </div>
+
+  <div class="table-wrap" id="tracker-wrap" hidden>
+    <table class="data" id="tracker-table">
+      <caption class="visually-hidden">Tracked internship applications</caption>
+      <thead>
+        <tr>
+          <th scope="col">Company</th>
+          <th scope="col">Role</th>
+          <th scope="col">Country</th>
+          <th scope="col">Weeks</th>
+          <th scope="col">Status</th>
+          <th scope="col">Sent</th>
+          <th scope="col">Flags</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <details class="card add-row" id="add-row">
+    <summary>Add a row by hand</summary>
+    <form id="row-form" novalidate>
+      <div class="field-row">
+        <p class="field">
+          <label for="r-company">Company <span aria-hidden="true">*</span></label>
+          <input id="r-company" name="company" required autocomplete="organization">
+        </p>
+        <p class="field">
+          <label for="r-role">Role</label>
+          <input id="r-role" name="role">
+        </p>
+      </div>
+      <div class="field-row">
+        <p class="field">
+          <label for="r-country">Country</label>
+          <select id="r-country" name="country">
+            <option value="">—</option>
+            {% for c in gju.countries %}<option value="{{ c[0] }}">{{ c[0] }}</option>{% endfor %}
+          </select>
+        </p>
+        <p class="field">
+          <label for="r-weeks">Weeks</label>
+          <input type="number" id="r-weeks" name="weeks" min="1" max="52" inputmode="numeric">
+        </p>
+        <p class="field">
+          <label for="r-status">Status</label>
+          <select id="r-status" name="status">
+            {% for s in tracker.statuses %}<option value="{{ s.value }}"{% if s.value == 'Researching' %} selected{% endif %}>{{ s.value }}</option>{% endfor %}
+          </select>
+        </p>
+      </div>
+      <p class="field">
+        <label for="r-wants">Skills they ask for</label>
+        <input id="r-wants" name="wants" placeholder="Python, PyTorch, Docker">
+        <span class="help">A comma-separated list scores exactly; prose is estimated.</span>
+      </p>
+      <button class="btn btn--primary" type="submit" id="row-submit">Add to tracker</button>
+      <p class="form-status" id="row-status" role="status"></p>
+    </form>
+  </details>
+</section>
+
+{# The checker and the table are driven by the same rules the workbook uses.
+   Passing them as JSON keeps the numbers in one place. #}
+<script type="application/json" id="gju-rules">{{ gju | dump | safe }}</script>
+<script type="application/json" id="tracker-schema">{{ tracker | dump | safe }}</script>

@@ -1,73 +1,95 @@
 ---
 framework_version: 1.1.1
+generated: true
 ---
+
+<!-- GENERATED FILE - do not edit by hand. -->
+<!-- Source: data/profile.json, data/experience.json, data/certificates.json, data/profile-extras.json -->
+<!-- Rebuild: npm run profile   (check in CI: npm run profile:check) -->
 
 # Candidate Profile
 
-<!-- SETUP: This file is populated by running /setup -->
-<!-- After running /setup, all sections will be filled with your actual information -->
-
 ## Identity
-- **Name:** [YOUR_NAME]
-- **Location:** [YOUR_ADDRESS]
-- **Phone:** [YOUR_PHONE]
-- **Email:** [YOUR_EMAIL]
-- **LinkedIn:** [YOUR_LINKEDIN_URL]
-- **GitHub:** [YOUR_GITHUB_URL]
-- **Status:** [YOUR_EMPLOYMENT_STATUS]
-- **Constraints:** [YOUR_COMMUTE_OR_LOCATION_CONSTRAINTS]
+- **Name:** _not set — add it to data/profile.json_
+- **Location:** _not set — add it to data/profile.json_
+- **Phone:** _not set — add it to data/profile-extras.json_
+- **Email:** _not set — add it to data/profile.json_
+- **LinkedIn:** _not set — add it to data/profile.json links_
+- **GitHub:** _not set — add it to data/profile.json links_
+- **Status:** _not set — add it to data/profile-extras.json_
+- **Constraints:** _not set — add it to data/profile-extras.json_
 
 ### Languages
-<!-- Every language you can work in professionally, with your honest level. Used by the
-Language Gate in 04-job-evaluation.md and by job-scraper/search-queries.md's query-language
-generation. Omit any language you don't actually work in - an undeclared language is treated as
-a hard no, not a gap to smooth over. -->
 
-| Language | Level | Notes |
-|----------|-------|-------|
-| [LANGUAGE] | [LEVEL, e.g. "Native" / "C2" / "B1/B2 (conversational)"] | [optional] |
+<!-- The Language Gate in 04-job-evaluation.md treats an undeclared language as a hard
+no, not a gap to smooth over. Edit data/profile-extras.json, not this file. -->
+
+_No working languages declared. Until you add them to `data/profile-extras.json`,
+the Language Gate has nothing to check and every language-conditional posting must
+be flagged for your own judgment rather than filtered._
 
 ## Education
 
-| Degree | Period | Institution | Key Topics |
-|--------|--------|-------------|------------|
-| [DEGREE] | [YEARS] | [INSTITUTION] | [TOPICS] |
+_No education entries in `data/profile.json`._
 
 ## Professional Experience
 
-### [JOB_TITLE] - [COMPANY] ([START] - [END])
-[LOCATION]
-- [RESPONSIBILITY_OR_ACHIEVEMENT_1]
-- [RESPONSIBILITY_OR_ACHIEVEMENT_2]
-- [RESPONSIBILITY_OR_ACHIEVEMENT_3]
+### Infrastructure Engineer - Example Corp (April 2023 – Present)
+Remote · Full-time
 
-<!-- Add more roles as needed -->
+- Sample entry so the Experience section renders on a fresh clone.
+- Runs the team's AWS estate: Terraform modules for account and network baselines, a Kubernetes platform two dozen services deploy onto, and the on-call rotation that keeps it honest.
+- Skills: Terraform, Kubernetes, AWS, Incident Response, CI/CD
 
 ## Independent Projects
-<!-- Projects outside of employment: freelance, open source, personal -->
-- **[PROJECT_NAME]**: [DESCRIPTION]
+
+_No projects listed. Add them to data/profile-extras.json._
 
 ## Technical Skills
 
-### Programming & ML
-- **[LANGUAGE]** ([PROFICIENCY]): [FRAMEWORKS_AND_LIBRARIES]
-- [OTHER_SKILLS]
+<!-- Aggregated from data/profile.json skills plus every skill tagged on a role or
+certificate. The split below is what /upskill and the Fit score read: evidenced
+skills carry a certificate or a role behind them, declared ones do not (yet). -->
 
-### Domain Expertise
-- [DOMAIN_1]
-- [DOMAIN_2]
+### Evidenced by a role or certificate
+- AWS
+- CI/CD
+- Cloud Architecture
+- Cost Optimization
+- Data Analysis
+- Data Cleaning
+- Data Visualization
+- EC2
+- High Availability
+- IAM
+- Incident Response
+- Kubernetes
+- R
+- S3
+- Spreadsheets
+- SQL
+- Tableau
+- Terraform
+- VPC
 
-### Software & Tools
-- [TOOL_LIST]
+### Declared, not yet evidenced
+- [object Object]
+
+### Certifications
+- **AWS Certified Solutions Architect – Associate** — Amazon Web Services (2024-03-15)
+- **Google Data Analytics Professional Certificate** — Google (via Coursera) (2023-08-02)
+
+_20 skills total._
 
 ## Publications
-<!-- List peer-reviewed publications, if any -->
-1. [AUTHOR_LIST] ([YEAR]). [TITLE]. [JOURNAL]. [DOI_LINK]
+
+_No publications listed. Add them to data/profile-extras.json._
 
 ## Awards
-- [AWARD] - [EVENT] ([YEAR])
+
+_No awards listed. Add them to data/profile-extras.json._
 
 ## References
-- [NAME], [TITLE], [COMPANY] ([EMAIL], [PHONE])
 
-More references available upon request.
+_No references listed. Add them to data/profile-extras.json._
+

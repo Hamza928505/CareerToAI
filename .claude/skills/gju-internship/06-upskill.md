@@ -4,16 +4,16 @@ Adapted from `/upskill` in ai-job-search (MIT). Same idea — compare the postin
 you tracked against your own profile and turn the difference into a study plan —
 rewired onto the data this project already keeps.
 
-Their version reads a CSV. This one reads the tracker's `Skills they ask for`
-column, which is the same column `npm run skills:harvest` already feeds into the
-editor's suggestions. So the gap analysis and the skill suggestions come from one
-source of truth: the adverts you actually applied to.
+Both read the same CSV now: `data/tracker.csv`. This one leans on its `Skills they
+ask for` column, the same column `npm run skills:harvest` feeds into the editor's
+suggestions. So the gap analysis and the skill suggestions come from one source of
+truth: the adverts you actually applied to.
 
 ## Inputs
 
 | Source | Role |
 |---|---|
-| `internship-tracker.xlsx`, sheet `Search` | The demand side. Every `Skills they ask for` cell, with its row's Fit % and Status |
+| `data/tracker.csv` | The demand side. Every `Skills they ask for` cell, with its row Fit % and Status |
 | `data/profile.json`, `data/experience.json`, `data/certificates.json` | The supply side — everything you can honestly claim |
 | `data/skill-pool.json` | Already-harvested advert skills, if `npm run skills:harvest` has run |
 | `data/skill-taxonomy.json` | ESCO, for the German label of a gap and for related skills |
@@ -74,5 +74,5 @@ half the value, because that is the word the advert uses.
 ## Afterwards
 
 If the student picks up a gap skill, it goes in the profile through `/editor/` —
-then `npm run tracker` recomputes every Fit % in the sheet against the new skill
-set. That is the loop closing: adverts → gaps → learning → profile → better scores.
+then `npm run tracker` recomputes every Fit % in the workbook against the new
+skill set. That is the loop closing: adverts → gaps → learning → profile → better scores.

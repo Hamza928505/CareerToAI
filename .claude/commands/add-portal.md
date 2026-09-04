@@ -1,5 +1,16 @@
 # /add-portal - Generate a Job-Portal Search Skill for Your Local Market
 
+<!-- PROJECT SPINE — the three files this repo agrees on:
+     · profile  .claude/skills/job-application-assistant/01-candidate-profile.md
+                GENERATED from data/*.json by `npm run profile`. Never hand-edit it;
+                edit the JSON (or use /editor/) and re-run. A fact that is not in
+                data/ does not go in a CV, a letter or an interview answer.
+     · tracker  data/tracker.csv — one row per application. internship-tracker.xlsx
+                is rendered from it by `npm run tracker`, which is safe to re-run.
+     · statuses data/tracker-schema.json → statuses. The only status vocabulary.
+     Code the framework ships — tools/, tests/, templates/, .agents/ portal CLIs,
+     documents/ — lives under job-search/. See CLAUDE.md. -->
+
 You are helping the user build a job-portal search skill for a job board in their market. The repo ships worked examples of the pattern (four Danish portals plus the country-agnostic `linkedin-search` and `freehire-search`), and the README invites users elsewhere to build equivalents — this command turns that invitation into a guided workflow: investigate the portal, scaffold the skill from the canonical structure, and test-run a live query before registering anything.
 
 The generator is **country-agnostic**: it works for any portal in any market and language. The skills it produces are typically market-specific and live in the user's fork (per repo policy, country-specific portal skills are not merged upstream — the generator is the upstream feature, its output is yours).
@@ -158,3 +169,13 @@ Present a summary:
 - Zero runtime dependencies by default, matching `linkedin-search` - a portal skill should run on a fresh clone with nothing but `bun`.
 - Access rules are surfaced, not silently bypassed: auth-walled portals are declined, robots.txt/ToS restrictions are reported to the user, and restricted portals get a prominent personal-use-only warning in the generated skill.
 - Credentials live in the environment, never in the repo: a generated skill reads its token from an environment variable, fails loudly when it is unset, and never commits it. Per-call cost is disclosed before the skill is generated, not discovered afterwards.
+
+---
+
+## In this project
+
+- Scaffold new portal skills into `job-search/.agents/skills/`, alongside the existing
+  ones, and give the CLI's `package.json` its own dependencies — the six portal CLIs are
+  independent Bun packages, not part of the root npm project.
+- Register the new CLI in `.claude/settings.json`; the permission entry needs the
+  `job-search/` prefix.

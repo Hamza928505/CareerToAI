@@ -18,9 +18,13 @@ except ImportError:
     _HAVE_YAML = False
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-COMMAND_FILE = REPO_ROOT / ".claude" / "commands" / "html-report.md"
+# .claude/ and .gitignore live at the repository root; this framework is a
+# subdirectory of it. See ../CLAUDE.md for the shared spine.
+PROJECT_ROOT = REPO_ROOT.parent
+
+COMMAND_FILE = PROJECT_ROOT / ".claude" / "commands" / "html-report.md"
 LINT_SCRIPT = REPO_ROOT / "tools" / "lint_skills.py"
-GITIGNORE = REPO_ROOT / ".gitignore"
+GITIGNORE = PROJECT_ROOT / ".gitignore"
 
 
 class HtmlReportCommandFileTests(unittest.TestCase):
@@ -58,7 +62,7 @@ class HtmlReportTrackerFieldTests(unittest.TestCase):
     # clean list diff naming the missing column instead.
     CANONICAL_HEADER = re.search(
         r"^\s*(date,company,[a-z_,]+)$",
-        (REPO_ROOT / ".claude" / "commands" / "apply.md").read_text(encoding="utf-8"),
+        (PROJECT_ROOT / ".claude" / "commands" / "apply.md").read_text(encoding="utf-8"),
         re.M,
     ).group(1).split(",")
 

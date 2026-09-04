@@ -13,7 +13,15 @@
       "Bash(python3 job-search/salary_lookup.py:*)",
       "Bash(python job-search/tools/verify_pdf.py:*)",
       "Bash(python3 job-search/tools/verify_pdf.py:*)",
-      "Bash(pdftotext:*)"
+      "Bash(pdftotext:*)",
+      "Bash(python job-search/tools/robots_check.py:*)",
+      "Bash(python3 job-search/tools/robots_check.py:*)",
+      "Bash(npm run profile:*)",
+      "Bash(npm run profile)",
+      "Bash(npm run tracker)",
+      "Bash(npm run skills:harvest:*)",
+      "Bash(npm run skills:harvest)",
+      "Bash(npm run build)"
     ]
   }
 }

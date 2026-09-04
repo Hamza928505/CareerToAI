@@ -1,5 +1,16 @@
 # /reset - Reset Candidate Profile Data
 
+<!-- PROJECT SPINE — the three files this repo agrees on:
+     · profile  .claude/skills/job-application-assistant/01-candidate-profile.md
+                GENERATED from data/*.json by `npm run profile`. Never hand-edit it;
+                edit the JSON (or use /editor/) and re-run. A fact that is not in
+                data/ does not go in a CV, a letter or an interview answer.
+     · tracker  data/tracker.csv — one row per application. internship-tracker.xlsx
+                is rendered from it by `npm run tracker`, which is safe to re-run.
+     · statuses data/tracker-schema.json → statuses. The only status vocabulary.
+     Code the framework ships — tools/, tests/, templates/, .agents/ portal CLIs,
+     documents/ — lives under job-search/. See CLAUDE.md. -->
+
 You are resetting parts of the job search framework back to a blank state so the user can start fresh with `/setup`.
 
 **This command is destructive.** Nothing is deleted until the user explicitly confirms. Follow these steps exactly in order.
@@ -273,3 +284,15 @@ Then tell the user what to do next based on what was reset:
 
 **If both were reset:**
 > Both your profile files and documents folder are now empty. Add documents to `job-search/documents/` (or skip and use the CV import / interview path), then run `/setup`.
+
+---
+
+## In this project
+
+- A profile reset clears `data/profile.json`, `data/experience.json`,
+  `data/certificates.json` and `data/profile-extras.json` back to their placeholder
+  shape, then re-runs `npm run profile`. Resetting `01-candidate-profile.md` alone
+  achieves nothing — the next build puts it straight back.
+- A tracker reset empties `data/tracker.csv` to its header row and re-runs
+  `npm run tracker`.
+- `src/assets/gy-internships/` is reference material and is never reset.

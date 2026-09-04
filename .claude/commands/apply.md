@@ -92,21 +92,24 @@ An application that is drafted but not recorded does not exist. Do all three:
    `applications/<company>_<role>/posting.txt`, with the URL and the date fetched
    at the top.
 
-2. **Add a row to the tracker.** `internship-tracker.xlsx`, sheet `Search`. Match
-   on company name first — update the existing row rather than adding a duplicate.
+2. **Add a row to the tracker.** `data/tracker.csv` — the one tracker, shared with
+   the job-search framework and shaped by `data/tracker-schema.json`. Match on
+   company name first — update the existing row rather than adding a duplicate.
    Fill: Company, Website, Contact person, Contact e-mail, Role / Bereich, Where I
    found it, City, Country, Working language, Start date, Weeks, Paid?, Pay
    €/month, **Skills they ask for** (as a comma-separated list — the Fit % measures
    the share of them you have), Why it interests me, Application type, and Status
    `To apply`. Leave Sent blank until it is actually sent; the sheet computes the
-   follow-up date from it.
+   follow-up date from it. Leave `#`, `Skills I match`, `Follow up due`, `Fit %`
+   and `Check` empty — those are formulas, filled in when the workbook is built.
 
-3. **Harvest the skills.** Run `npm run skills:harvest` so the advert's
-   requirements join the editor's suggestions. Then `npm run tracker` only if the
-   profile changed — it regenerates the workbook and would discard rows.
+3. **Harvest the skills, then rebuild the workbook.** Run `npm run skills:harvest`
+   so the advert's requirements join the editor's suggestions, then
+   `npm run tracker` to re-render `internship-tracker.xlsx` from the CSV with every
+   Fit % recomputed.
 
-> Careful: `npm run tracker` **rewrites** `internship-tracker.xlsx` from scratch.
-> Never run it to "refresh" the sheet after adding rows — you will lose them.
+> `npm run tracker` is safe to re-run: the rows live in `data/tracker.csv`, and the
+> workbook is a rendering of them. It is the CSV you must never hand-wreck.
 
 ---
 

@@ -2,6 +2,17 @@
 framework_version: 1.2.6
 ---
 
+<!-- PROJECT SPINE — the three files this repo agrees on:
+     · profile  .claude/skills/job-application-assistant/01-candidate-profile.md
+                GENERATED from data/*.json by `npm run profile`. Never hand-edit it;
+                edit the JSON (or use /editor/) and re-run. A fact that is not in
+                data/ does not go in a CV, a letter or an interview answer.
+     · tracker  data/tracker.csv — one row per application. internship-tracker.xlsx
+                is rendered from it by `npm run tracker`, which is safe to re-run.
+     · statuses data/tracker-schema.json → statuses. The only status vocabulary.
+     Code the framework ships — tools/, tests/, templates/, .agents/ portal CLIs,
+     documents/ — lives under job-search/. See CLAUDE.md. -->
+
 # Job Evaluation Framework
 
 <!-- SETUP: Skill match areas and career goals are personalized by running /setup -->
@@ -267,3 +278,13 @@ Before writing the application, consider whether the candidate should call the c
 - The call's purpose is **gathering information**, not delivering a pitch
 - Take notes - use what you learn to tailor the application
 - Reference the conversation naturally in the cover letter ("After speaking with [name], I was especially drawn to...")
+
+---
+
+## In this project
+
+- The Language Gate reads the `Languages` table in `01-candidate-profile.md`, fed by
+  `data/profile-extras.json`. If that table is empty, no posting may be filtered on
+  language — flag it for judgment instead.
+- A GJU German Year internship is gated by the `gju-internship` skill first; a posting
+  that fails one of its hard rules is out regardless of the score here.

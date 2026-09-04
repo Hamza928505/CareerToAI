@@ -1,3 +1,5 @@
+import fs from "node:fs";
+
 import { formatDate } from "./lib/content.mjs";
 import { personGraph } from "./lib/jsonld.mjs";
 import { resolveSite } from "./lib/site.mjs";
@@ -9,11 +11,25 @@ export default function (eleventyConfig) {
   eleventyConfig.addPassthroughCopy({ "src/assets": "assets" });
   eleventyConfig.addPassthroughCopy({ "src/certs": "certs" });
   eleventyConfig.addPassthroughCopy({ "src/media": "media" });
+  // SweetAlert2 is self-hosted rather than loaded from a CDN: the site makes no
+  // third-party requests, and the local editor keeps working offline. The
+  // esm.all build carries its own CSS, so this is the only file needed.
+  eleventyConfig.addPassthroughCopy({
+    "node_modules/sweetalert2/dist/sweetalert2.esm.all.min.js": "assets/sweetalert2.esm.min.js",
+  });
   // Publish the raw data too — an AI agent that would rather parse JSON than
   // HTML can fetch /data/certificates.json directly.
   eleventyConfig.addPassthroughCopy({ "data/certificates.json": "data/certificates.json" });
   eleventyConfig.addPassthroughCopy({ "data/profile.json": "data/profile.json" });
   eleventyConfig.addPassthroughCopy({ "data/experience.json": "data/experience.json" });
+  // Optional: written by `npm run skills:import`. The editor fetches it lazily
+  // and works without it, so its absence must not fail the build.
+  if (fs.existsSync("data/skill-taxonomy.json")) {
+    eleventyConfig.addPassthroughCopy({ "data/skill-taxonomy.json": "data/skill-taxonomy.json" });
+  }
+  if (fs.existsSync("data/skill-pool.json")) {
+    eleventyConfig.addPassthroughCopy({ "data/skill-pool.json": "data/skill-pool.json" });
+  }
 
   eleventyConfig.addWatchTarget("./data/");
   eleventyConfig.addWatchTarget("./lib/");
