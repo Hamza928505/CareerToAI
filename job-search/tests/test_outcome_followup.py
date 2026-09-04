@@ -20,7 +20,11 @@ except ImportError:
     _HAVE_YAML = False
 
 REPO = Path(__file__).resolve().parent.parent
-COMMAND = REPO / ".claude" / "commands" / "outcome.md"
+# .claude/ and .gitignore live at the repository root; this framework is a
+# subdirectory of it. See ../CLAUDE.md for the shared spine.
+PROJECT_ROOT = REPO.parent
+
+COMMAND = PROJECT_ROOT / ".claude" / "commands" / "outcome.md"
 
 
 class OutcomeFollowupBranchSpec(unittest.TestCase):

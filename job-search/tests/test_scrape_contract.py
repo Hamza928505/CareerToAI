@@ -25,7 +25,11 @@ import unittest
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-SCRAPER_SKILL = REPO_ROOT / ".claude" / "skills" / "job-scraper" / "SKILL.md"
+# .claude/ and .gitignore live at the repository root; this framework is a
+# subdirectory of it. See ../CLAUDE.md for the shared spine.
+PROJECT_ROOT = REPO_ROOT.parent
+
+SCRAPER_SKILL = PROJECT_ROOT / ".claude" / "skills" / "job-scraper" / "SKILL.md"
 PORTAL_CLIS = sorted((REPO_ROOT / ".agents" / "skills").glob("*-search"))
 
 # Derived, never copied: a hardcoded field list drifts in lockstep with

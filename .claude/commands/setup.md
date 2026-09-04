@@ -1,5 +1,16 @@
 # /setup - Profile Onboarding
 
+<!-- PROJECT SPINE — the three files this repo agrees on:
+     · profile  .claude/skills/job-application-assistant/01-candidate-profile.md
+                GENERATED from data/*.json by `npm run profile`. Never hand-edit it;
+                edit the JSON (or use /editor/) and re-run. A fact that is not in
+                data/ does not go in a CV, a letter or an interview answer.
+     · tracker  data/tracker.csv — one row per application. internship-tracker.xlsx
+                is rendered from it by `npm run tracker`, which is safe to re-run.
+     · statuses data/tracker-schema.json → statuses. The only status vocabulary.
+     Code the framework ships — tools/, tests/, templates/, .agents/ portal CLIs,
+     documents/ — lives under job-search/. See CLAUDE.md. -->
+
 You are running the onboarding setup for the AI Job Search framework. Your goal is to collect the user's professional information and populate all profile files so the `/apply` workflow works out of the box.
 
 There are three paths into setup. Step 0 picks the right one; all three converge on Step 3 (file generation) and Step 4 (confirmation).
@@ -430,3 +441,12 @@ If Path A left any STAR stubs in `07-interview-prep.md`, also note:
 - Can be re-run with `--section <name>` to update specific sections (e.g., `/setup --section search` to reconfigure job search queries without re-doing the full profile).
 - Section 9 (search) in Path C, and the equivalent follow-up questions in Path A, proactively suggest role types the user may not have considered.
 - At the end, suggest running `/scrape` and `/apply` with a test job posting.
+
+---
+
+## In this project
+
+- Onboarding writes `data/profile.json`, `data/experience.json`,
+  `data/certificates.json` and `data/profile-extras.json`, then runs `npm run profile`.
+  Writing `01-candidate-profile.md` directly is always the wrong move — it is generated.
+- `npm run editor` is the other way in, and edits the same JSON.

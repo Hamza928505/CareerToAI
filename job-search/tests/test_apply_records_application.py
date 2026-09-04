@@ -24,15 +24,19 @@ except ImportError:
     _HAVE_YAML = False
 
 REPO = Path(__file__).resolve().parent.parent
-COMMANDS = REPO / ".claude" / "commands"
+# .claude/ and .gitignore live at the repository root; this framework is a
+# subdirectory of it. See ../CLAUDE.md for the shared spine.
+PROJECT_ROOT = REPO.parent
+
+COMMANDS = PROJECT_ROOT / ".claude" / "commands"
 APPLY = COMMANDS / "apply.md"
 OUTCOME = COMMANDS / "outcome.md"
 GMAIL_SYNC = COMMANDS / "gmail-sync.md"
 HTML_REPORT = COMMANDS / "html-report.md"
 INTERVIEW = COMMANDS / "interview.md"
 NOTION_SYNC = COMMANDS / "notion-sync.md"
-SKILL = REPO / ".claude" / "skills" / "job-application-assistant" / "SKILL.md"
-SCRAPER = REPO / ".claude" / "skills" / "job-scraper" / "SKILL.md"
+SKILL = PROJECT_ROOT / ".claude" / "skills" / "job-application-assistant" / "SKILL.md"
+SCRAPER = PROJECT_ROOT / ".claude" / "skills" / "job-scraper" / "SKILL.md"
 DOCS_README = REPO / "documents" / "README.md"
 
 TRACKER_HEADER = (
@@ -407,7 +411,7 @@ class ArchiveNameIsOnePathComponent(unittest.TestCase):
          "the sentence that says why the rule exists; without it the next "
          "edit simplifies the rule back to spaces-only"),
         (OUTCOME, "## Step 1: Load State and Identify the Application",
-         "by the **Subfolder naming** rule in `documents/README.md`",
+         "by the **Subfolder naming** rule in `job-search/documents/README.md`",
          "Step 1.4 is the derivation every other writer cites; paraphrasing "
          "the rule here is how the two copies drifted apart originally"),
         (APPLY, "### Requirement coverage (both documents)",
@@ -416,21 +420,21 @@ class ArchiveNameIsOnePathComponent(unittest.TestCase):
          "`/` there sends the draft to a path lualatex never writes a PDF "
          "back to, and the Step 4 compile check fails on a phantom path"),
         (SKILL, "### Step 2: Tailor CV",
-         "by the **Subfolder naming** rule in `documents/README.md`",
+         "by the **Subfolder naming** rule in `job-search/documents/README.md`",
          "the /scrape path writes its documents before Step 3b consults /apply, "
          "so /apply's filename rule cannot protect it"),
         (GMAIL_SYNC, "## Step 2: Load State",
-         "by the **Subfolder naming** rule in `documents/README.md`",
+         "by the **Subfolder naming** rule in `job-search/documents/README.md`",
          "gmail-sync both locates and creates archives; its old spaces-only "
          "paraphrase would split state across two folders"),
         (INTERVIEW, "## Step 1: Load the Application Context",
-         "by the **Subfolder naming** rule in `documents/README.md`",
+         "by the **Subfolder naming** rule in `job-search/documents/README.md`",
          "interview must read the same archive /apply and /outcome wrote"),
         (INTERVIEW, "### 6. Logistics",
          "archive folder derived in Step 1",
          "interview must reuse its canonical read path when writing the prep pack"),
         (NOTION_SYNC, "## Step 5: Write the Detail Page",
-         "by the **Subfolder naming** rule in `documents/README.md`",
+         "by the **Subfolder naming** rule in `job-search/documents/README.md`",
          "notion-sync otherwise reports that the sanitized local archive is absent"),
         (DOCS_README, "## applications/",
          "If the derived name is empty",

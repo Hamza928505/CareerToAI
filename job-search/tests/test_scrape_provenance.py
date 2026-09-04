@@ -12,7 +12,11 @@ import unittest
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
-SKILL = REPO / ".claude" / "skills" / "job-scraper" / "SKILL.md"
+# .claude/ and .gitignore live at the repository root; this framework is a
+# subdirectory of it. See ../CLAUDE.md for the shared spine.
+PROJECT_ROOT = REPO.parent
+
+SKILL = PROJECT_ROOT / ".claude" / "skills" / "job-scraper" / "SKILL.md"
 
 
 def _steps(text: str) -> dict[str, str]:

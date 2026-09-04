@@ -1,6 +1,17 @@
 # /gmail-sync - Sync Application Status from Gmail
 
-You are scanning the user's Gmail for status signals on tracked job applications (interview invites, assessment links, offers, rejections) and, once approved, writing the detected changes into `job_search_tracker.csv` and `job-search/documents/applications/<company>_<role>/outcome.md` - the same two places `/outcome` writes to, in the same schema.
+<!-- PROJECT SPINE — the three files this repo agrees on:
+     · profile  .claude/skills/job-application-assistant/01-candidate-profile.md
+                GENERATED from data/*.json by `npm run profile`. Never hand-edit it;
+                edit the JSON (or use /editor/) and re-run. A fact that is not in
+                data/ does not go in a CV, a letter or an interview answer.
+     · tracker  data/tracker.csv — one row per application. internship-tracker.xlsx
+                is rendered from it by `npm run tracker`, which is safe to re-run.
+     · statuses data/tracker-schema.json → statuses. The only status vocabulary.
+     Code the framework ships — tools/, tests/, templates/, .agents/ portal CLIs,
+     documents/ — lives under job-search/. See CLAUDE.md. -->
+
+You are scanning the user's Gmail for status signals on tracked job applications (interview invites, assessment links, offers, rejections) and, once approved, writing the detected changes into `data/tracker.csv` and `job-search/documents/applications/<company>_<role>/outcome.md` - the same two places `/outcome` writes to, in the same schema.
 
 Unlike `/outcome` (which asks the user what happened), `/gmail-sync` classifies real emails on its own - but it never writes on its own. Every classified change is presented as a batch **before** anything touches the tracker or `outcome.md`, and only proceeds once the user approves it (approving the whole batch at once is fine; writing first and flagging it after is not). Because a wrong write silently corrupts application history that `/setup` later calibrates from, every proposed change must cite its source email and every uncertain case must be surfaced instead of guessed. Never treat this command's job as "notice something in an inbox" - it is "propose a correct, sourced line for a permanent record, and write it only once the user says yes."
 
@@ -26,7 +37,7 @@ Confirm the Gmail MCP tools (`mcp__claude_ai_Gmail__*`) are available. If not, t
 
 ## Step 2: Load State
 
-1. Read `job_search_tracker.csv`. If it does not exist, tell the user there is nothing to sync against yet (suggest `/outcome` or `/apply` first) and stop. Do not create it here - `/gmail-sync` never originates new applications, only updates existing ones.
+1. Read `data/tracker.csv`. If it does not exist, tell the user there is nothing to sync against yet (suggest `/outcome` or `/apply` first) and stop. Do not create it here - `/gmail-sync` never originates new applications, only updates existing ones.
 2. Read `job-search/gmail_sync/state.json` (create if missing: `{"last_sync": null, "processed_message_ids": []}`).
 3. Build the set of **open applications**: tracker rows whose `status` is not **Final** (per the **Tracker status vocabulary** in `/outcome`). For each, derive its archive folder `job-search/documents/applications/<company>_<role>/` by the **Subfolder naming** rule in `job-search/documents/README.md` and check whether `outcome.md` exists there. Reuse this exact derived path for any write in Step 7a.
 
@@ -124,7 +135,7 @@ Approving the whole batch in one reply is expected UX - the requirement is that 
 
 For every row the user approved:
 
-1. **Tracker (`job_search_tracker.csv`):** update the matched row's `status` column per the Step 5 table, and append to `notes`: `<date> gmail-sync: <signal> ("<email subject>")`. Never restructure the CSV, reorder rows, or touch unrelated rows - same rule `/outcome` follows. The rewrite touches only `status`, `notes` (and `date` when the drafted-rule below fires): preserve every other field of the row, parsed or not, so the `deadline` column written by `/apply` Step 6b - or any column added in the future - is never blanked by a status sync.
+1. **Tracker (`data/tracker.csv`):** update the matched row's `status` column per the Step 5 table, and append to `notes`: `<date> gmail-sync: <signal> ("<email subject>")`. Never restructure the CSV, reorder rows, or touch unrelated rows - same rule `/outcome` follows. The rewrite touches only `status`, `notes` (and `date` when the drafted-rule below fires): preserve every other field of the row, parsed or not, so the `deadline` column written by `/apply` Step 6b - or any column added in the future - is never blanked by a status sync.
 
    **If the matched row was still `drafted`,** also set `date` to the email's date. The employer replying proves the user submitted by hand without running `/outcome`, so the drafting date now in that column is wrong. The email's date is an upper bound on the real submission date, tight for an ack and loose for a rejection weeks later, which is why Step 6 shows it and lets the user supply the actual date instead.
 2. **`outcome.md`:** tick the relevant stage checkbox (adding the date in parentheses) or update `Status`/`Date resolved` per the table. Append a dated entry to `## Notes`, never overwrite existing Notes history:
@@ -189,4 +200,12 @@ If this run pushed the count of applications with a **final** `outcome.md` statu
 6. **Idempotent by message ID.** Re-running must never re-propose, or duplicate a tracker note or Notes entry for, the same email.
 7. **Never fabricate a match.** If the company can't be confidently identified from the email, it goes in "Unmatched," not a guess.
 8. **Read-only against Gmail itself.** This command reads and classifies; it does not label, archive, or delete anything in the user's mailbox.
-9. **All state is personal data.** `job-search/gmail_sync/state.json`, `job_search_tracker.csv`, and `job-search/documents/applications/**` are gitignored - never suggest committing them.
+9. **All state is personal data.** `job-search/gmail_sync/state.json`, `data/tracker.csv`, and `job-search/documents/applications/**` are gitignored - never suggest committing them.
+
+---
+
+## In this project
+
+- Status changes are applied to `data/tracker.csv` using only the values in
+  `data/tracker-schema.json`. Run `npm run tracker` afterwards so the workbook matches.
+- Sync state stays at `job-search/gmail_sync/state.json`.

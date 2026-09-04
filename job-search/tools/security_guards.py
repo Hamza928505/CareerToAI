@@ -32,28 +32,50 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+
+def _project_root(start):
+    """
+    The directory holding .claude/ and .gitignore. In this repository that is the
+    parent of job-search/; when the guards are run against a fixture tree (the
+    tests copy them into a tmpdir), it is that tree's own root. Walking up until
+    .claude/ appears handles both without a flag.
+    """
+    for candidate in (start, *start.parents):
+        if (candidate / ".claude").is_dir():
+            return candidate
+    return start
+
+
+PROJECT_ROOT = _project_root(ROOT)
+
 errors: list[str] = []
 
 # The exact permission entries the template ships. A PR that adds or changes
 # an entry must add it here too - that is the point: the diff shows both.
 ALLOWED_PERMISSIONS = {
     "Skill(job-application-assistant)",
-    # Narrowed from the upstream template's blanket Bash(bun run:*), which
-    # pre-approved `bun run <any file>`. One entry per shipped portal CLI,
-    # matching what each SKILL.md already declares in its allowed-tools.
-    # A portal added by /add-portal needs its own entry here and in
-    # .claude/settings.json - that review step is the point.
-    "Bash(bun run .agents/skills/jobbank-search/cli/src/cli.ts:*)",
-    "Bash(bun run .agents/skills/jobdanmark-search/cli/src/cli.ts:*)",
-    "Bash(bun run .agents/skills/jobindex-search/cli/src/cli.ts:*)",
-    "Bash(bun run .agents/skills/jobnet-search/cli/src/cli.ts:*)",
-    "Bash(bun run .agents/skills/linkedin-search/cli/src/cli.ts:*)",
-    "Bash(bun run .agents/skills/freehire-search/cli/src/cli.ts:*)",
-    "Bash(python salary_lookup.py:*)",
-    "Bash(python3 salary_lookup.py:*)",
-    "Bash(python tools/verify_pdf.py:*)",
-    "Bash(python3 tools/verify_pdf.py:*)",
+    "Skill(gju-internship)",
+    # The framework lives in job-search/; its commands carry that prefix here.
+    "Bash(bun run job-search/.agents/skills/jobbank-search/cli/src/cli.ts:*)",
+    "Bash(bun run job-search/.agents/skills/jobdanmark-search/cli/src/cli.ts:*)",
+    "Bash(bun run job-search/.agents/skills/jobindex-search/cli/src/cli.ts:*)",
+    "Bash(bun run job-search/.agents/skills/jobnet-search/cli/src/cli.ts:*)",
+    "Bash(bun run job-search/.agents/skills/linkedin-search/cli/src/cli.ts:*)",
+    "Bash(bun run job-search/.agents/skills/freehire-search/cli/src/cli.ts:*)",
+    "Bash(python job-search/salary_lookup.py:*)",
+    "Bash(python3 job-search/salary_lookup.py:*)",
+    "Bash(python job-search/tools/verify_pdf.py:*)",
+    "Bash(python3 job-search/tools/verify_pdf.py:*)",
+    "Bash(python job-search/tools/robots_check.py:*)",
+    "Bash(python3 job-search/tools/robots_check.py:*)",
     "Bash(pdftotext:*)",
+    # Site-side build steps. All read data/ and write generated files only.
+    "Bash(npm run profile)",
+    "Bash(npm run profile:*)",
+    "Bash(npm run tracker)",
+    "Bash(npm run skills:harvest)",
+    "Bash(npm run skills:harvest:*)",
+    "Bash(npm run build)",
 }
 
 # Personal-data ignore rules that must never disappear from .gitignore.
@@ -67,26 +89,29 @@ REQUIRED_IGNORE_RULES = [
     "**/job_scraper/*.md",
     "*_BehavioralReport.pdf",
     "linkedin_Profile.pdf",
-    "cv/main_*.*",
-    "!cv/main_example.tex",
+    "**/cv/main_*.*",
+    "!**/cv/main_example.tex",
     # ATS text extractions (/apply step 5d) carry the CV's full text.
-    "cv/*.txt",
-    "cover_letters/cover_*.*",
+    "**/cv/*.txt",
+    "**/cover_letters/cover_*.*",
     # /apply also recognizes the uppercase Cover_* naming variant.
-    "cover_letters/Cover_*.*",
-    "documents/cv/**",
-    "documents/linkedin/**",
-    "documents/diplomas/**",
-    "documents/references/**",
-    "documents/applications/**",
-    "documents/postings/**",
+    "**/cover_letters/Cover_*.*",
+    "**/documents/cv/**",
+    "**/documents/linkedin/**",
+    "**/documents/diplomas/**",
+    "**/documents/references/**",
+    "**/documents/applications/**",
+    "**/documents/postings/**",
     # Belt-and-braces, not the primary guard: nothing writes here.
     # /interview's prep packs land under documents/applications/**, above.
-    "documents/interview/**",
-    "job_search_tracker.csv",
-    "gmail_sync/",
-    "reports/",
-    "upskill/*.md",
+    "**/documents/interview/**",
+    # The tracker moved to data/tracker.csv when the site and the framework were
+    # merged; it holds employers' contact details and this repo publishes a
+    # public site, so it stays out of git.
+    "data/tracker.csv",
+    "**/gmail_sync/",
+    "**/reports/",
+    "**/upskill/*.md",
     # Depth-independent twin of the rule above. The upskill *skill* resolves
     # `upskill/` relative to its own directory - the same observed behavior
     # the **/job_scraper rules exist for - so reports can land at
@@ -102,7 +127,7 @@ REQUIRED_IGNORE_RULES = [
     # Company research cache (/apply Step 3, /interview Step 2). Referenced
     # from commands, not a skill, so a plain rooted rule is correct here -
     # unlike the **/-prefixed job_scraper/upskill rules above.
-    "company_research/*.json",
+    "**/company_research/*.json",
 ]
 
 # Negation (re-include) rules the template legitimately ships. .gitignore is
@@ -113,10 +138,16 @@ REQUIRED_IGNORE_RULES = [
 # failure - add an intentional one here in the same PR, exactly as with
 # ALLOWED_PERMISSIONS, so the widening is explicit and reviewable.
 ALLOWED_IGNORE_NEGATIONS = {
-    "!cover_letters/OpenFonts/fonts/**",
-    "!cv/main_example.tex",
-    "!cover_letters/cover_example.tex",
-    "!documents/**/.gitkeep",
+    "!**/cv/main_example.tex",
+    "!**/cover_letters/cover_example.tex",
+    "!**/cover_letters/OpenFonts/fonts/**",
+    "!**/documents/**/.gitkeep",
+    # Site side: the committed env template, and the placeholder that keeps the
+    # empty certificate-source directory in git.
+    "!.env.example",
+    "!certs-source/.gitkeep",
+    # Published site content that the blanket *.pdf rule would otherwise catch.
+    "!src/assets/gy-internships/**/*.pdf",
 }
 
 # Hook commands the template legitimately ships, as "<Event>:<command>" strings.
@@ -159,7 +190,7 @@ def _hook_commands(event: str, entries: object):
 
 
 def check_permissions() -> None:
-    path = ROOT / ".claude" / "settings.json"
+    path = PROJECT_ROOT / ".claude" / "settings.json"
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
@@ -211,7 +242,7 @@ def check_permissions() -> None:
 
 
 def check_gitignore() -> None:
-    path = ROOT / ".gitignore"
+    path = PROJECT_ROOT / ".gitignore"
     try:
         lines = [line.strip() for line in path.read_text(encoding="utf-8").splitlines()]
     except OSError as exc:

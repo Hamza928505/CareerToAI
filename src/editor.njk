@@ -18,6 +18,11 @@ pageScript: /assets/editor.js
       as you go, so a refresh or a closed tab loses nothing. Uploaded images are kept in
       this browser too.
     </p>
+    <p class="muted">
+      Fields marked <span class="required">required</span> have no fallback in the
+      published profile, so <strong>Download .json</strong> and <strong>Save to data/</strong>
+      check them before they run. Everything else is optional.
+    </p>
     <p class="muted" data-mode-note>Checking how this page is running…</p>
   </header>
 
@@ -31,27 +36,27 @@ pageScript: /assets/editor.js
     <input type="file" accept="application/json,.json" data-import-input hidden>
   </div>
 
-  <p class="notice" data-message hidden></p>
-
   <form class="editor-form" data-form autocomplete="on">
 
     <fieldset>
       <legend>Basics</legend>
       <div class="grid-2">
-        <label>First name
-          <input type="text" data-path="profile.firstName" autocomplete="given-name">
+        <label>First name <span class="required">required</span>
+          <input type="text" data-path="profile.firstName" autocomplete="given-name" required>
         </label>
-        <label>Last name
-          <input type="text" data-path="profile.lastName" autocomplete="family-name">
+        <label>Last name <span class="required">required</span>
+          <input type="text" data-path="profile.lastName" autocomplete="family-name" required>
         </label>
       </div>
-      <label>Headline
-        <input type="text" data-path="profile.headline" placeholder="Cloud Infrastructure Engineer">
-        <small>One line under your name. Also used in the page title.</small>
+      <label>Headline <span class="required">required</span>
+        <textarea rows="3" data-path="profile.headline"
+          placeholder="Cloud Infrastructure Engineer" required></textarea>
+        <small>Sits under your name. Line breaks are kept, so you can run it over more than one line.</small>
       </label>
       <div class="grid-2">
-        <label>Location
+        <label>Location <span class="optional">optional</span>
           <input type="text" data-path="profile.location" placeholder="Amman, Jordan">
+          <small>Leave blank to publish no location.</small>
         </label>
         <label>Pronouns <span class="optional">optional</span>
           <select data-path="profile.pronouns">
@@ -70,8 +75,8 @@ pageScript: /assets/editor.js
 
     <fieldset>
       <legend>About</legend>
-      <label>About me
-        <textarea rows="7" data-path="profile.bio"
+      <label>About me <span class="required">required</span>
+        <textarea rows="7" data-path="profile.bio" required
           placeholder="Two to four sentences. Write it the way you would want an AI assistant to summarize you to someone else."></textarea>
         <small>The single most-quoted piece of text when an assistant summarizes you. State facts, not marketing.</small>
       </label>
@@ -106,6 +111,15 @@ pageScript: /assets/editor.js
       <p class="muted">
         Skills that no role or certificate already covers. The site unions these with every
         skill listed on a position or certification.
+      </p>
+      <p class="muted">
+        Every skills box takes a whole list at once — paste one skill per line, or
+        comma-separated. <strong>+ Add skills</strong> browses a catalogue by field and
+        searches it, German labels included. <strong>From a job ad</strong> takes a pasted
+        advert and pulls the skills out of it. The type-ahead offers your own skills first,
+        then ones it has seen in adverts, then the catalogue — and anything you type is
+        accepted whether or not it has heard of it. Duplicates are dropped whatever their
+        capitalisation.
       </p>
       <div data-skills="profile.skills"></div>
     </fieldset>

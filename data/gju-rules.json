@@ -1,0 +1,31 @@
+{
+  "$comment": "The GJU German Year internship rules, read out of the documents in src/assets/gy-internships/. Defined once here: scripts/make-internship-tracker.mjs builds the workbook's Fit % and Check formulas from this file, and the workspace eligibility checker on the site scores against the same numbers. Change a rule here and both follow.",
+  "source": "src/assets/gy-internships/",
+  "rules": {
+    "minWeeks": 20,
+    "maxRecognisedMonths": 6,
+    "creditHours": 12,
+    "followUpDays": 14,
+    "minMonthlySalary": 861,
+    "reportPages": "15-20 pages (5,000-7,000 words)",
+    "handInMonths": 2,
+    "salaryNote": "Fiktionsbescheinigung / 3rd-semester enrolment both demand this much monthly income if the blocked account is not refilled."
+  },
+  "countries": [
+    ["Germany", 15, "Preferred - has priority"],
+    ["Austria", 12, "German-speaking - approved easily"],
+    ["Switzerland", 12, "German-speaking - approved easily"],
+    ["Luxembourg", 12, "German-speaking - approved easily"],
+    ["Other European (German company)", 5, "Needs your Dean's explicit approval"],
+    ["Other European (non-German company)", 5, "Needs the President's explicit approval"],
+    ["Outside Europe (German company)", 5, "Deans' Council recommendation AND the President"],
+    ["Other", 0, "Generally not approved"]
+  ],
+  "score": [
+    ["Skills matched", 40, "The share of the skills the advert names that you actually have — 40 points for all of them, proportionally less otherwise. Matching is whole-word, so the skill 'R' matches \"R\" but not every advert containing the letter r. Paste the requirements as a comma-separated list and the share is exact; paste prose and it assumes at least three."],
+    ["Duration", 20, "Full marks at {minWeeks} weeks or more, half at 15-19, nothing below 15. The {minWeeks}-week minimum is a hard GJU rule."],
+    ["Country", 15, "Germany 15, Austria/Switzerland/Luxembourg 12, anywhere else 5 - because anywhere else needs a Dean or the President to approve it."],
+    ["Paid", 15, "Paid and at least {minMonthlySalary} EUR/month 15, paid but less 10, unknown 5, unpaid 0. {minMonthlySalary} EUR/month is what a visa extension asks you to prove."],
+    ["Language", 10, "English or bilingual 10. German-only is 10 if your German level is B2 or better, otherwise 5."]
+  ]
+}

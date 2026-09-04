@@ -1,5 +1,16 @@
 # /add-template - Register a Custom CV or Cover Letter Template
 
+<!-- PROJECT SPINE — the three files this repo agrees on:
+     · profile  .claude/skills/job-application-assistant/01-candidate-profile.md
+                GENERATED from data/*.json by `npm run profile`. Never hand-edit it;
+                edit the JSON (or use /editor/) and re-run. A fact that is not in
+                data/ does not go in a CV, a letter or an interview answer.
+     · tracker  data/tracker.csv — one row per application. internship-tracker.xlsx
+                is rendered from it by `npm run tracker`, which is safe to re-run.
+     · statuses data/tracker-schema.json → statuses. The only status vocabulary.
+     Code the framework ships — tools/, tests/, templates/, .agents/ portal CLIs,
+     documents/ — lives under job-search/. See CLAUDE.md. -->
+
 You are helping the user register their own CV or cover letter template with the AI Job Search framework — LaTeX, Typst, or any other toolchain that compiles to PDF from the command line. The framework ships with moderncv (banking style) for CVs and a custom `cover.cls` for cover letters. This command lets the user swap in their own template: store the template files, capture usage instructions (source extension, compile command, fonts, style rules, page limits), verify the template compiles, and wire it into the `/apply` workflow so every future application uses it.
 
 `$ARGUMENTS` may contain a subcommand, a file path, or nothing.
@@ -199,3 +210,13 @@ Present a summary:
 - Templates are stored profile-agnostic (`[PLACEHOLDER]` tokens) so they can be shared or committed without leaking personal data.
 - The compile check in Step 4 is non-negotiable — a template that has never compiled will fail mid-`/apply`, which is the worst place to discover it.
 - Activation is a small managed block, not a rewrite of the guidance files: `/setup` and manual edits to `05`/`06` survive template switches, and `--use default` is a clean revert.
+
+---
+
+## In this project
+
+- Templates live in `job-search/templates/`, `job-search/cv/` and
+  `job-search/cover_letters/`.
+- A template renders the generated profile. If a field you need is missing from
+  `01-candidate-profile.md`, add it to `data/profile.json` or `data/profile-extras.json`
+  and re-run `npm run profile` — never type the fact into the template.

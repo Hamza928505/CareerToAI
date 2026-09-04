@@ -9,14 +9,16 @@ you were rejected, because it makes the next application better.
 
 ## Step 1 — Update the row
 
-Find the row in sheet `Search` of `internship-tracker.xlsx` by company name. If
-there is no row, say so and stop — do not create one from a bare company name.
+Find the row in `data/tracker.csv` by company name. If there is no row, say so and
+stop — do not create one from a bare company name. Status values come from
+`data/tracker-schema.json`; that list is the only vocabulary, shared with
+`/rank`, `/html-report`, `/gmail-sync` and `/notion-sync`.
 
 Set what the outcome implies:
 
 | Outcome | Set |
 |---|---|
-| Sent | `Sent` = today. The sheet computes `Follow up due` itself |
+| Sent | `Sent` = today, Status = `Applied`. The workbook computes `Follow up due` |
 | Followed up | `Followed up` = today |
 | Reply received | `Answer` = Yes or No |
 | Interview scheduled | `Interview` = the date, Status = `Interview` |
@@ -25,12 +27,13 @@ Set what the outcome implies:
 | Rejected | Status = `Rejected`, `Answer` = No |
 | Withdrawn | Status = `Withdrawn`, with the reason in Notes |
 
-Never run `npm run tracker` — it rewrites the workbook and discards rows.
+After editing, run `npm run tracker` to re-render `internship-tracker.xlsx` from
+the CSV. That is safe now: the rows live in `data/tracker.csv`.
 
 ## Step 2 — On a rejection, ask what it teaches
 
 Not therapy, and not a post-mortem on one data point. Look at the row against the
-rest of the sheet and say only what the data supports:
+rest of the tracker and say only what the data supports:
 
 - Was the Fit % low? Then the row was honest and the outcome expected.
 - Was it high? Then the score is not the reason — check the Check column, the

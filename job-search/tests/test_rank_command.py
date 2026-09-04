@@ -18,10 +18,14 @@ except ImportError:
     _HAVE_YAML = False
 
 REPO = Path(__file__).resolve().parent.parent
-COMMAND = REPO / ".claude" / "commands" / "rank.md"
-SCRAPER_SKILL = REPO / ".claude" / "skills" / "job-scraper" / "SKILL.md"
+# .claude/ and .gitignore live at the repository root; this framework is a
+# subdirectory of it. See ../CLAUDE.md for the shared spine.
+PROJECT_ROOT = REPO.parent
+
+COMMAND = PROJECT_ROOT / ".claude" / "commands" / "rank.md"
+SCRAPER_SKILL = PROJECT_ROOT / ".claude" / "skills" / "job-scraper" / "SKILL.md"
 EVALUATION = (
-    REPO / ".claude" / "skills" / "job-application-assistant" / "04-job-evaluation.md"
+    PROJECT_ROOT / ".claude" / "skills" / "job-application-assistant" / "04-job-evaluation.md"
 )
 
 

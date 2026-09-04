@@ -1,19 +1,21 @@
 # /rank — what to do next, in order
 
-Reads `internship-tracker.xlsx` and tells you which rows deserve attention today.
+Reads `data/tracker.csv` and tells you which rows deserve attention today.
 Adapted from `/rank` in ai-job-search (MIT).
 
-The sheet already sorts by Fit %. This does the thing a spreadsheet cannot: weigh
+The workbook already sorts by Fit %. This does the thing a spreadsheet cannot: weigh
 score against **what is about to go stale**.
 
 ## Read
 
-Sheet `Search` in `internship-tracker.xlsx`. Every row with a Company. For each:
+`data/tracker.csv` — the one tracker, shared with the job-search framework. Every
+row with a Company. For each:
 Fit %, Status, Sent, Follow up due, Answer, Interview, Weeks, Country, Paid?, and
 the Check column.
 
-Never run `npm run tracker` here — it rewrites the workbook from scratch and would
-discard every row.
+Fit % and Check are computed by the workbook, so read them from
+`internship-tracker.xlsx` (run `npm run tracker` first if the CSV is newer). Status
+values come from `data/tracker-schema.json`, the only status vocabulary in the repo.
 
 ## Order the output by urgency, not by score
 
@@ -56,5 +58,5 @@ low, that is the finding — not the ranking.
 
 ## What this does not do
 
-It does not change the sheet. It reads and reports. Any status change is the
+It does not change the tracker. It reads and reports. Any status change is the
 student's, or `/outcome`'s.

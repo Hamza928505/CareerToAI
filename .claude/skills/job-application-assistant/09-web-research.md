@@ -2,6 +2,17 @@
 framework_version: 1.1.0
 ---
 
+<!-- PROJECT SPINE — the three files this repo agrees on:
+     · profile  .claude/skills/job-application-assistant/01-candidate-profile.md
+                GENERATED from data/*.json by `npm run profile`. Never hand-edit it;
+                edit the JSON (or use /editor/) and re-run. A fact that is not in
+                data/ does not go in a CV, a letter or an interview answer.
+     · tracker  data/tracker.csv — one row per application. internship-tracker.xlsx
+                is rendered from it by `npm run tracker`, which is safe to re-run.
+     · statuses data/tracker-schema.json → statuses. The only status vocabulary.
+     Code the framework ships — tools/, tests/, templates/, .agents/ portal CLIs,
+     documents/ — lives under job-search/. See CLAUDE.md. -->
+
 # Web Research and Fetching
 
 How to retrieve job postings and company pages reliably, and what to do when a fetch fails. Every command in this workspace that reads a posting or researches a company (`/apply`, `/rank`, `/scrape`, `/interview`, `/expand`) follows this file.
@@ -112,3 +123,10 @@ When a posting arrives from an aggregator, search the employer's careers site fo
 - Prefer specific verified facts (legal entity name, office cities, anniversary year, client segments, cross-jurisdiction arrangements) over generic praise. They are what make a letter read as researched.
 
 Record what was verified and from where when presenting the final application, so the user can defend any claim in an interview.
+
+---
+
+## In this project
+
+- `tools/robots_check.py` is `job-search/tools/robots_check.py`; its tests are
+  `job-search/tests/test_robots_check.py`.

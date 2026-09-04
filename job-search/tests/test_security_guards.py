@@ -7,6 +7,10 @@ import unittest
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
+# .claude/ and .gitignore live at the repository root; this framework is a
+# subdirectory of it. See ../CLAUDE.md for the shared spine.
+PROJECT_ROOT = REPO_ROOT.parent
+
 GUARD_SCRIPT = REPO_ROOT / "tools" / "security_guards.py"
 
 sys.path.insert(0, str(REPO_ROOT / "tools"))
@@ -274,7 +278,7 @@ class GitignorePatternBehaviorTests(unittest.TestCase):
         subprocess.run(
             ["git", "init", "-q", str(self.root)], check=True, capture_output=True
         )
-        shutil.copy(REPO_ROOT / ".gitignore", self.root / ".gitignore")
+        shutil.copy(PROJECT_ROOT / ".gitignore", self.root / ".gitignore")
 
     def test_upskill_reports_ignored_at_depth_but_skill_md_stays_tracked(self):
         # The upskill skill resolves `upskill/` relative to its own directory
@@ -311,9 +315,9 @@ class GitignorePatternBehaviorTests(unittest.TestCase):
         # Two fragments, not one literal: #329 split the path across Step 1
         # (which derives the archive folder) and Step 3 (which names the file),
         # so either half can move independently and each must be pinned.
-        folder = "documents/applications/<company>_<role>/"
+        folder = "job-search/documents/applications/<company>_<role>/"
         filename = "interview_prep_<stage>.md"
-        spec = (REPO_ROOT / ".claude" / "commands" / "interview.md").read_text(encoding="utf-8")
+        spec = (PROJECT_ROOT / ".claude" / "commands" / "interview.md").read_text(encoding="utf-8")
         for fragment in (folder, filename):
             # assertTrue, not assertIn: the haystack is the whole command spec,
             # and dumping it buries the one sentence explaining the failure.
@@ -331,7 +335,7 @@ class GitignorePatternBehaviorTests(unittest.TestCase):
             text=True,
         )
         self.assertEqual(result.returncode, 0, f"{path}: not ignored by the shipped .gitignore")
-        self.assertIn("documents/applications/**", result.stdout)
+        self.assertIn("job-search/documents/applications/**", result.stdout)
 
 
 class GitignoreNegationTests(GuardRepoFixture):

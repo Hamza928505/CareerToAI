@@ -18,7 +18,11 @@ except ImportError:
     _HAVE_YAML = False
 
 REPO = Path(__file__).resolve().parent.parent
-SKILL = REPO / ".claude" / "skills" / "upskill" / "SKILL.md"
+# .claude/ and .gitignore live at the repository root; this framework is a
+# subdirectory of it. See ../CLAUDE.md for the shared spine.
+PROJECT_ROOT = REPO.parent
+
+SKILL = PROJECT_ROOT / ".claude" / "skills" / "upskill" / "SKILL.md"
 
 
 def _sections(text: str) -> dict[str, str]:

@@ -15,9 +15,13 @@ import unittest
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
-EVALUATION = REPO / ".claude" / "skills" / "job-application-assistant" / "04-job-evaluation.md"
-APPLY = REPO / ".claude" / "commands" / "apply.md"
-INTERVIEW = REPO / ".claude" / "commands" / "interview.md"
+# .claude/ and .gitignore live at the repository root; this framework is a
+# subdirectory of it. See ../CLAUDE.md for the shared spine.
+PROJECT_ROOT = REPO.parent
+
+EVALUATION = PROJECT_ROOT / ".claude" / "skills" / "job-application-assistant" / "04-job-evaluation.md"
+APPLY = PROJECT_ROOT / ".claude" / "commands" / "apply.md"
+INTERVIEW = PROJECT_ROOT / ".claude" / "commands" / "interview.md"
 
 
 def _sections(text: str, marker: str) -> dict[str, str]:

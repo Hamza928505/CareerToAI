@@ -25,6 +25,22 @@ except ImportError:
     sys.exit("lint_skills.py requires PyYAML: pip install pyyaml")
 
 ROOT = Path(__file__).resolve().parent.parent
+
+def _project_root(start):
+    """
+    The directory holding .claude/ and .gitignore. In this repository that is the
+    parent of job-search/; when the guards are run against a fixture tree (the
+    tests copy them into a tmpdir), it is that tree's own root. Walking up until
+    .claude/ appears handles both without a flag.
+    """
+    for candidate in (start, *start.parents):
+        if (candidate / ".claude").is_dir():
+            return candidate
+    return start
+
+
+PROJECT_ROOT = _project_root(ROOT)
+
 errors: list[str] = []
 
 
@@ -78,7 +94,7 @@ def check_command(path: Path) -> None:
 
 
 def check_settings() -> None:
-    path = ROOT / ".claude" / "settings.json"
+    path = PROJECT_ROOT / ".claude" / "settings.json"
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
@@ -96,8 +112,8 @@ def check_settings() -> None:
 
 
 def main() -> int:
-    skills = sorted(ROOT.glob(".claude/skills/*/SKILL.md")) + sorted(ROOT.glob(".agents/skills/*/SKILL.md"))
-    commands = sorted((ROOT / ".claude" / "commands").glob("*.md"))
+    skills = sorted(PROJECT_ROOT.glob(".claude/skills/*/SKILL.md")) + sorted(ROOT.glob(".agents/skills/*/SKILL.md"))
+    commands = sorted((PROJECT_ROOT / ".claude" / "commands").glob("*.md"))
     if not skills:
         errors.append("no SKILL.md files found - glob roots are wrong or the tree moved")
     if not commands:

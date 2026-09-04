@@ -7,8 +7,11 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
+# .github/ lives at the repository root; job-search/ is a subdirectory.
+PROJECT_ROOT = REPO_ROOT.parent
+
 SCRIPT = REPO_ROOT / "tools" / "upstream_triage.py"
-WORKFLOW = REPO_ROOT / ".github" / "workflows" / "upstream-watch.yml"
+WORKFLOW = PROJECT_ROOT / ".github" / "workflows" / "upstream-watch.yml"
 UPSTREAM_SLUG = "MadsLorentzen/ai-job-search"
 
 

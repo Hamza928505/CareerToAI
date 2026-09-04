@@ -22,9 +22,13 @@ from pathlib import Path
 UPSTREAM = "MadsLorentzen/ai-job-search"
 
 REPO = Path(__file__).resolve().parent.parent
-CI = REPO / ".github" / "workflows" / "ci.yml"
+# .claude/ and .gitignore live at the repository root; this framework is a
+# subdirectory of it. See ../CLAUDE.md for the shared spine.
+PROJECT_ROOT = REPO.parent
+
+CI = PROJECT_ROOT / ".github" / "workflows" / "ci.yml"
 EXAMPLE_CV = REPO / "cv" / "main_example.tex"
-PROFILE = REPO / ".claude" / "skills" / "job-application-assistant" / "01-candidate-profile.md"
+PROFILE = PROJECT_ROOT / ".claude" / "skills" / "job-application-assistant" / "01-candidate-profile.md"
 
 # The literal sentinel strings (unescaped) that ci.yml's grep patterns match.
 CV_SENTINELS = ["\\name{[First]}{[Last]}", "\\email{[your.email@example.com]}"]

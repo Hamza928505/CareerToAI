@@ -1,0 +1,17 @@
+{
+  "$comment": "The parts of the candidate profile the site's JSON does not model, but the job-search framework needs. Kept here so data/ stays the single source of truth for both projects — scripts/build-profile-md.mjs folds this into .claude/skills/job-application-assistant/01-candidate-profile.md. Leave a field empty and the generated profile says so plainly rather than inventing one.",
+  "phone": "",
+  "employmentStatus": "",
+  "constraints": "",
+  "languages": [
+    {
+      "language": "",
+      "level": "",
+      "notes": "Every language you can work in professionally, with your honest level. The Language Gate in 04-job-evaluation.md treats an undeclared language as a hard no, so omit what you do not actually work in."
+    }
+  ],
+  "projects": [],
+  "publications": [],
+  "awards": [],
+  "references": []
+}

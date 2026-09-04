@@ -33,8 +33,12 @@ import unittest
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
-RESET = REPO / ".claude" / "commands" / "reset.md"
-SETUP = REPO / ".claude" / "commands" / "setup.md"
+# .claude/ and .gitignore live at the repository root; this framework is a
+# subdirectory of it. See ../CLAUDE.md for the shared spine.
+PROJECT_ROOT = REPO.parent
+
+RESET = PROJECT_ROOT / ".claude" / "commands" / "reset.md"
+SETUP = PROJECT_ROOT / ".claude" / "commands" / "setup.md"
 
 
 def tracked_document_subfolders():
@@ -106,7 +110,7 @@ def setup_step3_skill_files():
             if target.startswith(".claude/skills/"):
                 files.add(Path(target).name)
             continue
-        matches = list((REPO / ".claude" / "skills").glob(f"*/{target}"))
+        matches = list((PROJECT_ROOT / ".claude" / "skills").glob(f"*/{target}"))
         if matches:
             files.add(Path(target).name)
     return files

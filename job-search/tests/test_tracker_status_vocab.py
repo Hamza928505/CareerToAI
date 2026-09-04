@@ -34,7 +34,11 @@ import unittest
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
-COMMANDS = REPO / ".claude" / "commands"
+# .claude/ and .gitignore live at the repository root; this framework is a
+# subdirectory of it. See ../CLAUDE.md for the shared spine.
+PROJECT_ROOT = REPO.parent
+
+COMMANDS = PROJECT_ROOT / ".claude" / "commands"
 
 OUTCOME = COMMANDS / "outcome.md"
 GMAIL_SYNC = COMMANDS / "gmail-sync.md"
