@@ -1,10 +1,19 @@
 # Security Policy
 
+## Supported versions
+
+This is a personal project with no released versions. **`main` is what is
+supported** — it is what GitHub Pages deploys and what the workflow runs from.
+Fixes land there; there are no backports, because there is nothing to backport
+to.
+
 ## Reporting a vulnerability
 
-Please report security findings privately via **[GitHub private vulnerability reporting](https://github.com/MadsLorentzen/ai-job-search/security/advisories/new)** rather than a public issue. You will get a response within a few days, credit in the fix unless you prefer otherwise, and public disclosure coordinated with the patch.
+Please report security findings privately via **[GitHub private vulnerability reporting](https://github.com/Hamza928505/CareerToAI/security/advisories/new)** rather than a public issue. You will get a response within a few days, credit in the fix unless you prefer otherwise, and public disclosure coordinated with the patch.
 
 If the private form is unavailable, open a public issue that describes the *class* of problem without a working recipe, and note that you have details to share privately.
+
+If the finding is in the upstream [ai-job-search](https://github.com/MadsLorentzen/ai-job-search) framework rather than in this repository's own code, report it there as well — the `job-search/` tree here is vendored from it, so upstream's users are affected too.
 
 ## Threat model, honestly stated
 
@@ -15,6 +24,16 @@ This is an agentic workflow: an LLM with file access reads untrusted web content
 - **Personal data boundaries**: your populated profile, tracker, salary data, and application archive are gitignored; documents never leave the machine by design (`/notion-sync` syncs filenames only; nothing uploads document content anywhere).
 
 Instruction-level defenses raise the bar; they are not a sandbox. If you run this workflow against job boards you do not trust at all, review what the agent fetched and wrote before sending anything out.
+
+## What this repository publishes
+
+The site half is deliberately public: `data/profile.json`, `data/experience.json`,
+`data/projects.json` and `data/certificates.json` are served as raw JSON and
+restated in `/llms.txt`, so **anything written into them is published**. The
+tracker is the opposite — `data/tracker.csv` holds employers' contact names,
+e-mails and phone numbers and is gitignored, with `data/tracker.example.csv`
+carrying only the header. Check which of the two a fact belongs in before
+writing it.
 
 ## Scope notes
 
