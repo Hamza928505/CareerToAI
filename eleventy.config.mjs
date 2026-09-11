@@ -22,6 +22,7 @@ export default function (eleventyConfig) {
   eleventyConfig.addPassthroughCopy({ "data/certificates.json": "data/certificates.json" });
   eleventyConfig.addPassthroughCopy({ "data/profile.json": "data/profile.json" });
   eleventyConfig.addPassthroughCopy({ "data/experience.json": "data/experience.json" });
+  eleventyConfig.addPassthroughCopy({ "data/projects.json": "data/projects.json" });
   // Optional: written by `npm run skills:import`. The editor fetches it lazily
   // and works without it, so its absence must not fail the build.
   if (fs.existsSync("data/skill-taxonomy.json")) {
@@ -45,7 +46,9 @@ export default function (eleventyConfig) {
 
   // Structured data is built in lib/jsonld.mjs and injected into <head> by the
   // base layout. The profile is a single page, so one graph covers the whole site.
-  eleventyConfig.addFilter("personJsonLd", (profile, certificates, experience) => personGraph(profile, certificates, experience, abs));
+  eleventyConfig.addFilter("personJsonLd", (profile, certificates, experience, projects) =>
+    personGraph(profile, certificates, experience, projects, abs)
+  );
 
   /** "2024-03-15" -> "15 March 2024"; also handles "2024-03" and "2024". */
   eleventyConfig.addFilter("humanDate", (value) => formatDate(value));

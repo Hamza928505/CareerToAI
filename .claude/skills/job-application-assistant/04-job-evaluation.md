@@ -284,7 +284,7 @@ Before writing the application, consider whether the candidate should call the c
 ## In this project
 
 - The Language Gate reads the `Languages` table in `01-candidate-profile.md`, fed by
-  `data/profile-extras.json`. If that table is empty, no posting may be filtered on
+  the `languages` array in `data/profile.json` (edited in `/editor/` → Basics). If that table is empty, no posting may be filtered on
   language — flag it for judgment instead.
 - A GJU German Year internship is gated by the `gju-internship` skill first; a posting
   that fails one of its hard rules is out regardless of the score here.

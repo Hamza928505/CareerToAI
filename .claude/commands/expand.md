@@ -231,6 +231,6 @@ After writing, present:
 ## In this project
 
 - Confirmed additions are written to `data/profile.json`, `data/experience.json`,
-  `data/certificates.json` or `data/profile-extras.json` — **not** to
+  `data/certificates.json`, `data/projects.json` or `data/profile-extras.json` — **not** to
   `01-candidate-profile.md`, which is generated. After writing, run `npm run profile`;
   the site publishes the same facts on its next build.

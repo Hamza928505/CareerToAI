@@ -54,6 +54,7 @@ zero-cost, no-backend constraint hold:
                                          ▼      https://you.github.io/CareerToAI
                         data/profile.json
                         data/experience.json
+                        data/projects.json
                         data/certificates.json
                         src/certs/*.jpg  src/media/*.jpg
                                          │
@@ -95,9 +96,14 @@ Then:
 ## The editor
 
 `/editor/` is a LinkedIn-style form for everything the site publishes: your name,
-headline, location and email; an About paragraph; Education; Experience; Licenses &
-certifications; links; and any extra skills. Repeatable sections have **+ Add** buttons,
-and skills are entered as chips — type one and press <kbd>Enter</kbd>.
+headline, location, email and working languages; an About paragraph; Education;
+Experience; Projects; Licenses & certifications; links; and any extra skills.
+Repeatable sections have **+ Add** buttons, and skills are entered as chips — type one
+and press <kbd>Enter</kbd>.
+
+Every section heading collapses, and carries a count of what is inside it so a closed
+section still tells you something. Rows reorder by dragging their handle, or by focusing
+the handle and pressing <kbd>↑</kbd>/<kbd>↓</kbd> — and that order is what gets published.
 
 **Nothing is ever lost to a refresh.** Every keystroke is saved to this browser's
 `localStorage` after a short pause, and uploaded images go into its `IndexedDB` (which,
@@ -113,7 +119,8 @@ The recommended way to work. A small Node server (`scripts/editor-server.mjs`, b
 `127.0.0.1` only) builds the site, serves it on port 8081, and adds two buttons:
 
 - **Save to data/** writes `data/profile.json`, `data/experience.json`,
-  `data/certificates.json` and every uploaded image into `src/certs/` and `src/media/`,
+  `data/projects.json`, `data/certificates.json` and every uploaded image into
+  `src/certs/` and `src/media/`,
   then rebuilds. No download, no copying files around — just commit and push afterwards.
 - **Extract with AI** appears on a certificate once you attach an image. It sends that
   image to Claude and fills in *only the fields you have left blank*, so it never
@@ -235,7 +242,8 @@ that entry. To remove a certificate, delete its object from the array and its im
 `src/certs/`.
 
 > `npm run import-data` and the editor's **Save to data/** button both **replace**
-> `data/profile.json`, `data/experience.json` and `data/certificates.json` wholesale — an
+> `data/profile.json`, `data/experience.json`, `data/projects.json` and
+> `data/certificates.json` wholesale — an
 > export is the complete picture, not a patch. If you added a certificate with
 > `add-cert` in the terminal, load the current state into the editor before saving over
 > it, or the terminal-added entry will be dropped.
@@ -283,8 +291,9 @@ ANTHROPIC_API_KEY=sk-ant-...
 | `pronouns`  | Optional; shown on the profile when set. |
 | `jobTitle`, `worksFor` | Optional. Left blank, they fall back to whichever Experience entry has no end date, so your current role only has to be typed once. |
 | `education` | Array of `{ school, industry, degree, fieldOfStudy, startDate, endDate, description }`. Emitted as schema.org `alumniOf`. An entry whose `school` is still a `TODO:` value is dropped. |
+| `languages` | Array of `{ language, level, notes }` — every language you can work in professionally. Emitted as schema.org `knowsLanguage` and listed in `/llms.txt`, and it feeds the **Language Gate** that `/apply` and `/rank` run: an undeclared language is treated as a hard no, not a gap to talk around, so a language-conditional posting cannot be scored until this is filled in. An entry whose `language` is still a `TODO:` value is dropped. |
 | `links`     | `{ "label", "url" }` pairs, rendered with `rel="me"` and emitted as `sameAs`. Any URL containing `TODO` is dropped from the build with a warning. |
-| `skills`    | Only skills **not** already implied by a role or certificate. The site unions this with the skills on every Experience entry and every certificate, deduplicates case-insensitively, and sorts by how many entries evidence each one. |
+| `skills`    | Only skills **not** already implied by a role, project or certificate. The site unions this with the skills on every Experience entry, every project and every certificate, deduplicates case-insensitively, and sorts by how many entries evidence each one. |
 
 `data/experience.json` is a separate array — one object per position:
 
@@ -297,6 +306,31 @@ ANTHROPIC_API_KEY=sk-ant-...
 | `description` | Free prose about the role. |
 | `skills` | Feeds the role's own list and the aggregated profile list. |
 | `attachmentImage` | Optional image under `/media/`, published the same way certificate images are. |
+
+`data/projects.json` is another array — one object per project. A project is work you can
+point at that no employer owns: a side project, a university capstone, an open-source
+contribution. It is deliberately not an Experience entry, because there is no employer and
+the thing itself, not the role, is what a reader wants the link to.
+
+| Field | Notes |
+|---|---|
+| `id` | URL-safe slug, derived from name + organization. |
+| `name` | What the project is called. An entry with no name is not published. |
+| `role` | What you did on it, if it was not all your own work. |
+| `organization` | The course, club or organization it was built under, if any. |
+| `url` | Where the thing itself lives. |
+| `sourceUrl` | The repository. Its presence is what makes the JSON-LD node a `SoftwareSourceCode` rather than a plain `CreativeWork`. |
+| `startDate`, `endDate` | Same formats as Experience. **An empty `endDate` means it is ongoing.** |
+| `description` | Free prose. `npm run profile` splits it into bullets for the candidate profile. |
+| `skills` | Feeds the project's own list and the aggregated profile list. |
+| `attachmentImage` | Optional image under `/media/`, published the same way certificate images are. |
+
+**Array order is publication order.** Education, experience, projects, certificates and
+links are all published in the order they appear in the JSON — nothing is re-sorted on
+load. Put what you most want read at the top. In `/editor/` you arrange that by dragging a
+row's handle, or by focusing the handle and pressing <kbd>↑</kbd>/<kbd>↓</kbd>;
+**Sort by date** restores newest-first for any dated list. If you want date order in your
+own code, `lib/content.mjs` exports a `byDateDesc` comparator for it.
 
 Any string field left starting with `TODO:` is treated as unset: it is omitted from the
 page, the JSON-LD and the plain-text summary rather than published as a placeholder.
@@ -453,13 +487,14 @@ required; everything else degrades gracefully when empty.
 | `sourceFileType` | `"image"` or `"pdf"` — what the model read. |
 | `extractedText` | Kept verbatim and shown on the profile in a collapsed `<details>` block, so the summary can be checked against the source. |
 
-`data/experience.json` and the `education` array inside `data/profile.json` are documented
-in [Customizing your profile by hand](#customizing-your-profile-by-hand).
+`data/experience.json`, `data/projects.json` and the `education` array inside
+`data/profile.json` are documented in
+[Customizing your profile by hand](#customizing-your-profile-by-hand).
 
 The editor's export file (`careertoai-data.json`) is a different, self-contained shape —
-`{ version, profile, experience, certificates, images }`, where `images` holds every
-uploaded file as a data URL. `npm run import-data` is what turns it back into the three
-files above plus the images in `src/certs/` and `src/media/`.
+`{ version, profile, experience, projects, certificates, images }`, where `images` holds
+every uploaded file as a data URL. `npm run import-data` is what turns it back into the
+four files above plus the images in `src/certs/` and `src/media/`.
 
 ---
 
@@ -469,6 +504,7 @@ files above plus the images in `src/certs/` and `src/media/`.
 data/
   profile.json          You: name, about, education, links, extra skills.
   experience.json       Work history.
+  projects.json         Projects: side projects, capstones, open-source work.
   certificates.json     Licenses & certifications.
   site.json             Fallback site URL for local builds.
 certs-source/           Full-resolution originals. Git-ignored, never published.
@@ -540,7 +576,7 @@ one profile, one tracker, one status vocabulary — described in [CLAUDE.md](CLA
 
 | Spine file | Owns | Generated from it |
 |---|---|---|
-| `data/profile.json`, `experience.json`, `certificates.json`, `profile-extras.json` | Who you are | the site's pages, and the framework's `01-candidate-profile.md` (`npm run profile`) |
+| `data/profile.json`, `experience.json`, `projects.json`, `certificates.json`, `profile-extras.json` | Who you are | the site's pages, and the framework's `01-candidate-profile.md` (`npm run profile`) |
 | `data/tracker.csv` | Every application, one row each | `internship-tracker.xlsx` (`npm run tracker`) |
 | `data/tracker-schema.json` | Tracker columns, and the only status vocabulary | the workbook's columns and validation |
 

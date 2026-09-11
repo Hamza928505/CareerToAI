@@ -447,6 +447,8 @@ If Path A left any STAR stubs in `07-interview-prep.md`, also note:
 ## In this project
 
 - Onboarding writes `data/profile.json`, `data/experience.json`,
-  `data/certificates.json` and `data/profile-extras.json`, then runs `npm run profile`.
+  `data/projects.json`, `data/certificates.json` and `data/profile-extras.json`, then
+  runs `npm run profile`. Projects go in `data/projects.json` and working languages in
+  `data/profile.json`, not in the extras file.
   Writing `01-candidate-profile.md` directly is always the wrong move — it is generated.
 - `npm run editor` is the other way in, and edits the same JSON.

@@ -13,8 +13,8 @@ duplicate none of them.
 
 1. **The candidate profile.**
    `.claude/skills/job-application-assistant/01-candidate-profile.md`, **generated**
-   from `data/profile.json`, `data/experience.json`, `data/certificates.json` and
-   `data/profile-extras.json` by `npm run profile`. Never edit the markdown; edit
+   from `data/profile.json`, `data/experience.json`, `data/projects.json`,
+   `data/certificates.json` and `data/profile-extras.json` by `npm run profile`. Never edit the markdown; edit
    the JSON, or use the editor (`npm run editor`). A fact that is not in `data/`
    does not belong in a CV, a letter, or an interview answer.
 

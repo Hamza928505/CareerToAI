@@ -151,7 +151,10 @@ async function handleSave(req, res) {
   const payload = await readBody(req);
   const result = await applyPayload(payload);
   await build();
-  console.log(`  saved — ${result.counts.experience} role(s), ${result.counts.certificates} certificate(s), ${result.images} image(s)`);
+  console.log(
+    `  saved — ${result.counts.experience} role(s), ${result.counts.projects} project(s), ` +
+    `${result.counts.certificates} certificate(s), ${result.images} image(s)`
+  );
   sendJson(res, 200, result);
 }
 

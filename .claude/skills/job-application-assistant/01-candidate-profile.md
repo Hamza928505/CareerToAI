@@ -4,7 +4,7 @@ generated: true
 ---
 
 <!-- GENERATED FILE - do not edit by hand. -->
-<!-- Source: data/profile.json, data/experience.json, data/certificates.json, data/profile-extras.json -->
+<!-- Source: data/profile.json, data/experience.json, data/projects.json, data/certificates.json, data/profile-extras.json -->
 <!-- Rebuild: npm run profile   (check in CI: npm run profile:check) -->
 
 # Candidate Profile
@@ -22,11 +22,11 @@ generated: true
 ### Languages
 
 <!-- The Language Gate in 04-job-evaluation.md treats an undeclared language as a hard
-no, not a gap to smooth over. Edit data/profile-extras.json, not this file. -->
+no, not a gap to smooth over. Edit data/profile.json (or /editor/ → Basics), not this file. -->
 
-_No working languages declared. Until you add them to `data/profile-extras.json`,
-the Language Gate has nothing to check and every language-conditional posting must
-be flagged for your own judgment rather than filtered._
+_No working languages declared. Until you add them in `/editor/` → Basics (they are
+stored in `data/profile.json`), the Language Gate has nothing to check and every
+language-conditional posting must be flagged for your own judgment rather than filtered._
 
 ## Education
 
@@ -43,15 +43,21 @@ Remote · Full-time
 
 ## Independent Projects
 
-_No projects listed. Add them to data/profile-extras.json._
+### CareerToAI (November 2025 – Present)
+Author
+[Source](https://github.com/example/careertoai)
+
+- Sample entry so the Projects section renders on a fresh clone.
+- A static profile built to be read by machines: Eleventy renders the same data/*.json into semantic HTML, schema.org JSON-LD and a plain-text summary at /llms.txt, so an assistant needs one fetch rather than a scrape.
+- Skills: Eleventy, Node.js, schema.org, Static Site Generation
 
 ## Technical Skills
 
-<!-- Aggregated from data/profile.json skills plus every skill tagged on a role or
-certificate. The split below is what /upskill and the Fit score read: evidenced
-skills carry a certificate or a role behind them, declared ones do not (yet). -->
+<!-- Aggregated from data/profile.json skills plus every skill tagged on a role,
+project or certificate. The split below is what /upskill and the Fit score read:
+evidenced skills carry something behind them, declared ones do not (yet). -->
 
-### Evidenced by a role or certificate
+### Evidenced by a role, project or certificate
 - AWS
 - CI/CD
 - Cloud Architecture
@@ -60,14 +66,18 @@ skills carry a certificate or a role behind them, declared ones do not (yet). --
 - Data Cleaning
 - Data Visualization
 - EC2
+- Eleventy
 - High Availability
 - IAM
 - Incident Response
 - Kubernetes
+- Node.js
 - R
 - S3
+- schema.org
 - Spreadsheets
 - SQL
+- Static Site Generation
 - Tableau
 - Terraform
 - VPC
@@ -79,7 +89,7 @@ skills carry a certificate or a role behind them, declared ones do not (yet). --
 - **AWS Certified Solutions Architect – Associate** — Amazon Web Services (2024-03-15)
 - **Google Data Analytics Professional Certificate** — Google (via Coursera) (2023-08-02)
 
-_20 skills total._
+_24 skills total._
 
 ## Publications
 

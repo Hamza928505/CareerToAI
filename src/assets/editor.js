@@ -86,10 +86,12 @@ function blankState() {
       email: "",
       bio: "",
       education: [],
+      languages: [],
       links: [],
       skills: [],
     },
     experience: [],
+    projects: [],
     certificates: [],
   };
 }
@@ -114,10 +116,37 @@ const EMPLOYMENT_TYPES = [
 /** Where the work happens — distinct from *where the company is*. */
 const LOCATION_TYPES = ["On-site", "Hybrid", "Remote"];
 
+/**
+ * "2024-03-15" / "2024-03" / "2024" -> a comparable "2024-03-15" string, and
+ * "0000-00-00" for anything unparseable. The same shape lib/content.mjs builds,
+ * so "Sort by date" here and date order there mean the same thing.
+ */
+function dateKey(value) {
+  const m = /^(\d{4})(?:-(\d{2}))?(?:-(\d{2}))?$/.exec(String(value || "").trim());
+  return m ? `${m[1]}-${m[2] ?? "01"}-${m[3] ?? "01"}` : "0000-00-00";
+}
+
+/**
+ * CEFR levels, strongest first, each with the plain word for it. The level is
+ * written into the profile verbatim and read by the Language Gate, so the
+ * wording here is the wording a job-evaluation prompt sees.
+ */
+const LANGUAGE_LEVELS = [
+  "Native",
+  "C2 (mastery)",
+  "C1 (advanced)",
+  "B2 (upper intermediate)",
+  "B1 (intermediate)",
+  "A2 (elementary)",
+  "A1 (beginner)",
+];
+
 const LISTS = {
   education: {
     target: () => state.profile.education,
     label: "education entry",
+    plural: "education entries",
+    sortKey: (e) => `${dateKey(e.endDate || e.startDate)}-1`,
     heading: (e) => e.school || "New education entry",
     blank: () => ({
       _key: uid(), school: "", industry: "", degree: "", fieldOfStudy: "",
@@ -134,9 +163,27 @@ const LISTS = {
     ],
   },
 
+  languages: {
+    target: () => state.profile.languages,
+    label: "language",
+    plural: "languages",
+    heading: (e) => [e.language, e.level].filter(Boolean).join(" — ") || "New language",
+    blank: () => ({ _key: uid(), language: "", level: "", notes: "" }),
+    fields: [
+      { name: "language", label: "Language", type: "text", placeholder: "German" },
+      { name: "level", label: "Level", type: "select", options: LANGUAGE_LEVELS,
+        blankLabel: "Not stated", hint: "An honest level. The gate is only as good as this." },
+      { name: "notes", label: "Notes", type: "textarea", rows: 2, full: true,
+        placeholder: "Five levels at the GJU German Language Center; B2 certificate pending.",
+        hint: "Where the level comes from, or what you can actually do in it." },
+    ],
+  },
+
   experience: {
     target: () => state.experience,
     label: "position",
+    plural: "positions",
+    sortKey: (e) => `${dateKey(e.startDate)}-${e.endDate ? "0" : "1"}`,
     heading: (e) => [e.title, e.organization].filter(Boolean).join(" — ") || "New position",
     blank: () => ({
       _key: uid(), id: "", title: "", organization: "", employmentType: "", location: "",
@@ -159,9 +206,41 @@ const LISTS = {
     image: { label: "Attachment", hint: "Optional image shown with this position." },
   },
 
+  projects: {
+    target: () => state.projects,
+    label: "project",
+    plural: "projects",
+    sortKey: (e) => `${dateKey(e.startDate)}-${e.endDate ? "0" : "1"}`,
+    heading: (e) => e.name || "New project",
+    blank: () => ({
+      _key: uid(), id: "", name: "", role: "", organization: "", url: "", sourceUrl: "",
+      startDate: "", endDate: "", description: "", skills: [], imageKey: "",
+      attachmentImage: "",
+    }),
+    fields: [
+      { name: "name", label: "Project name", type: "text", full: true },
+      { name: "role", label: "Your role", type: "text", placeholder: "Author",
+        hint: "What you did on it, if it was not all your own work." },
+      { name: "organization", label: "Context", type: "text", placeholder: "GJU capstone",
+        hint: "The course, club or organization it was built under, if any." },
+      { name: "url", label: "Project URL", type: "url", placeholder: "https://example.com",
+        hint: "Where the thing itself lives." },
+      { name: "sourceUrl", label: "Source URL", type: "url", placeholder: "https://github.com/you/project",
+        hint: "The repository. Marks it as code in the published structured data." },
+      { name: "startDate", label: "Start", type: "month" },
+      { name: "endDate", label: "End", type: "month", hint: "Leave blank if you are still working on it" },
+      { name: "description", label: "Description", type: "textarea", rows: 5, full: true,
+        hint: "What it does and what you built. Written in sentences — the candidate profile splits it into bullets." },
+    ],
+    skills: true,
+    image: { label: "Attachment", hint: "Optional image shown with this project." },
+  },
+
   certificates: {
     target: () => state.certificates,
     label: "certification",
+    plural: "certifications",
+    sortKey: (e) => `${dateKey(e.dateIssued)}-1`,
     heading: (e) => e.title || "New certification",
     blank: () => ({
       _key: uid(), id: "", title: "", issuer: "", dateIssued: "", dateExpires: "",
@@ -187,6 +266,7 @@ const LISTS = {
   links: {
     target: () => state.profile.links,
     label: "link",
+    plural: "links",
     heading: (e) => e.label || "New link",
     blank: () => ({ _key: uid(), label: "", url: "" }),
     fields: [
@@ -253,10 +333,12 @@ function adoptState(incoming) {
       ...base.profile,
       ...(incoming.profile || {}),
       education: withKeys(incoming.profile?.education),
+      languages: withKeys(incoming.profile?.languages),
       links: withKeys(incoming.profile?.links),
       skills: Array.isArray(incoming.profile?.skills) ? incoming.profile.skills : [],
     },
     experience: withKeys(incoming.experience),
+    projects: withKeys(incoming.projects),
     certificates: withKeys(incoming.certificates),
   };
 }
@@ -377,6 +459,7 @@ function ownSkills() {
   };
   add(state.profile.skills);
   for (const role of state.experience) add(role.skills);
+  for (const project of state.projects) add(project.skills);
   for (const cert of state.certificates) add(cert.skills);
   return [...seen.values()];
 }
@@ -697,6 +780,9 @@ async function pickFromAdvert(skills) {
 /** Chips + a text box. Enter or comma commits; the × on a chip removes it. */
 function renderSkills(container, skills, owner) {
   container.replaceChildren();
+  // The Extra skills heading carries a count like every other section, and this
+  // is the only place that list changes.
+  if (owner === "profile.skills") renderCounts();
   const redraw = () => {
     renderSkills(container, skills, owner);
     scheduleSave();
@@ -856,6 +942,103 @@ async function renderImage(container, listName, item, config) {
   container.append(el("div", { className: "image-preview" }, [preview]), actions, input);
 }
 
+/** The chevron that turns when the thing it labels opens. */
+const chevron = () => {
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("class", "chevron");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("fill", "none");
+  svg.setAttribute("stroke", "currentColor");
+  svg.setAttribute("stroke-width", "2.5");
+  svg.setAttribute("stroke-linecap", "round");
+  svg.setAttribute("stroke-linejoin", "round");
+  svg.setAttribute("aria-hidden", "true");
+  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  path.setAttribute("d", "m9 18 6-6-6-6");
+  svg.append(path);
+  return svg;
+};
+
+/**
+ * Which entry rows are open, by their _key. Kept here rather than in `state`
+ * because it is a view preference, not profile data — it must never reach an
+ * export or data/*.json. Rows default to open, so nothing collapses under
+ * someone who never asked for it.
+ */
+const collapsedRows = new Set();
+
+// ---------------------------------------------------------------------------
+// Reordering
+//
+// The array order is the published order — lib/content.mjs stopped re-sorting,
+// so what you arrange here is what /llms.txt, the JSON-LD and the generated
+// candidate profile say. Dragging is the obvious way to do that and the
+// keyboard is the reliable one, so the grip does both: it is a real button that
+// takes focus, and arrow keys move the row without a pointer.
+// ---------------------------------------------------------------------------
+
+const grip = () => {
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("fill", "currentColor");
+  svg.setAttribute("aria-hidden", "true");
+  for (const [cx, cy] of [[9, 6], [15, 6], [9, 12], [15, 12], [9, 18], [15, 18]]) {
+    const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    dot.setAttribute("cx", cx);
+    dot.setAttribute("cy", cy);
+    dot.setAttribute("r", "1.6");
+    svg.append(dot);
+  }
+  return svg;
+};
+
+/** The row being dragged right now: which list it came from, and its _key. */
+let dragging = null;
+
+/** Say what just happened, for anyone who cannot see the row move. */
+function announce(message) {
+  const live = root?.querySelector("[data-reorder-status]");
+  if (live) live.textContent = message;
+}
+
+/**
+ * Move one entry to a new index and re-render. Returns false when the move
+ * would be a no-op, so a key at the end of a list does not announce a move
+ * that did not happen.
+ */
+function moveEntry(listName, fromIndex, toIndex) {
+  const items = LISTS[listName].target();
+  const to = Math.max(0, Math.min(items.length - 1, toIndex));
+  if (to === fromIndex) return false;
+  const [moved] = items.splice(fromIndex, 1);
+  items.splice(to, 0, moved);
+  renderList(listName);
+  scheduleSave();
+  return true;
+}
+
+/** Put focus back on the grip of the row that just moved, so keys can repeat. */
+function refocusGrip(listName, key) {
+  root.querySelector(`[data-grip="${listName}.${key}"]`)?.focus();
+}
+
+/**
+ * The per-list "Collapse all" for entry rows — the counterpart of the toolbar
+ * button, which works on whole sections. Its label says what pressing it does,
+ * and it hides itself below two rows, where a row's own title already is the
+ * whole control.
+ */
+function syncRowsToggle(listName) {
+  const button = root.querySelector(`[data-rows-toggle="${listName}"]`);
+  if (!button) return;
+  const config = LISTS[listName];
+  const items = config.target();
+  button.hidden = items.length < 2;
+  const anyOpen = items.some((item) => !collapsedRows.has(item._key));
+  button.textContent = anyOpen ? "Collapse all" : "Expand all";
+  button.setAttribute("aria-label", `${anyOpen ? "Collapse" : "Expand"} all ${config.plural}`);
+}
+
 function renderList(listName) {
   const config = LISTS[listName];
   const container = root.querySelector(`[data-list="${listName}"]`);
@@ -866,36 +1049,280 @@ function renderList(listName) {
 
   if (!items.length) {
     container.append(el("p", { className: "muted empty", textContent: `No ${config.label} added yet.` }));
+    renderCounts();
+    syncRowsToggle(listName);
     return;
   }
 
   items.forEach((item, index) => {
-    const heading = el("h3", { textContent: config.heading(item) });
+    const open = !collapsedRows.has(item._key);
+    const bodyId = `entry-${listName}-${item._key}`;
+    const position = `${index + 1} of ${items.length}`;
+
+    const handle = el("button", {
+      type: "button",
+      className: "entry-grip",
+      title: `Drag to reorder, or use the arrow keys (${position})`,
+      onkeydown: (event) => {
+        const step = event.key === "ArrowUp" ? -1 : event.key === "ArrowDown" ? 1 : 0;
+        if (!step) return;
+        // Arrows on a focused grip move the row; without this they would
+        // scroll the page and the keyboard path would not exist at all.
+        event.preventDefault();
+        if (moveEntry(listName, index, index + step)) {
+          refocusGrip(listName, item._key);
+          announce(`${config.heading(item)} moved to position ${index + step + 1} of ${items.length}.`);
+        }
+      },
+      ondragstart: (event) => {
+        dragging = { listName, key: item._key };
+        event.dataTransfer.effectAllowed = "move";
+        // Firefox ignores a drag that carries no data at all.
+        event.dataTransfer.setData("text/plain", item._key);
+        // The class lands after this tick so the drag image is the solid row.
+        setTimeout(() => handle.closest(".entry-editor")?.classList.add("is-dragging"), 0);
+      },
+      ondragend: () => {
+        dragging = null;
+        for (const node of container.querySelectorAll(".is-dragging, .drop-before, .drop-after")) {
+          node.classList.remove("is-dragging", "drop-before", "drop-after");
+        }
+      },
+    }, [grip()]);
+    // As a content attribute, not the IDL property: a <button> is not draggable
+    // by default, and the attribute is what every browser actually reads.
+    handle.setAttribute("draggable", "true");
+    handle.dataset.grip = `${listName}.${item._key}`;
+    handle.setAttribute("aria-label", `Reorder ${config.heading(item)} — ${position}`);
+
+    const heading = el("h3", {}, [
+      el("button", {
+        type: "button",
+        className: "entry-toggle",
+        // The title doubles as the toggle: a long form is unreadable when every
+        // row is expanded, and the heading is the only thing worth keeping.
+        onclick: () => {
+          if (collapsedRows.has(item._key)) collapsedRows.delete(item._key);
+          else collapsedRows.add(item._key);
+          renderList(listName);
+        },
+      }, [chevron(), el("span", { textContent: config.heading(item) })]),
+    ]);
+    const toggle = heading.firstChild;
+    toggle.setAttribute("aria-expanded", String(open));
+    toggle.setAttribute("aria-controls", bodyId);
+
     const remove = el("button", {
       type: "button",
       className: "btn btn-small btn-danger",
       textContent: "Remove",
       onclick: async () => {
         if (item.imageKey) await deleteImage(item.imageKey).catch(() => {});
+        collapsedRows.delete(item._key);
         items.splice(index, 1);
         renderList(listName);
         scheduleSave();
       },
     });
 
-    const fields = el("div", { className: "field-grid" },
+    const fields = el("div", { className: "field-grid", id: bodyId },
       config.fields.map((field) => fieldControl(listName, item, field)));
 
     if (config.skills) fields.append(skillsWidget(listName, item));
     if (config.image) fields.append(imageWidget(listName, item, config.image));
+    fields.hidden = !open;
 
-    container.append(
-      el("article", { className: "entry-editor" }, [
-        el("div", { className: "entry-editor-head" }, [heading, remove]),
-        fields,
-      ])
-    );
+    const article = el("article", { className: "entry-editor" }, [
+      el("div", { className: "entry-editor-head" }, [handle, heading, remove]),
+      fields,
+    ]);
+    article.dataset.open = String(open);
+    article.dataset.key = item._key;
+    article.dataset.index = String(index);
+
+    container.append(article);
   });
+
+  renderCounts();
+  syncRowsToggle(listName);
+}
+
+/**
+ * Drop handling lives on the list container, not on each row, so it survives
+ * the re-render that every move triggers. A drop lands before or after the row
+ * under the pointer, depending on which half of it you are over.
+ */
+function initDropZone(listName) {
+  const container = root.querySelector(`[data-list="${listName}"]`);
+  if (!container) return;
+
+  const rowUnder = (event) =>
+    [...container.querySelectorAll(".entry-editor")].find((row) => {
+      const box = row.getBoundingClientRect();
+      return event.clientY >= box.top && event.clientY <= box.bottom;
+    });
+
+  container.addEventListener("dragover", (event) => {
+    if (dragging?.listName !== listName) return;
+    // Only a preventDefault'd dragover makes an element a drop target.
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+
+    const row = rowUnder(event);
+    for (const node of container.querySelectorAll(".drop-before, .drop-after")) {
+      node.classList.remove("drop-before", "drop-after");
+    }
+    if (!row || row.dataset.key === dragging.key) return;
+    const box = row.getBoundingClientRect();
+    row.classList.add(event.clientY < box.top + box.height / 2 ? "drop-before" : "drop-after");
+  });
+
+  container.addEventListener("dragleave", (event) => {
+    if (container.contains(event.relatedTarget)) return;
+    for (const node of container.querySelectorAll(".drop-before, .drop-after")) {
+      node.classList.remove("drop-before", "drop-after");
+    }
+  });
+
+  container.addEventListener("drop", (event) => {
+    if (dragging?.listName !== listName) return;
+    event.preventDefault();
+
+    const row = rowUnder(event);
+    const items = LISTS[listName].target();
+    const from = items.findIndex((entry) => entry._key === dragging.key);
+    if (from < 0) return;
+
+    // Dropping past the last row means "put it at the end".
+    let to = items.length - 1;
+    if (row && row.dataset.key !== dragging.key) {
+      const over = Number(row.dataset.index);
+      const box = row.getBoundingClientRect();
+      const after = event.clientY >= box.top + box.height / 2;
+      // Removing the row first shifts everything below it up by one.
+      to = over + (after ? 1 : 0) - (over > from ? 1 : 0);
+    }
+
+    const label = LISTS[listName].heading(items[from]);
+    dragging = null;
+    if (moveEntry(listName, from, to)) {
+      announce(`${label} moved to position ${Math.min(Math.max(to, 0), items.length - 1) + 1} of ${items.length}.`);
+    } else {
+      renderList(listName);
+    }
+  });
+}
+
+/**
+ * "3 positions", "1 education entry", "None yet" — written into both the
+ * section heading and the row above the list. The heading is the one that
+ * matters: it is what a collapsed section still tells you.
+ */
+function renderCounts() {
+  const counts = {};
+  for (const [name, config] of Object.entries(LISTS)) {
+    counts[name] = { n: config.target().length, one: config.label, many: config.plural };
+  }
+  counts.skills = { n: state.profile.skills.length, one: "extra skill", many: "extra skills" };
+
+  for (const [name, { n, one, many }] of Object.entries(counts)) {
+    const badge = root.querySelector(`[data-section-count="${name}"]`);
+    if (badge) {
+      badge.textContent = n ? String(n) : "";
+      badge.hidden = !n;
+    }
+    const line = root.querySelector(`[data-list-count="${name}"]`);
+    if (line) line.textContent = n ? `${n} ${n === 1 ? one : many}` : `No ${many} yet`;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Collapsible sections
+//
+// The fieldset legends are toggle buttons rendered by editor.njk. Which
+// sections are open is a view preference, so it is stored under its own key —
+// clearing the profile must not also rearrange the page, and an export must
+// never carry it.
+// ---------------------------------------------------------------------------
+
+const SECTIONS_KEY = "careertoai:sections:v1";
+
+function readSectionState() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(SECTIONS_KEY));
+    return raw && typeof raw === "object" ? raw : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeSectionState(map) {
+  try {
+    localStorage.setItem(SECTIONS_KEY, JSON.stringify(map));
+  } catch {
+    /* a full quota is not worth failing an edit over */
+  }
+}
+
+const sectionToggles = () => [...root.querySelectorAll("[data-section-toggle]")];
+
+function setSectionOpen(toggle, open) {
+  toggle.setAttribute("aria-expanded", String(open));
+  const body = document.getElementById(toggle.getAttribute("aria-controls"));
+  if (body) body.hidden = !open;
+  toggle.closest("fieldset")?.setAttribute("data-open", String(open));
+}
+
+/** Keep the toolbar button describing what pressing it will do. */
+function syncToggleAllLabel() {
+  const button = root.querySelector("[data-action='toggle-all']");
+  if (!button) return;
+  const anyOpen = sectionToggles().some((t) => t.getAttribute("aria-expanded") === "true");
+  button.textContent = anyOpen ? "Collapse all" : "Expand all";
+}
+
+function initSections() {
+  const stored = readSectionState();
+
+  for (const toggle of sectionToggles()) {
+    const id = toggle.dataset.sectionToggle;
+    // Unknown to storage means never touched, and a first visit should show the
+    // whole form rather than eight closed boxes.
+    setSectionOpen(toggle, stored[id] !== false);
+
+    toggle.addEventListener("click", () => {
+      const open = toggle.getAttribute("aria-expanded") !== "true";
+      setSectionOpen(toggle, open);
+      const map = readSectionState();
+      map[id] = open;
+      writeSectionState(map);
+      syncToggleAllLabel();
+    });
+  }
+
+  root.querySelector("[data-action='toggle-all']")?.addEventListener("click", () => {
+    const open = !sectionToggles().some((t) => t.getAttribute("aria-expanded") === "true");
+    const map = {};
+    for (const toggle of sectionToggles()) {
+      setSectionOpen(toggle, open);
+      map[toggle.dataset.sectionToggle] = open;
+    }
+    writeSectionState(map);
+    syncToggleAllLabel();
+  });
+
+  syncToggleAllLabel();
+}
+
+/** Open the section containing an element, so focusing a field can never fail. */
+function revealSection(node) {
+  const toggle = node?.closest("fieldset")?.querySelector("[data-section-toggle]");
+  if (!toggle || toggle.getAttribute("aria-expanded") === "true") return;
+  setSectionOpen(toggle, true);
+  const map = readSectionState();
+  map[toggle.dataset.sectionToggle] = true;
+  writeSectionState(map);
+  syncToggleAllLabel();
 }
 
 function renderProfileFields() {
@@ -939,13 +1366,15 @@ function onInput(event) {
   if (!control) return;
   setByPath(control.dataset.path, control.value);
 
-  // Keep the collapsed-row heading in step with the field that names it.
+  // Keep the collapsed-row heading in step with the field that names it. The
+  // label is the <span> inside the toggle button, not the <h3> itself —
+  // writing to the h3 would delete the button.
   const [listName, key] = control.dataset.path.split(".");
   const config = LISTS[listName];
   if (config) {
     const item = config.target().find((entry) => entry._key === key);
-    const heading = control.closest(".entry-editor")?.querySelector("h3");
-    if (item && heading) heading.textContent = config.heading(item);
+    const label = control.closest(".entry-editor")?.querySelector("h3 .entry-toggle span");
+    if (item && label) label.textContent = config.heading(item);
   }
 
   scheduleSave();
@@ -1068,9 +1497,13 @@ function missingRequired() {
   const hasEntries =
     state.profile.education.some((e) => trimmed(e.school)) ||
     state.experience.some((r) => trimmed(r.title) || trimmed(r.organization)) ||
+    state.projects.some((p) => trimmed(p.name)) ||
     state.certificates.some((c) => trimmed(c.title));
   if (!hasEntries) {
-    missing.push({ field: null, label: "At least one education entry, position or certification" });
+    missing.push({
+      field: null,
+      label: "At least one education entry, position, project or certification",
+    });
   }
 
   return missing;
@@ -1111,6 +1544,32 @@ function validate() {
     checkDates(role, label, errors);
   });
 
+  state.profile.languages.forEach((entry, i) => {
+    const name = trimmed(entry.language);
+    if (!name) {
+      return warnings.push(`Language ${i + 1} has no language name and will not be published.`);
+    }
+    // A language with no level reaches the site but not the Language Gate,
+    // which filters on both — so say so rather than let it look declared.
+    if (!trimmed(entry.level)) {
+      warnings.push(`${name} has no level, so the Language Gate will not count it.`);
+    }
+  });
+
+  state.projects.forEach((project, i) => {
+    const label = trimmed(project.name) || `Project ${i + 1}`;
+    if (!trimmed(project.name)) {
+      warnings.push(`Project ${i + 1} has no name and will not be published.`);
+    }
+    for (const [field, what] of [["url", "project URL"], ["sourceUrl", "source URL"]]) {
+      const url = trimmed(project[field]);
+      if (url && !isUrl(url)) {
+        errors.push(`${label}: ${what} "${url}" is not a valid http(s) URL.`);
+      }
+    }
+    checkDates(project, label, errors);
+  });
+
   state.certificates.forEach((cert, i) => {
     const label = trimmed(cert.title) || `Certification ${i + 1}`;
     if (!trimmed(cert.title)) {
@@ -1137,6 +1596,10 @@ function validate() {
 function focusField(field) {
   const control = root?.querySelector(`[data-path="profile.${field}"]`);
   if (!control) return;
+  // A field inside a collapsed section cannot be scrolled to or focused, so
+  // open its section first — being sent to an invisible field is worse than
+  // losing the collapse.
+  revealSection(control);
   control.scrollIntoView?.({ block: "center", behavior: "smooth" });
   control.focus({ preventScroll: true });
 }
@@ -1212,7 +1675,8 @@ const blobToDataUrl = (blob) =>
 /** One self-contained payload: text plus every referenced image inline. */
 async function buildPayload() {
   const images = {};
-  const withImages = [...state.experience, ...state.certificates].filter((entry) => entry.imageKey);
+  const withImages = [...state.experience, ...state.projects, ...state.certificates]
+    .filter((entry) => entry.imageKey);
 
   for (const entry of withImages) {
     const record = await getImage(entry.imageKey).catch(() => null);
@@ -1229,6 +1693,7 @@ async function buildPayload() {
     exportedAt: new Date().toISOString(),
     profile: state.profile,
     experience: state.experience,
+    projects: state.projects,
     certificates: state.certificates,
     images,
   };
@@ -1452,7 +1917,47 @@ function init() {
       renderList(name);
       scheduleSave();
       const rows = root.querySelectorAll(`[data-list="${name}"] .entry-editor`);
+      // A new row is open by design — it is empty, and nobody adds one to leave
+      // it alone — so the cursor always lands in a visible field.
       rows[rows.length - 1]?.querySelector("input, textarea")?.focus();
+    });
+  }
+
+  for (const name of Object.keys(LISTS)) initDropZone(name);
+
+  for (const button of root.querySelectorAll("[data-rows-toggle]")) {
+    button.addEventListener("click", () => {
+      const name = button.dataset.rowsToggle;
+      const config = LISTS[name];
+      const items = config.target();
+      // One open row is enough to mean "collapse"; only when every row is
+      // already shut does the button expand instead.
+      const collapse = items.some((item) => !collapsedRows.has(item._key));
+      for (const item of items) {
+        if (collapse) collapsedRows.add(item._key);
+        else collapsedRows.delete(item._key);
+      }
+      renderList(name);
+      announce(`${items.length} ${config.plural} ${collapse ? "collapsed" : "expanded"}.`);
+      // The re-render replaced the node the click landed on in every other
+      // list, but this button lives outside the list — keep the focus on it.
+      root.querySelector(`[data-rows-toggle="${name}"]`)?.focus();
+    });
+  }
+
+  for (const button of root.querySelectorAll("[data-sort]")) {
+    button.addEventListener("click", () => {
+      const name = button.dataset.sort;
+      const config = LISTS[name];
+      const items = config.target();
+      // Newest first — what the site used to impose before the order became
+      // yours. Sorting a copy and writing it back in place keeps `target()`
+      // pointing at the same array the rest of the editor holds.
+      const sorted = [...items].sort((a, b) => config.sortKey(b).localeCompare(config.sortKey(a)));
+      items.splice(0, items.length, ...sorted);
+      renderList(name);
+      scheduleSave();
+      announce(`${name} sorted newest first.`);
     });
   }
 
@@ -1491,10 +1996,11 @@ function init() {
     });
     if (!value) return;
 
-    for (const entry of [...state.experience, ...state.certificates]) {
+    for (const entry of [...state.experience, ...state.projects, ...state.certificates]) {
       if (entry.imageKey) await deleteImage(entry.imageKey).catch(() => {});
     }
     state = blankState();
+    collapsedRows.clear();
     try {
       localStorage.removeItem(STORAGE_KEY);
     } catch { /* nothing stored to remove */ }
@@ -1502,6 +2008,8 @@ function init() {
     setStatus("Empty");
     toast("success", "Cleared — nothing is left in this browser");
   });
+
+  initSections();
 
   const restored = load();
   // Fire and forget: the tracker's harvested skills join the suggestions as

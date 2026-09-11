@@ -9,8 +9,12 @@
  * what `/apply`, `/rank`, `/interview` and `/upskill` actually read. Edit the
  * JSON (or `/editor/`), re-run this, and both projects agree.
  *
- * The parts the site JSON does not model — phone, working languages,
- * publications, awards, references — live in `data/profile-extras.json`.
+ * The parts the site JSON does not model — phone, employment status, working
+ * constraints, publications, awards, references — live in
+ * `data/profile-extras.json`. Projects and languages are not among them:
+ * projects are a first-class entity in `data/projects.json`, and languages live
+ * in `data/profile.json`. Both are edited in /editor/ and published like every
+ * other fact.
  *
  * Nothing here invents a fact. A field you have not filled in renders as an
  * explicit "not set" line, because a fabricated profile is worse than a thin
@@ -32,6 +36,7 @@ import {
   formatDateRange,
   loadCertificates,
   loadExperience,
+  loadProjects,
   readJson,
   real,
 } from "../lib/content.mjs";
@@ -43,7 +48,7 @@ const EXTRAS_JSON = path.join(ROOT, "data", "profile-extras.json");
 
 const BANNER = [
   "<!-- GENERATED FILE - do not edit by hand. -->",
-  "<!-- Source: data/profile.json, data/experience.json, data/certificates.json, data/profile-extras.json -->",
+  "<!-- Source: data/profile.json, data/experience.json, data/projects.json, data/certificates.json, data/profile-extras.json -->",
   "<!-- Rebuild: npm run profile   (check in CI: npm run profile:check) -->",
 ].join("\n");
 
@@ -70,20 +75,20 @@ function identity(profile, extras) {
   ].join("\n");
 }
 
-function languages(extras) {
-  const rows = (extras.languages || []).filter((l) => real(l.language) && real(l.level));
+function languages(profile) {
+  const rows = (profile.languages || []).filter((l) => real(l.language) && real(l.level));
   const head = [
     "### Languages",
     "",
     "<!-- The Language Gate in 04-job-evaluation.md treats an undeclared language as a hard",
-    "no, not a gap to smooth over. Edit data/profile-extras.json, not this file. -->",
+    "no, not a gap to smooth over. Edit data/profile.json (or /editor/ → Basics), not this file. -->",
     "",
   ];
   if (!rows.length) {
     return head.concat([
-      "_No working languages declared. Until you add them to `data/profile-extras.json`,",
-      "the Language Gate has nothing to check and every language-conditional posting must",
-      "be flagged for your own judgment rather than filtered._",
+      "_No working languages declared. Until you add them in `/editor/` → Basics (they are",
+      "stored in `data/profile.json`), the Language Gate has nothing to check and every",
+      "language-conditional posting must be flagged for your own judgment rather than filtered._",
     ]).join("\n");
   }
   return head.concat([
@@ -131,17 +136,44 @@ function experienceSection(experience) {
   return ["## Professional Experience", "", blocks.join("\n\n")].join("\n");
 }
 
+function projectsSection(projects) {
+  if (!projects.length) {
+    return "## Independent Projects\n\n_No entries in `data/projects.json`._";
+  }
+  const blocks = projects.map((p) => {
+    const period = formatDateRange(p.startDate, p.endDate);
+    const lines = [`### ${real(p.name)}${period ? ` (${period})` : ""}`];
+    const who = [real(p.role), real(p.organization)].filter(Boolean).join(" · ");
+    if (who) lines.push(who);
+    const where = [
+      real(p.url) ? `[Project](${real(p.url)})` : "",
+      real(p.sourceUrl) ? `[Source](${real(p.sourceUrl)})` : "",
+    ].filter(Boolean).join(" · ");
+    if (where) lines.push(where);
+    const desc = real(p.description);
+    if (desc) {
+      lines.push("");
+      for (const sentence of desc.split(/(?<=\.)\s+(?=[A-Z])/).filter(Boolean)) {
+        lines.push(`- ${sentence.trim()}`);
+      }
+    }
+    if (p.skills?.length) lines.push(`- Skills: ${p.skills.join(", ")}`);
+    return lines.join("\n");
+  });
+  return ["## Independent Projects", "", blocks.join("\n\n")].join("\n");
+}
+
 function skillsSection(skills, certificates) {
   const named = skills.map((s) => s.name);
   const backed = skills.filter((s) => s.count > 0).map((s) => s.name);
   const declared = skills.filter((s) => s.count === 0).map((s) => s.name);
 
   const out = ["## Technical Skills", ""];
-  out.push("<!-- Aggregated from data/profile.json skills plus every skill tagged on a role or");
-  out.push("certificate. The split below is what /upskill and the Fit score read: evidenced");
-  out.push("skills carry a certificate or a role behind them, declared ones do not (yet). -->");
+  out.push("<!-- Aggregated from data/profile.json skills plus every skill tagged on a role,");
+  out.push("project or certificate. The split below is what /upskill and the Fit score read:");
+  out.push("evidenced skills carry something behind them, declared ones do not (yet). -->");
   out.push("");
-  out.push("### Evidenced by a role or certificate");
+  out.push("### Evidenced by a role, project or certificate");
   out.push(backed.length ? backed.map((s) => `- ${s}`).join("\n") : "_none yet_");
   out.push("");
   out.push("### Declared, not yet evidenced");
@@ -169,14 +201,12 @@ const listSection = (title, items, render, emptyHint) =>
   ].join("\n");
 
 function render() {
-  const profile = buildProfile(readJson(PROFILE_JSON), {
-    certificates: loadCertificates(),
-    experience: loadExperience(),
-  });
   const certificates = loadCertificates();
   const experience = loadExperience();
+  const projects = loadProjects();
+  const profile = buildProfile(readJson(PROFILE_JSON), { certificates, experience, projects });
   const extras = fs.existsSync(EXTRAS_JSON) ? readJson(EXTRAS_JSON) : {};
-  const skills = aggregateSkills(profile.skills, certificates, experience);
+  const skills = aggregateSkills(profile.skills, certificates, experience, projects);
 
   return [
     "---",
@@ -190,17 +220,13 @@ function render() {
     "",
     identity(profile, extras),
     "",
-    languages(extras),
+    languages(profile),
     "",
     education(profile),
     "",
     experienceSection(experience),
     "",
-    listSection(
-      "Independent Projects", extras.projects,
-      (p) => `- **${real(p.name)}**: ${real(p.description)}`,
-      "No projects listed. Add them to data/profile-extras.json.",
-    ),
+    projectsSection(projects),
     "",
     skillsSection(skills, certificates),
     "",
@@ -241,5 +267,5 @@ if (check) {
   fs.mkdirSync(path.dirname(OUT), { recursive: true });
   fs.writeFileSync(OUT, wanted, "utf8");
   console.log(`Wrote ${path.relative(ROOT, OUT)}`);
-  console.log(`  source    data/profile.json, experience.json, certificates.json, profile-extras.json`);
+  console.log(`  source    data/profile.json, experience.json, projects.json, certificates.json, profile-extras.json`);
 }
