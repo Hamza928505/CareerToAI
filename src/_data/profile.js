@@ -4,6 +4,7 @@ import {
   isPlaceholder,
   loadCertificates,
   loadExperience,
+  loadProjects,
   readJson,
 } from "../../lib/content.mjs";
 
@@ -12,6 +13,7 @@ export default () => {
   const profile = buildProfile(raw, {
     certificates: loadCertificates(),
     experience: loadExperience(),
+    projects: loadProjects(),
   });
 
   // Placeholder links and TODO values are dropped by buildProfile rather than

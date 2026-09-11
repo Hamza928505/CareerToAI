@@ -1,181 +1,1299 @@
 ---
 layout: base.njk
 permalink: /
-schemaType: person
-ogType: profile
+ogType: article
+pageTitle: The German Year Internship — a GJU field guide
+pageDescription: >-
+  Every rule, document and deadline for the mandatory 20-week German Year
+  internship at the German Jordanian University, assembled from the official
+  GJU and Office for Industrial Links documents.
+pageStyles: /assets/home.css
 ---
 
-<article class="profile">
-  <header>
-    <h1>{{ profile.name }}</h1>
-    {% if profile.headline %}<p class="headline">{{ profile.headline }}</p>{% endif %}
-    {% if profile.location or profile.pronouns %}
-    <p class="muted">
-      {{ profile.location }}{% if profile.location and profile.pronouns %} · {% endif %}{{ profile.pronouns }}
-    </p>
-    {% endif %}
-  </header>
+{% set docs = "/assets/gy-internships" %}
 
-  {% if profile.bio %}
-  <section aria-labelledby="about-heading">
-    <h2 id="about-heading">About</h2>
-    <p>{{ profile.bio }}</p>
-  </section>
-  {% endif %}
+<div class="hero">
+  <p class="eyebrow">German Jordanian University · Office for Industrial Links</p>
+  <h1>The German Year Internship</h1>
+  <p class="lede">
+    Every GJU bachelor student spends one full academic year in Germany: a semester
+    studying at a partner university, then a semester working. This page is the second
+    half — the mandatory <span lang="de">Studentisches Pflichtpraktikum</span> — written
+    out in full so you can read it in one sitting instead of opening sixteen PDFs.
+  </p>
+  <p class="hero-note">
+    Everything below is taken from the official documents, each of which is linked where
+    it applies and listed again in <a href="#library">the document library</a>. Where a
+    rule cites a Deans’ Council decision, the decision is what counts.
+  </p>
 
-  {% if experience.length %}
-  <section aria-labelledby="experience-heading">
-    <h2 id="experience-heading">Experience</h2>
-    <ul class="entry-list">
-      {%- for role in experience %}
-      <li>
-        <article class="entry">
-          <h3>{{ role.title }}</h3>
-          <p class="entry-meta">
-            {{ role.organization }}{% if role.employmentType %} · {{ role.employmentType }}{% endif %}
+  <ul class="stat-grid">
+    <li class="stat">
+      <span class="stat-value">20</span>
+      <span class="stat-label">weeks minimum, full time</span>
+    </li>
+    <li class="stat">
+      <span class="stat-value">12</span>
+      <span class="stat-label">GJU credit hours awarded</span>
+    </li>
+    <li class="stat">
+      <span class="stat-value">15–20</span>
+      <span class="stat-label">pages in the internship report</span>
+    </li>
+    <li class="stat">
+      <span class="stat-value">2</span>
+      <span class="stat-label">months to hand in your documents</span>
+    </li>
+  </ul>
+</div>
+
+<div class="guide">
+
+  <nav class="toc" aria-label="On this page">
+    <h2 class="toc-title">On this page</h2>
+    <ol>
+      <li><a href="#overview">What the German Year is</a></li>
+      <li><a href="#before">Before you travel</a></li>
+      <li><a href="#timeline">The year, step by step</a></li>
+      <li><a href="#search">Finding an internship</a></li>
+      <li><a href="#cv">The CV (<span lang="de">Lebenslauf</span>)</a></li>
+      <li><a href="#cover-letter">The cover letter (<span lang="de">Anschreiben</span>)</a></li>
+      <li><a href="#sending">Sending the application</a></li>
+      <li><a href="#interview">The interview</a></li>
+      <li><a href="#during">During the internship</a></li>
+      <li><a href="#after">Certificate and report</a></li>
+      <li><a href="#rules">Rules and edge cases</a></li>
+      <li><a href="#staying">Staying longer than planned</a></li>
+      <li><a href="#library">Document library</a></li>
+      <li><a href="#contacts">Who to contact</a></li>
+      <li><a href="#machine">For AI assistants</a></li>
+    </ol>
+  </nav>
+
+  <div class="guide-body">
+
+    <!-- ------------------------------------------------------------------ -->
+    <section id="overview" aria-labelledby="overview-heading">
+      <h2 id="overview-heading">What the German Year is</h2>
+      <p>
+        To graduate from GJU you must spend one full academic year studying and training in
+        Germany. The year splits in two, and the order is fixed: <strong>study semester
+        first, internship semester second</strong>, unless you hold a scholarship other than
+        the GJU-DAAD German Year scholarship.
+      </p>
+
+      <div class="card-grid two">
+        <article class="card">
+          <h3>Semester 1 — study</h3>
+          <p>
+            Courses at one of GJU’s German partner universities, normally
+            <strong>18–21 ECTS or 12 SWS</strong>. GJU recognises up to
+            <strong>21 credit hours</strong>. Everything you take must appear in a signed
+            Learning Agreement before you leave; a course that is not on it is not
+            recognised, and German marks do not enter your GJU average — they are
+            pass/fail.
           </p>
-          <p class="entry-meta">
-            {% if role.started %}<time datetime="{{ role.started.iso }}">{{ role.dateRange }}</time>{% endif %}{% if role.location %} · {{ role.location }}{% endif %}
+          <p class="card-note">
+            <span lang="de">B.A. German and English for Business and Communication</span>
+            and B.A. Translation students take courses equivalent to 15 credit hours. At
+            most two courses may be taught in English, totalling no more than 12 ECTS.
           </p>
-          {% if role.description %}<p>{{ role.description }}</p>{% endif %}
-          {% if role.skills.length %}
-          <ul class="skills">
-            {%- for skill in role.skills %}<li>{{ skill }}</li>{%- endfor %}
+        </article>
+
+        <article class="card">
+          <h3>Semester 2 — internship</h3>
+          <p>
+            At least <strong>20 weeks full time</strong> with a company, recognised as
+            <strong>12 credit hours</strong>. Up to six months counts, as long as your
+            residence permit covers it. You cannot register any GJU course while you are on
+            internship — the only exception is sitting a final exam for a course you already
+            took and failed during the study semester.
+          </p>
+          <p class="card-note">
+            You are responsible for finding the placement. The International Office, the
+            Office for Industrial Links and the Project Office in Magdeburg support you;
+            none of them place you.
+          </p>
+        </article>
+      </div>
+
+      <p class="callout callout-warn">
+        <strong>One full academic year, no shortcuts.</strong> You must spend
+        1<sup>st</sup> + 2<sup>nd</sup> + summer semester in Germany, or 2<sup>nd</sup> +
+        summer + 1<sup>st</sup>. Anyone who does not stay the full year may not register
+        courses at GJU or start an internship in Jordan while they are supposed to be in
+        Germany.
+      </p>
+    </section>
+
+    <!-- ------------------------------------------------------------------ -->
+    <section id="before" aria-labelledby="before-heading">
+      <h2 id="before-heading">Before you travel</h2>
+      <p>
+        Failing any prerequisite lets your School and the International Office stop you from
+        travelling — <em>even at the last minute</em>, and you carry the financial loss. Check
+        these early.
+      </p>
+
+      <h3>Academic prerequisites</h3>
+      <div class="table-wrap">
+        <table>
+          <caption>Credit hours you must have passed before leaving. German language hours do not count towards these totals.</caption>
+          <thead>
+            <tr><th scope="col">Programme</th><th scope="col">Credit hours</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>All Engineering majors, including Architecture</td><td>90 CH</td></tr>
+            <tr><td>Management &amp; Logistic Sciences, Computer Science, Design &amp; Visual Communication</td><td>85 CH</td></tr>
+            <tr><td>B.A. German and English for Business and Communication; B.A. Translation (study plan from 1<sup>st</sup> semester 2014/15)</td><td>72 CH</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <ul class="checklist">
+        <li><strong>GPA ≥ 61 %</strong> when you apply — unless you can prove fewer than 33 credit hours remain to graduate, the 24 German Year hours included. <strong>GPA ≥ 60 %</strong> by the time you travel.</li>
+        <li>All obligatory courses named by your School or Department, passed.</li>
+        <li><strong>Five levels of German</strong> from the German Language Center (School of Applied Humanities and Languages students: five levels from their own School).</li>
+        <li><strong>Level 5 English</strong>, and every <strong>099-level course</strong>.</li>
+        <li>The <strong>160-hour Field Training in Jordan</strong> (B.A. Translation and B.A. German and English for Business and Communication students who started before 1<sup>st</sup> semester 2017/18 are exempt).</li>
+        <li>Application documents — CV, cover letter, certificates — prepared <em>before</em> you fly, and the OIL internship training seminar attended.</li>
+      </ul>
+
+      <p class="callout">
+        From 1<sup>st</sup> semester 2021/22 the old exemption for outside language
+        certificates is gone. Sit the German placement test, or present a certificate no
+        older than twelve months from Goethe-Institut, ÖSD, telc, TestDaF, DSD or the
+        Kultusministerkonferenz — it can place you in a higher level, but never out of
+        German VI.
+      </p>
+
+      <h3>Money, visa and insurance</h3>
+      <div class="card-grid three">
+        <article class="card compact">
+          <h4>Blocked account</h4>
+          <p><strong>10,332 €</strong> plus <strong>189 €</strong> Fintiba fees, deposited via Fintiba with Sutor Bank — roughly 10,500 € for twelve months. No proof of transfer, no visa process.</p>
+        </article>
+        <article class="card compact">
+          <h4>Health insurance</h4>
+          <p>Travel health insurance bought in Jordan covering your <strong>first three months</strong>, plus German public insurance — the Embassy accepts only <strong>DAK</strong>, obtained through Fintiba, at about <strong>110 €/month</strong>.</p>
+        </article>
+        <article class="card compact">
+          <h4>Liability insurance</h4>
+          <p><span lang="de">Haftpflichtversicherung</span> is not mandatory but strongly advised from the day you arrive. About <strong>60 €/year</strong> through Fintiba.</p>
+        </article>
+        <article class="card compact">
+          <h4>Visa deadlines</h4>
+          <p><strong>10 June</strong> for a 1<sup>st</sup>-semester start, <strong>10 December</strong> for a 2<sup>nd</sup>-semester start. The visa itself takes <strong>6–8 weeks</strong> after the appointment.</p>
+        </article>
+        <article class="card compact">
+          <h4>Housing</h4>
+          <p>Dorm rooms run <strong>200–500 €/month</strong>, usually with a two-month deposit — some halls want all six months up front. Take any offer you get; the private market is tight and unfurnished.</p>
+        </article>
+        <article class="card compact">
+          <h4>Living costs</h4>
+          <p><strong>700–1,000 €/month</strong> depending on the city. Several host universities also charge registration and service fees of <strong>250–700 €</strong> that GJU cannot influence.</p>
+        </article>
+      </div>
+
+      <p class="callout callout-warn">
+        <strong>Do not contact the host universities yourself.</strong> The International
+        Office runs the application, the distribution and the deadlines. Distribution
+        follows five published criteria — partner requirements, a balanced spread of
+        strong and weak students, social and gender considerations, geographic balance and
+        GJU’s strategic goals — so a higher GPA gives you no priority over a classmate.
+      </p>
+    </section>
+
+    <!-- ------------------------------------------------------------------ -->
+    <section id="timeline" aria-labelledby="timeline-heading">
+      <h2 id="timeline-heading">The year, step by step</h2>
+      <ol class="steps">
+        <li>
+          <h3>Nomination and distribution</h3>
+          <p>
+            Your School sends the application link in the first or second week of the
+            semester. You name five partner universities, in no particular order; the
+            International Office and your Exchange Coordinator decide together. Not everyone
+            gets one of their five.
+          </p>
+        </li>
+        <li>
+          <h3>Applications, Fintiba, visa</h3>
+          <p>
+            University forms, Learning Agreement, transcripts, language certificates, three
+            biometric photos and three signed passport copies. Then the blocked account, then
+            the Embassy appointment and fingerprints. Apply early — it gives the IO room to
+            find you another seat if a partner rejects you.
+          </p>
+        </li>
+        <li>
+          <h3>Study semester</h3>
+          <p>
+            Courses at the host university under a signed Learning Agreement. Changes need
+            approval from the host university and your Exchange Coordinator, cc’d to the IO
+            and your Head of Department, at the start of the semester.
+          </p>
+        </li>
+        <li>
+          <h3>Search and apply — from week one</h3>
+          <p>
+            Within two weeks of arriving, take your documents to the Career Center, the
+            International Office or your German contact professor and have them checked.
+            Then start applying. Expect to send fifty or more applications.
+          </p>
+        </li>
+        <li>
+          <h3>Interview, offer, contract</h3>
+          <p>
+            The moment you are accepted, send the company details and the contract to your
+            Exchange Coordinator (cc the Office for Industrial Links) for approval, and tell
+            the Project Office in Magdeburg. Then politely cancel your other interviews.
+          </p>
+        </li>
+        <li>
+          <h3>Twenty weeks of work</h3>
+          <p>
+            Stay enrolled at your host university for the second semester — your visa and
+            work permit depend on it. Keep an internship diary from day one; the report is
+            far easier to write while the work is still fresh.
+          </p>
+        </li>
+        <li>
+          <h3>Certificate, report, recognition</h3>
+          <p>
+            Collect a signed and stamped <span lang="de">Praktikumszeugnis</span>, get the
+            report signed and stamped, and hand both to the Office for Industrial Links
+            within two months of the next semester.
+          </p>
+        </li>
+      </ol>
+    </section>
+
+    <!-- ------------------------------------------------------------------ -->
+    <section id="search" aria-labelledby="search-heading">
+      <h2 id="search-heading">Finding an internship</h2>
+      <p class="callout callout-tip">
+        <strong>Do not wait.</strong> Start applying the week you land. And do not hold out
+        for a famous name — smaller and mid-sized companies are often the better internship:
+        the atmosphere is more personal, colleagues have more time for you, and you get a
+        wider range of real tasks.
+      </p>
+
+      <h3>Where to look</h3>
+      <div class="card-grid three">
+        <article class="card compact">
+          <h4>Your host university</h4>
+          <p>Announcements on the university web page, the notice board, the Career Center, the International Office, and your own professors.</p>
+        </article>
+        <article class="card compact">
+          <h4>The Project Office</h4>
+          <p>The GJU Project Office in Magdeburg will send you a list of German companies matching your field of study. Ask for it.</p>
+        </article>
+        <article class="card compact">
+          <h4>Job boards</h4>
+          <p>Dozens of them, listed below — plus plain Google, in German: <span lang="de">„Praktikum im Bereich Logistik“</span>.</p>
+        </article>
+      </div>
+
+      <div class="link-columns">
+        <div>
+          <h4>General job boards</h4>
+          <ul class="link-list">
+            <li><a href="https://de.indeed.com/" rel="external nofollow">indeed.de</a></li>
+            <li><a href="https://www.jobmensa.de/" rel="external nofollow">jobmensa.de</a></li>
+            <li><a href="https://www.monster.de" rel="external nofollow">monster.de</a></li>
+            <li><a href="https://www.stepstone.de" rel="external nofollow">stepstone.de</a></li>
+            <li><a href="https://www.jobboerse.arbeitsagentur.de" rel="external nofollow">jobboerse.arbeitsagentur.de</a></li>
+            <li><a href="https://www.stellenanzeigen.de" rel="external nofollow">stellenanzeigen.de</a></li>
+            <li><a href="https://www.academics.de" rel="external nofollow">academics.de</a></li>
+            <li><a href="https://www.kimeta.de/" rel="external nofollow">kimeta.de</a></li>
+            <li><a href="https://www.jobworld.de" rel="external nofollow">jobworld.de</a></li>
+            <li><a href="https://www.meinestadt.de/" rel="external nofollow">meinestadt.de</a></li>
           </ul>
-          {% endif %}
-          {% if role.attachmentImage %}
-          <figure>
-            <img src="{{ role.attachmentImage | url }}"
-                 alt="Attachment for {{ role.title }} at {{ role.organization }}"
-                 {% if role.attachmentImageWidth %}width="{{ role.attachmentImageWidth }}" height="{{ role.attachmentImageHeight }}"{% endif %}
-                 loading="lazy" decoding="async">
-          </figure>
-          {% endif %}
-        </article>
-      </li>
-      {%- endfor %}
-    </ul>
-  </section>
-  {% endif %}
-
-  {% if profile.education.length %}
-  <section aria-labelledby="education-heading">
-    <h2 id="education-heading">Education</h2>
-    <ul class="entry-list">
-      {%- for entry in profile.education %}
-      <li>
-        <article class="entry">
-          <h3>{{ entry.school }}</h3>
-          {% if entry.degree or entry.fieldOfStudy %}
-          <p class="entry-meta">{{ entry.degree }}{% if entry.degree and entry.fieldOfStudy %}, {% endif %}{{ entry.fieldOfStudy }}</p>
-          {% endif %}
-          <p class="entry-meta">
-            {% if entry.industry %}{{ entry.industry }}{% endif %}{% if entry.industry and entry.dateRange %} · {% endif %}{% if entry.started %}<time datetime="{{ entry.started.iso }}">{{ entry.dateRange }}</time>{% endif %}
-          </p>
-          {% if entry.description %}<p>{{ entry.description }}</p>{% endif %}
-        </article>
-      </li>
-      {%- endfor %}
-    </ul>
-  </section>
-  {% endif %}
-
-  <section aria-labelledby="certs-heading">
-    <h2 id="certs-heading">Licenses &amp; certifications</h2>
-    {% if certificates.length %}
-    <ul class="entry-list">
-      {%- for cert in certificates %}
-      <li>
-        <article class="entry" id="credential-{{ cert.id }}">
-          <h3>{{ cert.title }}</h3>
-          <p class="entry-meta">{{ cert.issuer }}</p>
-          <p class="entry-meta">
-            {% if cert.issued %}Issued <time datetime="{{ cert.issued.iso }}">{{ cert.dateIssued | humanDate }}</time>{% endif %}{% if cert.expires %} · {{ "Expired" if cert.isExpired else "Expires" }} <time datetime="{{ cert.expires.iso }}">{{ cert.dateExpires | humanDate }}</time>{% else %}{% if cert.issued %} · No expiry{% endif %}{% endif %}{% if cert.credentialId %} · ID {{ cert.credentialId }}{% endif %}
-          </p>
-          {% if cert.credentialUrl %}
-          <p class="entry-meta"><a href="{{ cert.credentialUrl }}" rel="external nofollow">Verify this credential</a></p>
-          {% endif %}
-          {% if cert.description %}<p>{{ cert.description }}</p>{% endif %}
-          {% if cert.skills.length %}
-          <ul class="skills">
-            {%- for skill in cert.skills %}<li>{{ skill }}</li>{%- endfor %}
+        </div>
+        <div>
+          <h4>Internship portals</h4>
+          <ul class="link-list">
+            <li><a href="https://www.meinpraktikum.de/" rel="external nofollow">meinpraktikum.de</a></li>
+            <li><a href="https://www.praktikumsstellen.de/" rel="external nofollow">praktikumsstellen.de</a></li>
+            <li><a href="https://www.praktika.de/" rel="external nofollow">praktika.de</a></li>
+            <li><a href="https://www.praktikum.info/" rel="external nofollow">praktikum.info</a></li>
+            <li><a href="https://www.praktikum.de" rel="external nofollow">praktikum.de</a></li>
+            <li><a href="https://www.connecticum.de/praktikum" rel="external nofollow">connecticum.de</a></li>
+            <li><a href="https://www.jobware.de" rel="external nofollow">jobware.de</a></li>
+            <li><a href="https://www.unicum.de" rel="external nofollow">unicum.de</a></li>
+            <li><a href="https://www.bonding.de" rel="external nofollow">bonding.de</a></li>
+            <li><a href="https://www.absolventa.de/" rel="external nofollow">absolventa.de</a></li>
           </ul>
-          {% endif %}
-          {% if cert.certificateImage %}
-          <figure>
-            <img src="{{ cert.certificateImage | url }}"
-                 alt="Certificate awarded to {{ profile.name }}: {{ cert.title }}, issued by {{ cert.issuer }}"
-                 {% if cert.certificateImageWidth %}width="{{ cert.certificateImageWidth }}" height="{{ cert.certificateImageHeight }}"{% endif %}
-                 loading="lazy" decoding="async">
-            <figcaption>Display-resolution copy. The full-resolution original is deliberately not published.</figcaption>
-          </figure>
-          {% endif %}
-          {% if cert.certificateFile %}
-          <p><a href="{{ cert.certificateFile | url }}">Open the certificate document</a></p>
-          {% endif %}
-          {% if cert.extractedText %}
-          {# <details> keeps the transcription in the markup — crawlers and AI
-             readers get it whether or not it is expanded on screen. #}
-          <details class="extracted-toggle">
-            <summary>Text read from the certificate</summary>
-            <blockquote class="extracted"><p>{{ cert.extractedText }}</p></blockquote>
-          </details>
-          {% endif %}
+        </div>
+        <div>
+          <h4>Rooms and flats</h4>
+          <ul class="link-list">
+            <li><a href="https://www.wg-gesucht.de" rel="external nofollow">wg-gesucht.de</a></li>
+            <li><a href="https://www.studis-online.de" rel="external nofollow">studis-online.de</a> — <span lang="de">Wohnungsbörse</span></li>
+            <li><a href="https://www.immobilienscout24.de" rel="external nofollow">immobilienscout24.de</a></li>
+            <li><a href="https://www.immowelt.de" rel="external nofollow">immowelt.de</a></li>
+            <li><a href="https://www.immonet.de" rel="external nofollow">immonet.de</a></li>
+            <li><a href="https://www.zwischenmiete.de" rel="external nofollow">zwischenmiete.de</a></li>
+            <li><a href="https://www.studenten-wg.de" rel="external nofollow">studenten-wg.de</a></li>
+            <li><a href="https://housinganywhere.com" rel="external nofollow">housinganywhere.com</a></li>
+            <li><a href="https://www.djh.de" rel="external nofollow">djh.de</a> — hostels, for the first few days</li>
+          </ul>
+        </div>
+      </div>
+      <p class="muted">
+        Ask the company first — many help their interns find a room. Also check the local
+        <span lang="de">Studentenwerk</span>, which keeps rooms for students enrolled at its
+        universities.
+      </p>
+
+      <h3>Keep a list</h3>
+      <p>
+        Research is the part most people skimp on. Make one spreadsheet and fill it in the
+        moment you send something and the moment anything comes back. Keep every application
+        in a single folder on your computer.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Company, website, contact e-mail</th>
+              <th scope="col">What interests you in the offer</th>
+              <th scope="col">Sent</th>
+              <th scope="col">Follow up</th>
+              <th scope="col">Answer</th>
+              <th scope="col">Interview</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td class="dim">…</td><td class="dim">…</td><td class="dim">date</td><td class="dim">date</td><td class="dim">date / yes / no</td><td class="dim">date</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        Wait about <strong>two weeks</strong> for an acknowledgement. If nothing arrives,
+        call and ask politely whether your application was received and when you can expect
+        an answer. Rejections are normal — German students are competing for the same
+        places. Ask why, when you can; the next application gets better for it. And answer
+        your phone properly during the application phase: take the caller’s name and
+        number, and ask again if you did not understand something.
+      </p>
+    </section>
+
+    <!-- ------------------------------------------------------------------ -->
+    <section id="cv" aria-labelledby="cv-heading">
+      <h2 id="cv-heading">The CV (<span lang="de">Lebenslauf</span>)</h2>
+      <p>
+        A German CV is a table, not a story, and it is the first impression the company gets.
+        Rewrite it for each application: decide every time which facts actually matter for
+        that job.
+      </p>
+
+      <div class="card-grid two">
+        <article class="card">
+          <h3>Form</h3>
+          <ul>
+            <li>Word document, table form, headed <span lang="de">Lebenslauf</span>.</li>
+            <li>Chronological or reverse chronological — pick one and hold it.</li>
+            <li>One page. Two at the very most.</li>
+            <li>Calibri, Arial, Tahoma or Verdana; never below 11 pt.</li>
+            <li>Dates always <code>MM/YYYY</code>, month by month, with no gaps.</li>
+            <li>Bold for emphasis, sparingly — not bold <em>and</em> italic.</li>
+            <li>Headlines left-aligned.</li>
+            <li>Application photo, top right. Have it taken properly.</li>
+            <li>City, date and a scanned signature at the bottom.</li>
+          </ul>
         </article>
-      </li>
-      {%- endfor %}
-    </ul>
-    {% else %}
-    <p class="muted">No certifications published yet.</p>
-    {% endif %}
-  </section>
+        <article class="card">
+          <h3>Sections</h3>
+          <dl class="facts compact">
+            <dt lang="de">Persönliche Daten</dt>
+            <dd>Name as in your passport (first and last only), German address, phone with area code, a serious e-mail address, date and place of birth, nationality. Marital status is optional.</dd>
+            <dt lang="de">Schulbildung</dt>
+            <dd>Your Tawjihi with the final grade.</dd>
+            <dt lang="de">Studium</dt>
+            <dd>Programme, university and city, and the degree you are working towards.</dd>
+            <dt lang="de">Praxiserfahrung</dt>
+            <dd>Not just company names — the tasks you did. That is what convinces.</dd>
+            <dt lang="de">Weiterbildungen</dt>
+            <dd>Only recent training that is relevant and ended in a certificate.</dd>
+            <dt lang="de">Zusatzqualifikationen</dt>
+            <dd>Languages and software, each with an honest level.</dd>
+            <dt lang="de">Interessen</dt>
+            <dd>Team hobbies read well. Skip reading and swimming; think twice about anything risky or hard to explain.</dd>
+          </dl>
+        </article>
+      </div>
 
-  <section aria-labelledby="skills-heading">
-    <h2 id="skills-heading">Skills</h2>
-    <p class="muted">
-      {{ profile.skills.length }} skill{{ "" if profile.skills.length == 1 else "s" }}, aggregated from
-      {{ profile.experienceCount }} role{{ "" if profile.experienceCount == 1 else "s" }},
-      {{ profile.certificateCount }} certification{{ "" if profile.certificateCount == 1 else "s" }}
-      and the profile's own list. A number in brackets is how many entries evidence that skill.
-    </p>
-    <ul class="skills">
-      {%- for skill in profile.skills %}
-      <li>{{ skill.name }}{% if skill.count %} <span class="count">({{ skill.count }})</span>{% endif %}</li>
-      {%- endfor %}
-    </ul>
-  </section>
+      <p class="callout">
+        <strong>Careful with <span lang="de">Nationalität</span>.</strong> Under
+        <span lang="de">Nationalität</span> you write the nationality —
+        <span lang="de">jordanisch</span>. Under
+        <span lang="de">Staatsangehörigkeit</span> you write the country —
+        <span lang="de">Jordanien</span>.
+      </p>
 
-  <section aria-labelledby="contact-heading">
-    <h2 id="contact-heading">Contact and links</h2>
-    <dl class="facts">
-      {% if profile.jobTitle %}<dt>Current role</dt><dd>{{ profile.jobTitle }}</dd>{% endif %}
-      {% if profile.worksFor %}<dt>Organization</dt><dd>{{ profile.worksFor }}</dd>{% endif %}
-      {% if profile.location %}<dt>Location</dt><dd>{{ profile.location }}</dd>{% endif %}
-      {% if profile.email %}<dt>Email</dt><dd><a href="mailto:{{ profile.email }}">{{ profile.email }}</a></dd>{% endif %}
-    </dl>
-    {% if profile.links.length %}
-    <ul class="links">
-      {%- for link in profile.links %}
-      <li><a href="{{ link.url }}" rel="me">{{ link.label }}</a></li>
-      {%- endfor %}
-    </ul>
-    {% else %}
-    <p class="muted">No external links configured yet.</p>
-    {% endif %}
-  </section>
+      <details class="check">
+        <summary>CV checklist</summary>
+        <ul class="checklist">
+          <li>Spelling and structure checked end to end; clear and readable throughout.</li>
+          <li>One or two pages, no more.</li>
+          <li>Contact details complete: name, address, phone, mobile, e-mail.</li>
+          <li><span lang="de">Persönliche Daten</span> complete.</li>
+          <li>Logical headings and sub-items, in a logical order.</li>
+          <li>Chronological or reverse chronological throughout.</li>
+          <li>Every date in <code>MM/YYYY</code>, month by month.</li>
+          <li>Practical experience names the company and the city.</li>
+          <li>Nothing unnecessary left in.</li>
+          <li>Languages listed with an assessment of each.</li>
+          <li>Computer skills listed with an assessment.</li>
+          <li>Every term explained; no abbreviations, no stray English.</li>
+          <li>City, current date and signature at the foot.</li>
+        </ul>
+      </details>
 
-  <section aria-labelledby="machine-heading">
-    <h2 id="machine-heading">For AI assistants and crawlers</h2>
-    <p>
-      This whole profile is one page of static HTML, rendered at build time. No JavaScript
-      is required to read any of it, and no crawler is blocked. If you are an automated
-      agent, the fastest complete summary is <a href="{{ '/llms.txt' | url }}">/llms.txt</a>
-      (plain text); the same content is available as structured data at
-      <a href="{{ '/data/profile.json' | url }}">/data/profile.json</a>,
-      <a href="{{ '/data/experience.json' | url }}">/data/experience.json</a> and
-      <a href="{{ '/data/certificates.json' | url }}">/data/certificates.json</a>.
-      Each certification is also addressable on this page as
-      <code>#credential-&lt;id&gt;</code>.
-    </p>
-  </section>
-</article>
+      <p class="doc-links">
+        <a class="doc-link" href="{{ (docs + '/application-process/praktikumsinfo1_lebenslauf_en_neues_logo.pdf') | url }}">
+          <span class="doc-kind">PDF</span> Internship Information Part 1 — The CV
+        </a>
+        <a class="doc-link" href="{{ (docs + '/samples/cv/cv_formatvorlage.pdf') | url }}">
+          <span class="doc-kind">PDF</span> <span lang="de">Lebenslauf</span> template
+        </a>
+      </p>
+    </section>
+
+    <!-- ------------------------------------------------------------------ -->
+    <section id="cover-letter" aria-labelledby="cover-letter-heading">
+      <h2 id="cover-letter-heading">The cover letter (<span lang="de">Anschreiben</span>)</h2>
+      <p>
+        This is where you argue that <em>you</em> are the right person. The reader will spend
+        very little time on it, so it has to be short and interesting. One page — roughly
+        four to eight sentences of body text.
+      </p>
+
+      <div class="card-grid two">
+        <article class="card">
+          <h3>Form</h3>
+          <ul>
+            <li>Left-aligned, not justified — it looks livelier.</li>
+            <li>One font throughout, 11–12 pt, single line spacing.</li>
+            <li>Real paragraphs; hyphenate by hand, not by autocorrect.</li>
+            <li>No abbreviations anywhere. Do not start sentence after sentence with <span lang="de">„ich“</span>.</li>
+            <li>Same page header as your CV, so the two look like one document.</li>
+            <li>Sign it by hand — scan the signature for e-mail applications.</li>
+            <li>Note <span lang="de">„Anlagen“</span> under your signature; you need not list them.</li>
+            <li>IT students especially: follow <a href="https://www.din5008.de" rel="external nofollow">DIN 5008</a>.</li>
+          </ul>
+        </article>
+        <article class="card">
+          <h3>The text must answer</h3>
+          <ul>
+            <li>Why this internship? What is genuinely interesting about it?</li>
+            <li>Which of your experiences are relevant to it?</li>
+            <li>Which characteristics describe you — and what evidence backs each one?</li>
+            <li>What are your goals?</li>
+            <li>How do you meet the requirements in the advertisement?</li>
+            <li>Why <em>you</em>, and not someone else?</li>
+          </ul>
+          <p class="card-note">
+            Close by summarising what speaks for you, then ask politely for an interview.
+            Sign off <span lang="de">„Mit freundlichen Grüßen“</span>.
+          </p>
+        </article>
+      </div>
+
+      <h3>The address block and subject line</h3>
+      <p>
+        Address a person, not a department. The name is in the advertisement or on the
+        company site; if it is nowhere, phone and ask. The subject line carries the exact
+        job title, the reference number, where you saw the advertisement and when it was
+        published — in bold.
+      </p>
+      <figure class="sample">
+        <pre lang="de">Stadtwerke München
+Frau Christa Rösner
+Personalpolitik/Personalmarketing
+Emmy-Noether-Straße 2
+80287 München
+
+<strong>Bewerbung um ein Praktikum im Bereich Softwareentwicklung (Java) ab März 2011</strong>
+hier: Ihre Anzeige in der Süddeutschen Zeitung vom 13.01.2011
+
+Sehr geehrte Frau Rösner,</pre>
+        <figcaption>
+          Never <span lang="de">„Sehr geehrte Damen und Herren“</span> when you can name the
+          person. Never <span lang="de">„Hiermit bewerbe ich mich…“</span> when you can open
+          with something about them: <span lang="de">„Sie suchen einen Praktikanten…“</span>
+        </figcaption>
+      </figure>
+
+      <p class="callout callout-warn">
+        <strong>The copy-and-paste trap.</strong> You will reuse text across dozens of
+        applications; that is fine. But read every letter again before it goes, and check
+        above all that the company name and the contact person are the right ones.
+      </p>
+
+      <details class="check">
+        <summary>Cover letter checklist</summary>
+        <ul class="checklist">
+          <li>Standard page format, real paragraphs, same look as the CV.</li>
+          <li>One page; single line spacing; one font at 11–12 pt.</li>
+          <li>No abbreviations, no chain of sentences starting with <span lang="de">„ich“</span>.</li>
+          <li>Whole document re-checked for grammar, spelling and formatting.</li>
+          <li>Page header with all contact details, well laid out.</li>
+          <li>Company name and address copied correctly, with the responsible person added.</li>
+          <li>Bold subject line carrying every piece of available information.</li>
+          <li>Personal salutation, individual opening, no stock phrases.</li>
+          <li>Earlier phone call or e-mail referred to, if there was one.</li>
+          <li>You explain your interest in this company and this internship.</li>
+          <li>Previous jobs and internships summarised — not the CV repeated.</li>
+          <li>Your skills tied back to the requirements in the advertisement, each with a reason.</li>
+          <li>You explain why you in particular fit the position.</li>
+          <li>A polite request for an interview at the end.</li>
+          <li><span lang="de">„Mit freundlichen Grüßen“</span>, the current date, and a scanned signature.</li>
+        </ul>
+      </details>
+
+      <p class="doc-links">
+        <a class="doc-link" href="{{ (docs + '/application-process/praktikumsinfo2_anschreiben_en_neues_logo.pdf') | url }}">
+          <span class="doc-kind">PDF</span> Internship Information Part 2 — The cover letter
+        </a>
+        <a class="doc-link" href="{{ (docs + '/samples/cover-letter/muster_anschreiben1.pdf') | url }}">
+          <span class="doc-kind">PDF</span> Sample letter 1
+        </a>
+        <a class="doc-link" href="{{ (docs + '/samples/cover-letter/muster_anschreiben2.pdf') | url }}">
+          <span class="doc-kind">PDF</span> Sample letter 2
+        </a>
+        <a class="doc-link" href="{{ (docs + '/samples/cover-letter/kreativesanschreiben.pdf') | url }}">
+          <span class="doc-kind">PDF</span> Creative sample letter
+        </a>
+      </p>
+    </section>
+
+    <!-- ------------------------------------------------------------------ -->
+    <section id="sending" aria-labelledby="sending-heading">
+      <h2 id="sending-heading">Sending the application</h2>
+
+      <h3>What goes in the PDF</h3>
+      <p>
+        An e-mail application is one PDF named
+        <code lang="de">Bewerbung Vorname Nachname</code>, in this order:
+      </p>
+      <ol class="numbered">
+        <li>Cover letter (<span lang="de">Anschreiben</span>)</li>
+        <li>CV (<span lang="de">Lebenslauf</span>) — these two may be merged into one file</li>
+        <li>Certificates (<span lang="de">Zeugnisse und Referenzen</span>) — <strong>all scanned into a single readable PDF</strong></li>
+        <li>Architecture and Design students only: a portfolio as a separate PDF, <strong>under 3 MB</strong></li>
+      </ol>
+
+      <p>The certificates section contains:</p>
+      <ul class="checklist tight">
+        <li>Confirmation of enrolment from your German university <em>and</em> from GJU</li>
+        <li><span lang="de">Bestätigung Pflichtpraktikum</span> from the International Office</li>
+        <li>Your current GJU transcript</li>
+        <li>Your Tawjihi certificate or equivalent</li>
+        <li>Letters of reference from earlier internships, training or voluntary work</li>
+        <li>A letter of recommendation from a GJU professor — optional, and worth asking for</li>
+        <li>The GJU internship guidelines (<span lang="de">GJU-Praktikumsrichtlinien</span>)</li>
+      </ul>
+
+      <h3>Three ways to apply</h3>
+      <div class="card-grid three">
+        <article class="card compact">
+          <h4>By e-mail</h4>
+          <p>
+            Attach the PDF and keep the message itself short. Send it to yourself first —
+            pasted text breaks line endings, and umlauts and HTML formatting do not survive
+            every mail client. Plain text only.
+          </p>
+        </article>
+        <article class="card compact">
+          <h4>Online form</h4>
+          <p>
+            Many companies require it. If they do, use it — do not send your documents to
+            some other address instead. Take your time and fill in every field carefully.
+          </p>
+        </article>
+        <article class="card compact">
+          <h4>Speculative (<span lang="de">Initiativbewerbung</span>)</h4>
+          <p>
+            When there is no advertisement. Phone first to ask whether they take interns and
+            who should receive it. Same form and structure as a normal application; say in
+            the subject that it is speculative and which position you want.
+          </p>
+        </article>
+      </div>
+
+      <figure class="sample">
+        <pre lang="de">Betreff: Bewerbung für ein Praktikum (Bezeichnung und/oder Stellennummer)
+
+Sehr geehrte Frau …,
+
+im Anhang finden Sie meine Bewerbungsunterlagen für ein Praktikum in Ihrem
+Unternehmen im Bereich … . Ich würde mich freuen, ein Praktikum bei Ihnen
+absolvieren zu können. Für Rückfragen stehe ich Ihnen selbstverständlich per
+Mail oder unter der Telefonnummer […] zur Verfügung.
+
+Mit freundlichen Grüßen
+Vorname Nachname</pre>
+        <figcaption>A body for the e-mail itself. The application lives in the attachment, not here.</figcaption>
+      </figure>
+
+      <p class="doc-links">
+        <a class="doc-link" href="{{ (docs + '/application-process/praktikumsinfo3_bewerbungsverfahren_und_praktikum_en_august_2019_1_0.pdf') | url }}">
+          <span class="doc-kind">PDF</span> Internship Information Part 3 — The application procedure
+        </a>
+        <a class="doc-link" href="{{ (docs + '/search-tools/jobborsen.pdf') | url }}">
+          <span class="doc-kind">PDF</span> <span lang="de">Jobbörsen</span> — job board list
+        </a>
+      </p>
+    </section>
+
+    <!-- ------------------------------------------------------------------ -->
+    <section id="interview" aria-labelledby="interview-heading">
+      <h2 id="interview-heading">The interview</h2>
+      <p>
+        An invitation already means they liked the application. The conversation usually
+        runs an hour at most and follows a predictable shape.
+      </p>
+
+      <h3>Before you go</h3>
+      <ul class="checklist">
+        <li><strong>Research them properly.</strong> Employee count, divisions, products, current projects. Being able to say “for your project XY I could contribute…” is worth more than any stock answer.</li>
+        <li><strong>Match the tone.</strong> A young internet company and a traditional bank are different conversations.</li>
+        <li><strong>Dress for the branch.</strong> Conservative in a traditional company, relaxed in a creative one — clean, neat, and something you are comfortable in. Keep jewellery, make-up and perfume restrained.</li>
+        <li><strong>Plan the journey.</strong> Aim to arrive about 15 minutes early. Late makes a bad impression; two hours early is not much better.</li>
+        <li><strong>Bring the paperwork:</strong> a copy of your application, the invitation, and copies of your certificates and references.</li>
+      </ul>
+
+      <h3>In the room</h3>
+      <div class="card-grid two">
+        <article class="card">
+          <h4>Do</h4>
+          <ul>
+            <li>Knock so they can hear you, and wait to be asked in.</li>
+            <li>Introduce yourself with first and last name; return an offered handshake firmly.</li>
+            <li>Sit only when invited, feet flat on the floor, well back on the chair.</li>
+            <li>Catch the interviewer’s name and use it. Ask again straight away if you missed it.</li>
+            <li>Talk clearly more than half the time — they want to hear about you.</li>
+            <li>Hold eye contact without staring. Ask if you may take notes.</li>
+            <li>Ask when something is unclear; it shows interest.</li>
+          </ul>
+        </article>
+        <article class="card">
+          <h4>Don’t</h4>
+          <ul>
+            <li>Accept a cigarette — politely refuse; smoking in interviews is not done in Germany. A drink is fine.</li>
+            <li>Fold your arms or build a wall of cups and notepads.</li>
+            <li>Cross your legs, sit on the edge of the chair, or tilt it.</li>
+            <li>Fidget with your hands.</li>
+            <li>Rush. Excitement makes people speak too fast.</li>
+            <li>Use filler like <span lang="de">„sag ich mal“</span> or <span lang="de">„man“</span>.</li>
+            <li>Crowd the interviewer — keep a comfortable distance.</li>
+          </ul>
+        </article>
+      </div>
+
+      <h3>The five phases</h3>
+      <ol class="steps compact" lang="de">
+        <li><h4>Begrüßung und Einleitung</h4><p>Haben Sie gut hierher gefunden? Wie war Ihre Anreise?</p></li>
+        <li><h4>Kennenlernen des Bewerbers und seiner Motivation</h4><p>Erzählen Sie uns bitte etwas über sich und Ihren bisherigen Werdegang. Warum haben Sie sich für dieses Studium entschieden? Warum an der GJU? Warum sind Sie zum Studieren nach Deutschland gekommen? Was ist Ihr berufliches Ziel? Was sind Ihre Stärken und Schwächen? Was machen Sie in Ihrer Freizeit?</p></li>
+        <li><h4>Gespräch über das Unternehmen und Praktikumsinhalte</h4><p>Was wissen Sie über unser Unternehmen und unsere Produkte? Warum haben Sie sich gerade bei uns beworben? Was erwarten Sie von Ihrem Praktikum? Welche Bereiche interessieren Sie? Welche Fragen haben Sie an uns?</p></li>
+        <li><h4>Vertragsverhandlungen</h4><p>Wann soll das Praktikum anfangen? Wie lange soll es dauern? Was für eine Praktikantenvergütung stellen Sie sich vor?</p></li>
+        <li><h4>Abschluss</h4><p>Wie geht es weiter? Bis wann ist eine Entscheidung zu erwarten?</p></li>
+      </ol>
+
+      <h3>Questions worth preparing</h3>
+      <div class="card-grid two">
+        <article class="card">
+          <h4>What they will ask</h4>
+          <dl class="facts compact">
+            <dt>Why us?</dt>
+            <dd>Name what is actually good about the company and the field you want to learn.</dd>
+            <dt>What do you expect from the internship?</dt>
+            <dd>What you want to learn; which areas you want to see.</dd>
+            <dt>Strengths and weaknesses?</dt>
+            <dd>Everyone has both. Pair a weakness with a matching strength, and avoid the worn-out “I expect too much of myself”. Saying your German is not perfect but improving is honest and lands well.</dd>
+            <dt>Where in 2, 5, 10 years?</dt>
+            <dd>Be ambitious and concrete — a master’s in Germany, a direction you are heading. Tie it back to them where you can.</dd>
+            <dt>What do you know about us?</dt>
+            <dd>Read the site and the press beforehand. Banks, authorities and media may also ask about politics and economics: show you follow the news, and offer your own opinion only carefully.</dd>
+          </dl>
+        </article>
+        <article class="card">
+          <h4>What you should ask</h4>
+          <p class="card-note">Keep one or two for the end. Ask open questions — who, what, how. Avoid “why”: it can sound like criticism.</p>
+          <ul>
+            <li>How much of the work is individual and how much is team work?</li>
+            <li>What happens during the introductory phase?</li>
+            <li>How are interns supervised here?</li>
+            <li>Which departments will I see? Which tasks will I be given?</li>
+            <li>Who are my supervisors and colleagues?</li>
+            <li>What does my workplace look like — could I see it?</li>
+            <li>You mentioned project XY on your site; can you tell me more?</li>
+            <li>Could you help me find a flat in …?</li>
+          </ul>
+          <p class="card-note">Pay and working-time rules belong before you sign the contract — not necessarily in the first conversation.</p>
+        </article>
+      </div>
+
+      <p class="callout">
+        <strong>You do not have to answer everything.</strong> Questions about your finances,
+        marriage, wish for children, pregnancy, illnesses or religion are generally not
+        allowed, and anything unrelated to the job need not be answered. The exceptions:
+        an illness relevant to the work, a contagious disease, or a condition likely to make
+        you unfit for work must be disclosed on request. More broadly, you must tell an
+        employer anything you can recognise as material to the contract.
+      </p>
+
+      <h3>On the phone</h3>
+      <p>
+        Phone screening is part of many selection procedures, and you may call them first —
+        any initiative is worth it. Say your name clearly, ask three smart questions in a
+        fresh voice, be short and precise, and get off the line. A first call also gives you
+        a far better opening than the usual one:
+        <span lang="de">„Herzlichen Dank für das nette Gespräch vom vergangenen Freitag, bei
+        dem Sie mich ermutigt haben, meine Unterlagen einzureichen.“</span> Keep your CV,
+        certificates and the advertisement in front of you — they will scan you back.
+      </p>
+
+      <p class="doc-links">
+        <a class="doc-link" href="{{ (docs + '/application-process/praktikumsinfo4_bewerbungsgespraech_en_neues_logo.pdf') | url }}">
+          <span class="doc-kind">PDF</span> Internship Information Part 4 — The interview
+        </a>
+      </p>
+    </section>
+
+    <!-- ------------------------------------------------------------------ -->
+    <section id="during" aria-labelledby="during-heading">
+      <h2 id="during-heading">During the internship</h2>
+      <ul class="checklist">
+        <li><strong>Get the contract.</strong> The company sends an internship contract for you to sign. Check that the placement is not shorter than 20 weeks.</li>
+        <li><strong>Stay enrolled</strong> at your German host university for the second semester. Your visa and work permit depend on it.</li>
+        <li><strong>Keep a diary.</strong> Note your tasks daily or weekly. The report is built from these notes; writing it from memory afterwards is far harder.</li>
+        <li><strong>Treat it as a real job.</strong> Office hours, break times, holiday rules — the contract applies to you like anyone else.</li>
+        <li><strong>No courses.</strong> You may not register GJU courses during the internship semester.</li>
+        <li><strong>Ask for the certificate.</strong> Tell the company early that you need a signed and stamped <span lang="de">Praktikumszeugnis</span> at the end.</li>
+      </ul>
+
+      <p class="callout callout-warn">
+        <strong>If something goes wrong</strong> — you feel underused, overwhelmed, or you
+        cannot get on with a colleague — start with a calm conversation with the person
+        involved or your supervisor. If that does not help, tell the Project Office in
+        Magdeburg, your Exchange Officer at GJU, or the Office for Industrial Links.
+        <strong>Never quit an internship before you have another agreement in place.</strong>
+      </p>
+
+      <p>
+        Take the placement seriously and it can turn into a bachelor thesis or a job. Show
+        interest in what you work on, bring your own ideas, offer help, and follow the
+        company’s rules.
+      </p>
+    </section>
+
+    <!-- ------------------------------------------------------------------ -->
+    <section id="after" aria-labelledby="after-heading">
+      <h2 id="after-heading">Certificate and report</h2>
+      <p class="callout callout-warn">
+        Both documents are due <strong>within two months of the next semester</strong>.
+        Hand them in late and you are blocked from registering.
+      </p>
+
+      <div class="card-grid two">
+        <article class="card">
+          <h3>Internship certificate</h3>
+          <p>
+            An official signed and stamped <span lang="de">Praktikumszeugnis</span> from the
+            company, in German or English, carrying:
+          </p>
+          <ul>
+            <li>The company logo and name, and the supervisor’s name</li>
+            <li>Your personal details and the internship dates</li>
+            <li>A description of your tasks</li>
+            <li>An evaluation of your performance</li>
+          </ul>
+          <p class="card-note">
+            Deliver the original plus <strong>three hard copies</strong> to the Office for
+            Industrial Links; the original comes back to you. The company may also post it
+            to: German Jordanian University, Office for Industrial Links, P.O. Box 35247,
+            Amman 11180, Jordan.
+          </p>
+        </article>
+
+        <article class="card">
+          <h3>Internship report</h3>
+          <ul>
+            <li><strong>15–20 pages</strong> (5,000–7,000 words)</li>
+            <li>Written in <strong>English</strong>, with a <strong>1–2 page German summary</strong> at the end</li>
+            <li>Page numbers on every page</li>
+            <li><strong>Clip it — do not bind or file it</strong></li>
+            <li>Signed and stamped by the company</li>
+          </ul>
+          <p class="card-note">
+            Some companies have their own outline or a secrecy agreement — ask your
+            supervisor. If you cannot finish before you leave, e-mail a scan to the company
+            to be signed, stamped and returned. Your Exchange Coordinator approves it; if it
+            is not up to standard, you rewrite it.
+          </p>
+        </article>
+      </div>
+
+      <h3>Report structure</h3>
+      <ol class="numbered spaced">
+        <li>
+          <strong>Cover page</strong> — your name and GJU student ID, the title
+          (“Internship at Company XY”), start and finish dates, number of weeks, your
+          company supervisor and your GJU advisor, with space left for both to sign and stamp.
+        </li>
+        <li><strong>Privacy statement</strong>, if the company requires one.</li>
+        <li><strong>Table of contents</strong> with page numbers, plus lists of tables and figures and the references.</li>
+        <li><strong>Introduction</strong> — why this company, and what you did in outline.</li>
+        <li>
+          <strong>The company</strong> — brief history, departments, full address and web
+          links; its sector, products and services, and who its customers are; whether it
+          operates worldwide and where; an organisation chart and the employee count.
+        </li>
+        <li>
+          <strong>Internship activities</strong> — the main part. A typical working day and
+          the unusual ones; difficulties with the work, the language and the culture; your
+          supervisor and team; your tasks and what you learned; the tools you used; a
+          special project and its result; any research you did; and a comparison of what you
+          learned at university with what you saw in practice. Include real work samples —
+          graphs, pictures, data, drawings, calculations.
+        </li>
+        <li>
+          <strong>Evaluation</strong> — skills gained, whether it met your expectations, the
+          responsibilities you were trusted with, how it shapes your career plans, how it
+          connects to your studies, the main challenges, your relationship with supervisor
+          and colleagues, and whether you would recommend the company to other GJU students.
+        </li>
+        <li><strong>Conclusion</strong> — the key takeaways.</li>
+        <li><strong>Appendices</strong> — charts, graphs, pictures, code.</li>
+        <li><strong>References.</strong></li>
+        <li><strong>Summary in German</strong> — one to two pages.</li>
+      </ol>
+      <p class="muted">
+        Your School or study programme may add its own requirements. Ask your academic
+        advisor at GJU.
+      </p>
+
+      <p class="doc-links">
+        <a class="doc-link" href="{{ (docs + '/after-the-internship/internship_report_instructions.pdf') | url }}">
+          <span class="doc-kind">PDF</span> Internship report instructions
+        </a>
+        <a class="doc-link" href="{{ (docs + '/after-the-internship/required_internship_documents_2015_46.pdf') | url }}">
+          <span class="doc-kind">PDF</span> Required internship documents (2015/46)
+        </a>
+      </p>
+    </section>
+
+    <!-- ------------------------------------------------------------------ -->
+    <section id="rules" aria-labelledby="rules-heading">
+      <h2 id="rules-heading">Rules and edge cases</h2>
+
+      <h3>Where the internship may be</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th scope="col">Where</th><th scope="col">Who has to approve it</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>German or international company <strong>in Germany</strong></td><td class="ok">Preferred — has priority</td></tr>
+            <tr><td>German or international company in Austria, Switzerland or Luxembourg</td><td class="ok">Approved easily</td></tr>
+            <tr><td>German company in a non-German-speaking European country</td><td>Your Dean, explicitly</td></tr>
+            <tr><td>Non-German company in a non-German-speaking European country</td><td>The President, explicitly</td></tr>
+            <tr><td>German company outside Europe</td><td>Deans’ Council recommendation <em>and</em> the President</td></tr>
+            <tr><td>Anything else</td><td class="no">Generally not approved</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        The placement must be with an industry, company or institution. Other placements — a
+        university laboratory, for instance — are possible only with a genuine link to your
+        study programme and the explicit approval of your Exchange Coordinator and Dean.
+      </p>
+
+      <h3>If you do not complete the 20 weeks</h3>
+      <div class="table-wrap">
+        <table>
+          <caption>What happens if you return to Jordan with an incomplete internship.</caption>
+          <thead>
+            <tr>
+              <th scope="col">Completed in Germany</th>
+              <th scope="col">Weeks required elsewhere</th>
+              <th scope="col">Credit hours to register and pay</th>
+              <th scope="col">On your transcript</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>None, or under 5 weeks</td><td>30 weeks</td><td>12 CH</td><td>Fail 12 · Pass 0</td></tr>
+            <tr><td>5 to under 10 weeks</td><td>20 weeks</td><td>9 CH</td><td>Fail 9 · Pass 3</td></tr>
+            <tr><td>10 to under 15 weeks</td><td>12 weeks</td><td>6 CH</td><td>Fail 6 · Pass 6</td></tr>
+            <tr><td>15 to under 20 weeks</td><td>6 weeks</td><td>3 CH</td><td>Fail 3 · Pass 9</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        Going back to Germany or another German-speaking country to finish counts as a
+        continuation of the same internship instead. Any internship in Jordan or elsewhere
+        needs the approval of your Dean and the head of the Office for Industrial Links, and
+        the place and duration appear on your transcript. Once approved, you may not split
+        or interrupt it to register courses.
+      </p>
+
+      <h3>Internships outside Germany (Corona regulations)</h3>
+      <p>
+        Exceptional rules apply to the outgoing groups of 2019/20, 2020/21 and — with
+        limitations — 1<sup>st</sup> semester 2021/22. A substitute internship in Jordan or
+        elsewhere needs prior approval from the OIL Director and your Dean; the company need
+        not be German; only the 20 required weeks must be completed; and the certificate
+        will state that the internship was not conducted in Germany.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <caption>Credit hours to register at GJU for a substitute internship, and the documents required for a split internship.</caption>
+          <thead>
+            <tr>
+              <th scope="col">Weeks already done in Germany</th>
+              <th scope="col">Weeks needed outside Germany</th>
+              <th scope="col">Credit hours</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>0 to under 5</td><td>20–16</td><td>12 CH</td></tr>
+            <tr><td>5 to under 10</td><td>15–11</td><td>9 CH</td></tr>
+            <tr><td>10 to under 15</td><td>10–6</td><td>6 CH</td></tr>
+            <tr><td>15 to under 20</td><td>5–1</td><td>3 CH</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <ul class="checklist tight">
+        <li><strong>Under 5 weeks</strong> — a signed certificate or company confirmation only, no report.</li>
+        <li><strong>5–9 weeks</strong> — signed certificate plus a 2–3 page summary report, which the company need not sign.</li>
+        <li><strong>10 weeks or more</strong> — certificate plus the full report, both signed and stamped.</li>
+      </ul>
+      <p class="muted">
+        Remote internships from home office are allowed where the company’s own precautions
+        require it. Students still registered at a German university for the online
+        internship do not register or pay tuition at GJU; students who are not, do. You may
+        not register GJU courses in parallel with an internship, and you may not postpone
+        the internship in order to take an extra study semester in Germany.
+      </p>
+
+      <h3>Graduation project in Germany</h3>
+      <p>
+        Many students are offered a bachelor graduation project or thesis in Germany, either
+        through a company or a partner university. Two routes exist, and the company route
+        requires that your <strong>20 weeks are already complete</strong>, that the project
+        is <strong>clearly distinct</strong> from the internship work, and that it runs at
+        least 12 weeks for 3 credit hours or 16 weeks for 6. The documentation is in English,
+        signed by the company advisor and stamped, and the defence happens at GJU as normal.
+        You are responsible for keeping legal residence in Germany throughout.
+      </p>
+      <p class="muted">
+        You may not register graduation project courses before finishing the German Year
+        requirements, unless your study plan allows it or you have completed at least half of
+        the international internship. Additional study or internship semesters are possible
+        only after the German Year is complete, and they fall outside it.
+      </p>
+
+      <p class="doc-links">
+        <a class="doc-link" href="{{ (docs + '/rules-and-regulations/german_year_manual_final_0.pdf') | url }}">
+          <span class="doc-kind">PDF</span> German Year Manual
+        </a>
+        <a class="doc-link" href="{{ (docs + '/rules-and-regulations/gju_praktikumsrichtlinien_stand_september_2021.pdf') | url }}">
+          <span class="doc-kind">PDF</span> <span lang="de">GJU-Praktikumsrichtlinien</span>
+        </a>
+        <a class="doc-link" href="{{ (docs + '/rules-and-regulations/regulations_for_corona_related_internships_outside_germany_all_batches_20210221.pdf') | url }}">
+          <span class="doc-kind">PDF</span> Corona-related internships outside Germany
+        </a>
+      </p>
+    </section>
+
+    <!-- ------------------------------------------------------------------ -->
+    <section id="staying" aria-labelledby="staying-heading">
+      <h2 id="staying-heading">Staying longer than planned</h2>
+      <p>
+        Internships often run past the end of the semester. Which route you take depends on
+        how far past.
+      </p>
+
+      <div class="card-grid two">
+        <article class="card">
+          <h3>One to two months over — <span lang="de">Fiktionsbescheinigung</span></h3>
+          <p>
+            A provisional certificate that extends your visa. Go to the local
+            <span lang="de">Ausländerbehörde</span> with:
+          </p>
+          <ul>
+            <li>Your contract with the company</li>
+            <li>Your GJU enrolment certificate</li>
+            <li>Proof of funds — a refilled blocked account or an internship salary of at least <strong>861 € a month</strong></li>
+            <li>A letter from your insurer confirming your cover for the extended period</li>
+          </ul>
+          <p class="card-note">They may ask for more; bring everything you have.</p>
+        </article>
+
+        <article class="card">
+          <h3>More than three months over — full enrolment</h3>
+          <p>You will be enrolled for a whole extra semester. Three things at university level:</p>
+          <ul>
+            <li>Written approval of the extension from your School — an e-mail from your Exchange Coordinator is enough. Forward it to your mobility coordinator.</li>
+            <li>Confirmation from your German host university that it will enrol you for an additional semester. <strong>Your visa and work permit depend on this.</strong></li>
+            <li>Postpone your GJU studies using the postponing-studies form from the GJU required-forms page.</li>
+          </ul>
+          <p class="card-note">
+            Then extend the visa, ideally no later than a month before it expires, proving
+            continued enrolment, funds (refilled blocked account or salary of at least
+            861 €/month) and insurance cover.
+          </p>
+        </article>
+      </div>
+
+      <p class="doc-links">
+        <a class="doc-link" href="{{ (docs + '/rules-and-regulations/fiktionsbescheinigung.pdf') | url }}">
+          <span class="doc-kind">PDF</span> <span lang="de">Fiktionsbescheinigung</span>
+        </a>
+        <a class="doc-link" href="{{ (docs + '/rules-and-regulations/full_3rd_semester_enrolment.pdf') | url }}">
+          <span class="doc-kind">PDF</span> Full 3<sup>rd</sup> semester enrolment
+        </a>
+      </p>
+    </section>
+
+    <!-- ------------------------------------------------------------------ -->
+    <section id="library" aria-labelledby="library-heading">
+      <h2 id="library-heading">Document library</h2>
+      <p class="muted">
+        The sixteen source documents, exactly as issued. Everything on this page is drawn
+        from them; where the two disagree, these are what count.
+      </p>
+
+      <h3>Application process and required documents</h3>
+      <ul class="doc-grid">
+        <li>
+          <a href="{{ (docs + '/application-process/praktikumsinfo1_lebenslauf_en_neues_logo.pdf') | url }}">
+            <span class="doc-kind">PDF</span>
+            <span class="doc-title">Part 1 — The CV</span>
+            <span class="doc-desc">Layout, formal and contextual rules, every section of a German <span lang="de">Lebenslauf</span>, and a checklist. 5 pages.</span>
+          </a>
+        </li>
+        <li>
+          <a href="{{ (docs + '/application-process/praktikumsinfo2_anschreiben_en_neues_logo.pdf') | url }}">
+            <span class="doc-kind">PDF</span>
+            <span class="doc-title">Part 2 — The cover letter</span>
+            <span class="doc-desc">Length, typography, DIN 5008, the address block, subject line, salutation and body, with a checklist. 5 pages.</span>
+          </a>
+        </li>
+        <li>
+          <a href="{{ (docs + '/application-process/praktikumsinfo3_bewerbungsverfahren_und_praktikum_en_august_2019_1_0.pdf') | url }}">
+            <span class="doc-kind">PDF</span>
+            <span class="doc-title">Part 3 — The application procedure and the internship</span>
+            <span class="doc-desc">Searching, tracking, the three application types, following up, acceptance, the internship itself and flat hunting. 6 pages.</span>
+          </a>
+        </li>
+        <li>
+          <a href="{{ (docs + '/application-process/praktikumsinfo4_bewerbungsgespraech_en_neues_logo.pdf') | url }}">
+            <span class="doc-kind">PDF</span>
+            <span class="doc-title">Part 4 — The interview</span>
+            <span class="doc-desc">Preparation, appearance, body language, the five phases, questions both ways, and phone contact. 7 pages.</span>
+          </a>
+        </li>
+      </ul>
+
+      <h3>Internship search tools</h3>
+      <ul class="doc-grid">
+        <li>
+          <a href="{{ (docs + '/search-tools/jobborsen.pdf') | url }}">
+            <span class="doc-kind">PDF</span>
+            <span class="doc-title"><span lang="de">Jobbörsen</span></span>
+            <span class="doc-desc">The full list of general job boards, internship portals and application-tip sites. 2 pages.</span>
+          </a>
+        </li>
+      </ul>
+
+      <h3>Rules and regulations</h3>
+      <ul class="doc-grid">
+        <li>
+          <a href="{{ (docs + '/rules-and-regulations/german_year_manual_final_0.pdf') | url }}">
+            <span class="doc-kind">PDF</span>
+            <span class="doc-title">German Year Manual</span>
+            <span class="doc-desc">The complete rulebook: prerequisites, distribution, visa and insurance, the study semester, the internship semester, incomplete internships, and the roles of Exchange Coordinators and Officers. 30 pages, version 23 June 2021.</span>
+          </a>
+        </li>
+        <li>
+          <a href="{{ (docs + '/rules-and-regulations/gju_praktikumsrichtlinien_stand_september_2021.pdf') | url }}">
+            <span class="doc-kind">PDF</span>
+            <span class="doc-title" lang="de">GJU-Praktikumsrichtlinien</span>
+            <span class="doc-desc">The one-page German internship guidelines you attach to every application. Duration, certificate, report, recognition. September 2021.</span>
+          </a>
+        </li>
+        <li>
+          <a href="{{ (docs + '/rules-and-regulations/regulations_for_corona_related_internships_outside_germany_all_batches_20210221.pdf') | url }}">
+            <span class="doc-kind">PDF</span>
+            <span class="doc-title">Corona-related internships outside Germany</span>
+            <span class="doc-desc">Substitute internships in Jordan or elsewhere: approval, registration, remote work, split internships and the credit-hour tables. 3 pages.</span>
+          </a>
+        </li>
+        <li>
+          <a href="{{ (docs + '/rules-and-regulations/fiktionsbescheinigung.pdf') | url }}">
+            <span class="doc-kind">PDF</span>
+            <span class="doc-title" lang="de">Fiktionsbescheinigung</span>
+            <span class="doc-desc">Extending your visa when the internship runs one to two months into the new semester. 1 page.</span>
+          </a>
+        </li>
+        <li>
+          <a href="{{ (docs + '/rules-and-regulations/full_3rd_semester_enrolment.pdf') | url }}">
+            <span class="doc-kind">PDF</span>
+            <span class="doc-title">Full 3<sup>rd</sup> semester enrolment</span>
+            <span class="doc-desc">Extending the German Year by a whole semester: School approval, host university enrolment, postponing studies, visa. 1 page.</span>
+          </a>
+        </li>
+      </ul>
+
+      <h3>Required documents after the internship</h3>
+      <ul class="doc-grid">
+        <li>
+          <a href="{{ (docs + '/after-the-internship/internship_report_instructions.pdf') | url }}">
+            <span class="doc-kind">PDF</span>
+            <span class="doc-title">Internship report instructions</span>
+            <span class="doc-desc">Format and the full section-by-section outline of the report. 3 pages.</span>
+          </a>
+        </li>
+        <li>
+          <a href="{{ (docs + '/after-the-internship/required_internship_documents_2015_46.pdf') | url }}">
+            <span class="doc-kind">PDF</span>
+            <span class="doc-title">Required internship documents</span>
+            <span class="doc-desc">What the certificate must contain, how many copies go where, and the two-month deadline. Deans’ Council Decision 2015/46. 2 pages.</span>
+          </a>
+        </li>
+      </ul>
+
+      <h3>Samples and templates</h3>
+      <ul class="doc-grid">
+        <li>
+          <a href="{{ (docs + '/samples/cv/cv_formatvorlage.pdf') | url }}">
+            <span class="doc-kind">PDF</span>
+            <span class="doc-title" lang="de">Lebenslauf — Formatvorlage</span>
+            <span class="doc-desc">A fill-in CV template with margin notes explaining each section, language levels and how to choose hobbies. 2 pages.</span>
+          </a>
+        </li>
+        <li>
+          <a href="{{ (docs + '/samples/cover-letter/muster_anschreiben1.pdf') | url }}">
+            <span class="doc-kind">PDF</span>
+            <span class="doc-title" lang="de">Muster-Anschreiben 1</span>
+            <span class="doc-desc">A complete cover letter with every variable marked, written for a GJU exchange student.</span>
+          </a>
+        </li>
+        <li>
+          <a href="{{ (docs + '/samples/cover-letter/muster_anschreiben2.pdf') | url }}">
+            <span class="doc-kind">PDF</span>
+            <span class="doc-title" lang="de">Muster-Anschreiben 2</span>
+            <span class="doc-desc">A second pattern, with the page header and address block laid out.</span>
+          </a>
+        </li>
+        <li>
+          <a href="{{ (docs + '/samples/cover-letter/kreativesanschreiben.pdf') | url }}">
+            <span class="doc-kind">PDF</span>
+            <span class="doc-title" lang="de">Kreatives Anschreiben</span>
+            <span class="doc-desc">A livelier opening for creative fields, where a stock first sentence would cost you the read.</span>
+          </a>
+        </li>
+      </ul>
+    </section>
+
+    <!-- ------------------------------------------------------------------ -->
+    <section id="contacts" aria-labelledby="contacts-heading">
+      <h2 id="contacts-heading">Who to contact</h2>
+      <dl class="facts">
+        <dt>Office for Industrial Links (OIL), GJU</dt>
+        <dd>
+          <a href="mailto:oil@gju.edu.jo">oil@gju.edu.jo</a> ·
+          <a href="tel:+96264294881">+962 6 429 4881</a> ·
+          <a href="http://www.gju.edu.jo/oil" rel="external nofollow">gju.edu.jo/oil</a><br>
+          Internship seminars, approval of the placement, and the office that receives your
+          certificate and report.
+        </dd>
+
+        <dt>Project Office, Magdeburg</dt>
+        <dd>
+          <a href="mailto:interns@german-jordanian.org">interns@german-jordanian.org</a><br>
+          Company address lists for your field, help while you are searching, and a second
+          pair of eyes on your CV and cover letter. Stay in touch with them — they can only
+          help if you answer e-mails.
+        </dd>
+
+        <dt>Your Exchange Coordinator</dt>
+        <dd>
+          Your academic contact for the whole year in Germany. Approves the Learning
+          Agreement and any change to it, approves the internship placement, and checks the
+          certificate and report within two months of your return. Each School publishes an
+          address of the form <code>exchange.coordinator.&lt;major&gt;@gju.edu.jo</code>.
+        </dd>
+
+        <dt>International Office, GJU</dt>
+        <dd>
+          Runs the nomination, the distribution to partner universities, the university
+          applications, Fintiba and the visa process. It does not control the Embassy, the
+          <span lang="de">Ausländerbehörde</span>, your accommodation, your enrolment in
+          Germany, or the extra fees some host universities charge.
+        </dd>
+
+        <dt>The moment you are accepted</dt>
+        <dd>
+          Tell the Office for Industrial Links and the Project Office in Magdeburg
+          immediately, send the company details and contract to your Exchange Coordinator
+          for approval, and cancel your other interviews — by phone if you can.
+        </dd>
+      </dl>
+    </section>
+
+    <!-- ------------------------------------------------------------------ -->
+    <section id="machine" aria-labelledby="machine-heading">
+      <h2 id="machine-heading">For AI assistants and crawlers</h2>
+      <p>
+        This page is one file of static HTML, rendered at build time. Nothing here needs
+        JavaScript to read, no crawler is blocked, and every section has a stable
+        <code>#id</code> you can link to. The sixteen source PDFs are served from
+        <code>/assets/gy-internships/</code> and listed in
+        <a href="#library">the document library</a> above.
+      </p>
+      <p>
+        A plain-text summary of the site owner lives at
+        <a href="{{ '/llms.txt' | url }}">/llms.txt</a> and
+        <a href="{{ '/about.txt' | url }}">/about.txt</a>; the same content is available as
+        structured data at <a href="{{ '/data/profile.json' | url }}">/data/profile.json</a>,
+        <a href="{{ '/data/experience.json' | url }}">/data/experience.json</a> and
+        <a href="{{ '/data/certificates.json' | url }}">/data/certificates.json</a>.
+      </p>
+      <p class="muted">
+        This is a student-made reading of GJU’s published internship material, not an
+        official university page. The PDFs in the library are the authority, and where a
+        rule cites a Deans’ Council decision, that decision prevails.
+      </p>
+    </section>
+
+  </div><!-- /.guide-body -->
+</div><!-- /.guide -->
+
+<script type="application/ld+json">
+{{ {
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "The German Year Internship — a GJU field guide",
+  "description": "Rules, documents and deadlines for the mandatory 20-week German Year internship at the German Jordanian University.",
+  "inLanguage": site.language,
+  "url": page.url | absUrl,
+  "dateModified": site.buildDay,
+  "about": {
+    "@type": "EducationalOccupationalProgram",
+    "name": "German Year — International Internship",
+    "provider": {
+      "@type": "CollegeOrUniversity",
+      "name": "German Jordanian University",
+      "url": "http://www.gju.edu.jo"
+    },
+    "timeToComplete": "P20W",
+    "occupationalCredentialAwarded": "12 GJU credit hours"
+  }
+} | jsonld | safe }}
+</script>

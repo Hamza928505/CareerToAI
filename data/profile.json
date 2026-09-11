@@ -19,6 +19,13 @@
       "description": ""
     }
   ],
+  "languages": [
+    {
+      "language": "TODO: a language you can work in, e.g. German",
+      "level": "",
+      "notes": ""
+    }
+  ],
   "links": [
     { "label": "GitHub", "url": "https://github.com/TODO" },
     { "label": "LinkedIn", "url": "https://www.linkedin.com/in/TODO" }

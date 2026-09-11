@@ -20,6 +20,7 @@ the handful of Anthropic API tokens spent when you add a certificate, on your ow
 - [How it works](#how-it-works)
 - [Quick start](#quick-start)
 - [The editor](#the-editor)
+- [The workspace](#the-workspace)
 - [Adding a certificate from the terminal](#adding-a-certificate-from-the-terminal)
 - [The API key](#the-api-key)
 - [Customizing your profile by hand](#customizing-your-profile-by-hand)
@@ -27,6 +28,7 @@ the handful of Anthropic API tokens spent when you add a certificate, on your ow
 - [What makes it machine-readable](#what-makes-it-machine-readable)
 - [Data model](#data-model)
 - [Project layout](#project-layout)
+- [The job-search framework](#the-job-search-framework)
 - [Troubleshooting](#troubleshooting)
 
 ---
@@ -52,6 +54,7 @@ zero-cost, no-backend constraint hold:
                                          ▼      https://you.github.io/CareerToAI
                         data/profile.json
                         data/experience.json
+                        data/projects.json
                         data/certificates.json
                         src/certs/*.jpg  src/media/*.jpg
                                          │
@@ -93,9 +96,14 @@ Then:
 ## The editor
 
 `/editor/` is a LinkedIn-style form for everything the site publishes: your name,
-headline, location and email; an About paragraph; Education; Experience; Licenses &
-certifications; links; and any extra skills. Repeatable sections have **+ Add** buttons,
-and skills are entered as chips — type one and press <kbd>Enter</kbd>.
+headline, location, email and working languages; an About paragraph; Education;
+Experience; Projects; Licenses & certifications; links; and any extra skills.
+Repeatable sections have **+ Add** buttons, and skills are entered as chips — type one
+and press <kbd>Enter</kbd>.
+
+Every section heading collapses, and carries a count of what is inside it so a closed
+section still tells you something. Rows reorder by dragging their handle, or by focusing
+the handle and pressing <kbd>↑</kbd>/<kbd>↓</kbd> — and that order is what gets published.
 
 **Nothing is ever lost to a refresh.** Every keystroke is saved to this browser's
 `localStorage` after a short pause, and uploaded images go into its `IndexedDB` (which,
@@ -111,7 +119,8 @@ The recommended way to work. A small Node server (`scripts/editor-server.mjs`, b
 `127.0.0.1` only) builds the site, serves it on port 8081, and adds two buttons:
 
 - **Save to data/** writes `data/profile.json`, `data/experience.json`,
-  `data/certificates.json` and every uploaded image into `src/certs/` and `src/media/`,
+  `data/projects.json`, `data/certificates.json` and every uploaded image into
+  `src/certs/` and `src/media/`,
   then rebuilds. No download, no copying files around — just commit and push afterwards.
 - **Extract with AI** appears on a certificate once you attach an image. It sends that
   image to Claude and fills in *only the fields you have left blank*, so it never
@@ -139,6 +148,29 @@ work-in-progress between devices.
 > **Publishing is still a git push.** The editor writes to your browser, and in local mode
 > to your working tree. Neither one deploys anything. Until you commit and push, the live
 > site shows the last version you pushed.
+
+---
+
+## The workspace
+
+`/workspace/` is the page a student actually works from. It has five parts:
+
+- **Where things stand** — how many applications are tracked, open, waiting to be
+  sent, and at interview.
+- **Run a task** — buttons for the four deterministic steps (`npm run profile`,
+  `tracker`, `skills:harvest`, `build`), with their output streamed into the page.
+- **Ask Claude Code** — copy-ready `/apply`, `/rank`, `/outcome`, `/interview` and
+  `/upskill` commands. These read postings and write German, so they need Claude
+  Code; a web page cannot run them.
+- **Check a posting** — the GJU eligibility checker. Enter duration, country, pay
+  and working language and it scores against `data/gju-rules.json`, the same file
+  the workbook's Fit % formula uses, and names the rule behind every flag.
+- **Your tracker** — your rows, read live from `data/tracker.csv`, plus a form to
+  add one by hand.
+
+Everything except the checker needs `npm run editor`: a static host cannot write
+your files or run a command. Opened on the published site, the page says so and
+disables those controls rather than failing when you press them.
 
 ---
 
@@ -210,7 +242,8 @@ that entry. To remove a certificate, delete its object from the array and its im
 `src/certs/`.
 
 > `npm run import-data` and the editor's **Save to data/** button both **replace**
-> `data/profile.json`, `data/experience.json` and `data/certificates.json` wholesale — an
+> `data/profile.json`, `data/experience.json`, `data/projects.json` and
+> `data/certificates.json` wholesale — an
 > export is the complete picture, not a patch. If you added a certificate with
 > `add-cert` in the terminal, load the current state into the editor before saving over
 > it, or the terminal-added entry will be dropped.
@@ -258,8 +291,9 @@ ANTHROPIC_API_KEY=sk-ant-...
 | `pronouns`  | Optional; shown on the profile when set. |
 | `jobTitle`, `worksFor` | Optional. Left blank, they fall back to whichever Experience entry has no end date, so your current role only has to be typed once. |
 | `education` | Array of `{ school, industry, degree, fieldOfStudy, startDate, endDate, description }`. Emitted as schema.org `alumniOf`. An entry whose `school` is still a `TODO:` value is dropped. |
+| `languages` | Array of `{ language, level, notes }` — every language you can work in professionally. Emitted as schema.org `knowsLanguage` and listed in `/llms.txt`, and it feeds the **Language Gate** that `/apply` and `/rank` run: an undeclared language is treated as a hard no, not a gap to talk around, so a language-conditional posting cannot be scored until this is filled in. An entry whose `language` is still a `TODO:` value is dropped. |
 | `links`     | `{ "label", "url" }` pairs, rendered with `rel="me"` and emitted as `sameAs`. Any URL containing `TODO` is dropped from the build with a warning. |
-| `skills`    | Only skills **not** already implied by a role or certificate. The site unions this with the skills on every Experience entry and every certificate, deduplicates case-insensitively, and sorts by how many entries evidence each one. |
+| `skills`    | Only skills **not** already implied by a role, project or certificate. The site unions this with the skills on every Experience entry, every project and every certificate, deduplicates case-insensitively, and sorts by how many entries evidence each one. |
 
 `data/experience.json` is a separate array — one object per position:
 
@@ -272,6 +306,31 @@ ANTHROPIC_API_KEY=sk-ant-...
 | `description` | Free prose about the role. |
 | `skills` | Feeds the role's own list and the aggregated profile list. |
 | `attachmentImage` | Optional image under `/media/`, published the same way certificate images are. |
+
+`data/projects.json` is another array — one object per project. A project is work you can
+point at that no employer owns: a side project, a university capstone, an open-source
+contribution. It is deliberately not an Experience entry, because there is no employer and
+the thing itself, not the role, is what a reader wants the link to.
+
+| Field | Notes |
+|---|---|
+| `id` | URL-safe slug, derived from name + organization. |
+| `name` | What the project is called. An entry with no name is not published. |
+| `role` | What you did on it, if it was not all your own work. |
+| `organization` | The course, club or organization it was built under, if any. |
+| `url` | Where the thing itself lives. |
+| `sourceUrl` | The repository. Its presence is what makes the JSON-LD node a `SoftwareSourceCode` rather than a plain `CreativeWork`. |
+| `startDate`, `endDate` | Same formats as Experience. **An empty `endDate` means it is ongoing.** |
+| `description` | Free prose. `npm run profile` splits it into bullets for the candidate profile. |
+| `skills` | Feeds the project's own list and the aggregated profile list. |
+| `attachmentImage` | Optional image under `/media/`, published the same way certificate images are. |
+
+**Array order is publication order.** Education, experience, projects, certificates and
+links are all published in the order they appear in the JSON — nothing is re-sorted on
+load. Put what you most want read at the top. In `/editor/` you arrange that by dragging a
+row's handle, or by focusing the handle and pressing <kbd>↑</kbd>/<kbd>↓</kbd>;
+**Sort by date** restores newest-first for any dated list. If you want date order in your
+own code, `lib/content.mjs` exports a `byDateDesc` comparator for it.
 
 Any string field left starting with `TODO:` is treated as unset: it is omitted from the
 page, the JSON-LD and the plain-text summary rather than published as a placeholder.
@@ -428,13 +487,14 @@ required; everything else degrades gracefully when empty.
 | `sourceFileType` | `"image"` or `"pdf"` — what the model read. |
 | `extractedText` | Kept verbatim and shown on the profile in a collapsed `<details>` block, so the summary can be checked against the source. |
 
-`data/experience.json` and the `education` array inside `data/profile.json` are documented
-in [Customizing your profile by hand](#customizing-your-profile-by-hand).
+`data/experience.json`, `data/projects.json` and the `education` array inside
+`data/profile.json` are documented in
+[Customizing your profile by hand](#customizing-your-profile-by-hand).
 
 The editor's export file (`careertoai-data.json`) is a different, self-contained shape —
-`{ version, profile, experience, certificates, images }`, where `images` holds every
-uploaded file as a data URL. `npm run import-data` is what turns it back into the three
-files above plus the images in `src/certs/` and `src/media/`.
+`{ version, profile, experience, projects, certificates, images }`, where `images` holds
+every uploaded file as a data URL. `npm run import-data` is what turns it back into the
+four files above plus the images in `src/certs/` and `src/media/`.
 
 ---
 
@@ -444,6 +504,7 @@ files above plus the images in `src/certs/` and `src/media/`.
 data/
   profile.json          You: name, about, education, links, extra skills.
   experience.json       Work history.
+  projects.json         Projects: side projects, capstones, open-source work.
   certificates.json     Licenses & certifications.
   site.json             Fallback site URL for local builds.
 certs-source/           Full-resolution originals. Git-ignored, never published.
@@ -476,6 +537,16 @@ src/
   media/                Published experience attachments. Committed.
 eleventy.config.mjs     Build config, filters, passthrough copies.
 _site/                  Build output. Git-ignored.
+job-search/             The ai-job-search framework, vendored as a git subtree.
+                        Self-contained: Python + Bun, its own .gitignore and
+                        CLAUDE.md. See "The job-search framework" below.
+.claude/
+  skills/gju-internship/          The GJU German Year workflow. Written here.
+  skills/job-application-assistant/  Upstream's profile + evaluation skill.
+  skills/job-scraper/             Portal search across the CLIs in job-search/.
+  skills/upskill/                 Skill-gap analysis over tracked postings.
+  commands/                       Slash commands. See the table below.
+  NOTICE.md                       Attribution and what came from where.
 ```
 
 ### Commands
@@ -489,6 +560,116 @@ _site/                  Build output. Git-ignored.
 | `npm run add-cert -- <file>` | Add or update one certificate from the terminal. |
 | `npm run make-samples` | Generate placeholder images for sample certificates. |
 | `npm run clean` | Delete `_site/`. |
+
+---
+
+## The job-search framework
+
+`job-search/` holds [ai-job-search](https://github.com/MadsLorentzen/ai-job-search)
+(MIT), merged in as a git subtree with its full history. It is a separate toolchain
+from the site: Python for the tools and tests, Bun for the portal CLIs, LaTeX for the
+CV and cover-letter templates. Nothing in it is needed to build or deploy the site,
+and `npm run build` never touches it.
+
+It is not, however, a separate project. The site and the job search share one spine —
+one profile, one tracker, one status vocabulary — described in [CLAUDE.md](CLAUDE.md):
+
+| Spine file | Owns | Generated from it |
+|---|---|---|
+| `data/profile.json`, `experience.json`, `projects.json`, `certificates.json`, `profile-extras.json` | Who you are | the site's pages, and the framework's `01-candidate-profile.md` (`npm run profile`) |
+| `data/tracker.csv` | Every application, one row each | `internship-tracker.xlsx` (`npm run tracker`) |
+| `data/tracker-schema.json` | Tracker columns, and the only status vocabulary | the workbook's columns and validation |
+
+So the editor at `/editor/` is where you keep your profile current, and `/apply`,
+`/rank`, `/interview` and `/upskill` all argue from what it wrote.
+
+The repository keeps **one** of each project file at the root — `README.md`,
+`CLAUDE.md`, `AGENTS.md`, `CHANGELOG.md`, `CONTRIBUTING.md`, `SECURITY.md`,
+`SETUP.md`, `LICENSE`, `package.json`, `.gitignore`, `.env.example`, one `.claude/`
+and one `.github/`. `job-search/` holds the framework's code only: `tools/`,
+`tests/`, `templates/`, `cv/`, `cover_letters/`, `documents/` and the six portal
+CLIs under `.agents/skills/*/cli/`, which keep their own `package.json` because
+they are independent Bun packages.
+
+`data/tracker.csv` is gitignored — it holds employers' contact details and this site
+is public. `data/tracker.example.csv` carries the header.
+
+```
+job-search/
+  .agents/skills/*-search/cli/  Six portal search CLIs (Bun + TypeScript):
+                                LinkedIn, Jobindex, Jobnet, Jobbank,
+                                JobDanmark, Freehire.
+  tools/                        verify_pdf, robots_check, security_guards,
+                                salary conversion, skill linting.
+  tests/                        ~30 pytest files covering the tools and commands.
+  cv/, cover_letters/           LaTeX templates (moderncv + a cover class).
+  documents/                    Where you drop your CV, diplomas, references.
+                                Contents are git-ignored; structure is tracked.
+  salary_lookup.py              Danish salary lookup.
+```
+
+### The two workflows
+
+Both are available; they answer different questions.
+
+| | `gju-internship` | `job-application-assistant` |
+|---|---|---|
+| Written for | A GJU student on a German student visa | A general job seeker, Danish market |
+| Rules from | `src/assets/gy-internships/` | `04-job-evaluation.md` |
+| Output | German `Anschreiben` | Tailored LaTeX CV + cover letter PDFs |
+| Profile | `.claude/skills/job-application-assistant/01-candidate-profile.md`, generated from `data/*.json` | the same file |
+| Tracker | `data/tracker.csv` | the same file |
+
+Both now read the same profile and write the same tracker — that is what makes them
+one project rather than two. The GJU skill outranks the general one for a German Year
+internship, because its eligibility rules are hard gates rather than scoring inputs.
+
+`/apply`, `/rank` and `/outcome` are the GJU versions — they were rewritten for the
+German Year rules, and they win the name. Every other command at `.claude/commands/`
+is upstream's text with an **In this project** section at the end carrying the local
+overrides, so the difference from upstream stays legible in one place.
+
+Because there is now a single `.claude/`, upstream can no longer be re-synced
+file-for-file. `.github/workflows/upstream-watch.yml` still reports what changed
+upstream; adopting a change is a manual port into the root tree.
+
+### Commands from the framework
+
+| Command | Does |
+|---|---|
+| `/setup` | Fills in the `job-application-assistant` profile from your documents. |
+| `/interview` | Prepares for an interview on a tracked application. |
+| `/expand` | Pulls competencies out of documents and your online presence. |
+| `/add-portal` | Generates a new portal-search CLI for your local market. |
+| `/add-template` | Registers a custom CV or cover-letter template. |
+| `/html-report` | Builds an application tracker dashboard. |
+| `/gmail-sync` | Syncs application status from Gmail. |
+| `/notion-sync` | Pushes ranked jobs to a Notion database. |
+| `/reset` | Clears the candidate profile data. |
+
+### Running its tools
+
+The framework's paths are relative to `job-search/`, so run it from there:
+
+```bash
+cd job-search
+pip install -r requirements.txt   # if present; otherwise the stdlib suffices
+python -m pytest tests/
+bun run .agents/skills/linkedin-search/cli/src/cli.ts search --help
+```
+
+### Pulling upstream updates
+
+The subtree keeps its history, so updates still merge:
+
+```bash
+git fetch ai-job-search
+git merge -s subtree --allow-unrelated-histories ai-job-search/master
+```
+
+Files under `job-search/` are kept byte-identical to upstream so this stays clean.
+The copies surfaced in `.claude/` differ only by a `job-search/` path prefix; if a
+merge changes one upstream, re-copy it and re-apply the prefix.
 
 ---
 
