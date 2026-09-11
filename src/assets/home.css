@@ -1,0 +1,601 @@
+/* Home page only — the German Year internship guide.
+   Loaded via `pageStyles` in src/index.njk, on top of assets/style.css.
+   Presentation only: every fact on this page is in the HTML.
+
+   Surfaces, status colours and the accent all come from assets/style.css.
+   Only what is specific to this page is defined here. */
+
+:root {
+  /* --shadow comes from assets/style.css (--shadow-sm). The rule colour is
+     the one thing this page needs that the brand system does not name. */
+  --rule: color-mix(in srgb, var(--color-ai) 30%, transparent);
+}
+
+/* The profile layout is a single narrow column; the guide needs room for
+   tables, card grids and a table of contents beside the text. */
+/* The shell in assets/style.css sets the content width and the advertising
+   rails beside it, so this page no longer sets its own maximum. */
+
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}
+
+/* ---------- Hero ---------- */
+
+.hero {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 2.5rem;
+  margin-bottom: 3rem;
+}
+
+.eyebrow {
+  font-size: 0.78rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 600;
+  margin: 0 0 0.6rem;
+}
+
+.hero h1 {
+  font-size: clamp(2rem, 1.1rem + 3.6vw, 3.4rem);
+  max-width: 18ch;
+  margin-bottom: 1rem;
+}
+
+.hero .lede {
+  font-size: clamp(1.05rem, 0.98rem + 0.35vw, 1.25rem);
+  line-height: 1.55;
+  max-width: 60ch;
+  color: var(--text);
+  margin-bottom: 1rem;
+}
+
+.hero-note {
+  max-width: 60ch;
+  color: var(--muted);
+  font-size: 0.92rem;
+  padding-left: 0.9rem;
+  border-left: 2px solid var(--rule);
+}
+
+/* ---------- Stat strip ---------- */
+
+.stat-grid {
+  list-style: none;
+  margin: 2.25rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 1px;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.stat {
+  background: var(--surface);
+  padding: 1.1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.stat-value {
+  font-size: 2rem;
+  line-height: 1.05;
+  font-weight: 650;
+  color: var(--accent);
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-label {
+  font-size: 0.85rem;
+  color: var(--muted);
+  text-wrap: balance;
+}
+
+/* ---------- Two-column guide shell ---------- */
+
+.guide {
+  display: grid;
+  gap: 3rem;
+  align-items: start;
+}
+
+@media (min-width: 62rem) {
+  .guide {
+    grid-template-columns: 15rem minmax(0, 1fr);
+    gap: 3.5rem;
+  }
+}
+
+.toc {
+  font-size: 0.88rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  padding: 1.1rem 1.25rem;
+}
+
+@media (min-width: 62rem) {
+  .toc {
+    position: sticky;
+    top: 1.5rem;
+    max-height: calc(100vh - 3rem);
+    overflow-y: auto;
+    border: 0;
+    border-left: 1px solid var(--border);
+    border-radius: 0;
+    background: none;
+    padding: 0.25rem 0 0.25rem 1.25rem;
+  }
+}
+
+.toc-title {
+  font-size: 0.75rem;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 0.75rem;
+  padding: 0;
+  border: 0;
+  font-weight: 600;
+}
+
+.toc ol {
+  list-style: none;
+  counter-reset: toc;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.toc li { counter-increment: toc; }
+
+.toc a {
+  display: block;
+  text-decoration: none;
+  color: var(--muted);
+  padding: 0.15rem 0;
+  line-height: 1.35;
+}
+
+.toc a::before {
+  content: counter(toc) ". ";
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.toc a:hover { color: var(--accent); text-decoration: underline; }
+
+/* ---------- Sections and prose ---------- */
+
+.guide-body > section {
+  scroll-margin-top: 1.5rem;
+  padding-bottom: 1rem;
+}
+
+.guide-body > section + section {
+  margin-top: 3.5rem;
+  padding-top: 2.5rem;
+  border-top: 1px solid var(--border);
+}
+
+.guide-body h2 {
+  font-size: clamp(1.35rem, 1.15rem + 0.8vw, 1.75rem);
+  margin-top: 0;
+  padding-bottom: 0;
+  border: 0;
+  letter-spacing: -0.02em;
+}
+
+.guide-body h3 {
+  font-size: 1.1rem;
+  font-weight: 650;
+  margin: 2.25rem 0 0.75rem;
+}
+
+.guide-body h4 {
+  font-size: 0.95rem;
+  font-weight: 650;
+  margin: 0 0 0.5rem;
+}
+
+/* Keep running text readable even though the column is wide. Cards, tables
+   and grids deliberately opt out by being direct children of their own. */
+.guide-body > section > p,
+.guide-body > section > ul,
+.guide-body > section > ol,
+.guide-body > section > dl,
+.guide-body > section > details {
+  max-width: 68ch;
+}
+
+/* ---------- Cards ---------- */
+
+.card-grid {
+  list-style: none;
+  display: grid;
+  gap: 1.25rem;
+  margin: 1.5rem 0;
+  padding: 0;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 40rem) {
+  .card-grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .card-grid.three { grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); }
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.35rem 1.4rem;
+  box-shadow: var(--shadow);
+}
+
+.card.compact { padding: 1.1rem 1.15rem; font-size: 0.92rem; }
+
+.card > h3 {
+  margin: 0 0 0.75rem;
+  font-size: 1.02rem;
+  font-weight: 650;
+}
+
+.card > :last-child { margin-bottom: 0; }
+
+.card ul,
+.card ol {
+  margin: 0 0 1rem;
+  padding-left: 1.15rem;
+}
+
+.card li { margin-bottom: 0.35rem; }
+
+.card-note {
+  margin: 1rem 0 0;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.87rem;
+  color: var(--muted);
+}
+
+.card .facts { margin-bottom: 0; }
+
+/* ---------- Callouts ---------- */
+
+.callout {
+  background: var(--accent-soft);
+  border: 1px solid var(--rule);
+  border-left-width: 3px;
+  border-radius: var(--radius);
+  padding: 0.9rem 1.1rem;
+  margin: 1.5rem 0;
+  font-size: 0.93rem;
+}
+
+.callout-warn {
+  background: var(--warn-soft);
+  border-color: var(--warn);
+}
+
+.callout-tip {
+  background: var(--ok-soft);
+  border-color: var(--ok);
+}
+
+/* ---------- Numbered steps ---------- */
+
+.steps {
+  list-style: none;
+  counter-reset: step;
+  margin: 1.75rem 0;
+  padding: 0 0 0 2.75rem;
+  border-left: 1px solid var(--border);
+  display: grid;
+  gap: 2rem;
+}
+
+.steps > li {
+  counter-increment: step;
+  position: relative;
+}
+
+.steps > li::before {
+  content: counter(step);
+  position: absolute;
+  left: -3.62rem;
+  top: -0.1rem;
+  width: 1.75rem;
+  height: 1.75rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--bg);
+  font-size: 0.8rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.steps h3,
+.steps h4 {
+  margin: 0 0 0.4rem;
+  font-size: 1rem;
+  font-weight: 650;
+}
+
+.steps p { margin: 0; max-width: 62ch; }
+
+.steps.compact { gap: 1.4rem; }
+.steps.compact p { font-size: 0.92rem; color: var(--muted); }
+
+/* ---------- Lists ---------- */
+
+.checklist {
+  list-style: none;
+  padding: 0;
+  margin: 1.25rem 0;
+  display: grid;
+  gap: 0.65rem;
+}
+
+.checklist.tight { gap: 0.35rem; font-size: 0.93rem; }
+
+.checklist > li {
+  position: relative;
+  padding-left: 1.75rem;
+}
+
+.checklist > li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.5em;
+  width: 0.7rem;
+  height: 0.38rem;
+  border-left: 2px solid var(--accent);
+  border-bottom: 2px solid var(--accent);
+  transform: rotate(-45deg);
+}
+
+.numbered {
+  margin: 1.25rem 0;
+  padding-left: 1.3rem;
+}
+
+.numbered > li { margin-bottom: 0.4rem; }
+.numbered.spaced > li { margin-bottom: 0.9rem; }
+.numbered::marker { color: var(--accent); }
+
+.link-columns {
+  display: grid;
+  gap: 1.5rem 2.5rem;
+  margin: 1.5rem 0;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+}
+
+.link-columns h4 {
+  margin: 0 0 0.6rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.link-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.9rem;
+  display: grid;
+  gap: 0.3rem;
+}
+
+/* ---------- Tables ---------- */
+
+.table-wrap {
+  overflow-x: auto;
+  margin: 1.5rem 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.table-wrap table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.9rem;
+}
+
+.table-wrap caption {
+  caption-side: top;
+  text-align: left;
+  padding: 0.85rem 1rem 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.table-wrap th,
+.table-wrap td {
+  text-align: left;
+  padding: 0.65rem 1rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+.table-wrap thead th {
+  background: var(--surface-2);
+  font-size: 0.8rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.table-wrap tbody tr:last-child th,
+.table-wrap tbody tr:last-child td { border-bottom: 0; }
+
+.table-wrap td.ok { color: var(--ok); font-weight: 600; }
+.table-wrap td.no { color: var(--no); font-weight: 600; }
+.table-wrap td.dim { color: var(--muted); }
+
+/* ---------- Collapsible checklists ---------- */
+
+.check {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  padding: 0 1.15rem;
+  margin: 1.5rem 0;
+}
+
+.check > summary {
+  cursor: pointer;
+  padding: 0.85rem 0;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--accent);
+  list-style-position: inside;
+}
+
+.check[open] > summary { border-bottom: 1px solid var(--border); }
+.check .checklist { margin-block: 1rem; }
+
+/* ---------- Sample blocks ---------- */
+
+.sample {
+  margin: 1.5rem 0;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.sample pre {
+  margin: 0;
+  padding: 1.1rem 1.25rem;
+  overflow-x: auto;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.83rem;
+  line-height: 1.6;
+  white-space: pre;
+}
+
+.sample figcaption {
+  margin: 0;
+  padding: 0.75rem 1.25rem;
+  border-top: 1px solid var(--border);
+  background: var(--surface-2);
+  font-size: 0.85rem;
+}
+
+/* ---------- Document links ---------- */
+
+.doc-kind {
+  display: inline-block;
+  flex: none;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  padding: 0.05rem 0.3rem;
+  vertical-align: 0.1em;
+}
+
+.doc-links,
+.guide-body > section > p.doc-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin: 1.75rem 0 0;
+  max-width: none;
+}
+
+.doc-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  font-size: 0.88rem;
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  padding: 0.35rem 0.9rem 0.35rem 0.5rem;
+  background: var(--surface);
+}
+
+.doc-link:hover {
+  border-color: var(--accent);
+  text-decoration: underline;
+}
+
+.doc-grid {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr));
+}
+
+.doc-grid a {
+  display: grid;
+  gap: 0.4rem;
+  height: 100%;
+  align-content: start;
+  text-decoration: none;
+  color: inherit;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.1rem 1.2rem;
+  box-shadow: var(--shadow);
+}
+
+.doc-grid a:hover { border-color: var(--accent); }
+
+.doc-grid .doc-kind { justify-self: start; }
+
+.doc-title {
+  font-weight: 650;
+  font-size: 0.98rem;
+  color: var(--accent);
+}
+
+.doc-grid a:hover .doc-title { text-decoration: underline; }
+
+.doc-desc {
+  font-size: 0.87rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+/* ---------- Contacts ---------- */
+
+#contacts .facts {
+  grid-template-columns: minmax(12rem, 15rem) 1fr;
+  gap: 1.1rem 2rem;
+  max-width: 62rem;
+}
+
+#contacts .facts dt {
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 0.95rem;
+  font-weight: 650;
+  color: var(--text);
+}
+
+@media (max-width: 40rem) {
+  #contacts .facts { grid-template-columns: 1fr; gap: 0.25rem; }
+  #contacts .facts dd { margin-bottom: 1.1rem; }
+}

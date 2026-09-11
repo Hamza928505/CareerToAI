@@ -10,6 +10,48 @@ pageStyles: /assets/editor.css
 pageScript: /assets/editor.js
 ---
 
+{#
+  Every section is a fieldset whose legend is a toggle button: the grouping
+  stays semantic, the body collapses, and which sections are open is remembered
+  in this browser. The chevron is inline rather than a background image so it
+  can turn with the button's aria-expanded state.
+#}
+{% macro sectionHead(id, label, counts) %}
+<legend>
+  <button type="button" class="section-toggle" data-section-toggle="{{ id }}"
+          aria-expanded="true" aria-controls="section-{{ id }}">
+    <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="m9 18 6-6-6-6"/>
+    </svg>
+    <span>{{ label | safe }}</span>
+    {#- The count is what a collapsed section still tells you, so it is filled in
+        by the script on every render rather than only at build time. -#}
+    {% if counts %}<span class="section-count" data-section-count="{{ id }}"></span>{% endif %}
+  </button>
+</legend>
+{% endmacro %}
+
+{#
+  The row of controls above a repeatable list: how many entries it holds, and —
+  for the lists with dates on them — a one-click way back to newest-first after
+  dragging. Rendered here so the markup stays in the template, filled by the script.
+#}
+{% macro listTools(id, addLabel, dated) %}
+<div class="list-tools">
+  <p class="list-count muted" data-list-count="{{ id }}" aria-live="polite"></p>
+  <span class="toolbar-spacer"></span>
+  {#- Collapses the rows of this list only. The toolbar's Collapse all works on
+      whole sections; this one is for the drop-downs inside one of them. It
+      hides itself below two rows, where a row's own title is enough. -#}
+  <button type="button" class="btn btn-small" data-rows-toggle="{{ id }}" hidden>Collapse all</button>
+  {% if dated %}
+  <button type="button" class="btn btn-small" data-sort="{{ id }}">Sort by date</button>
+  {% endif %}
+  <button type="button" class="btn btn-small" data-add="{{ id }}">{{ addLabel }}</button>
+</div>
+{% endmacro %}
+
 <div class="editor" data-editor>
   <header class="editor-intro">
     <h1>Profile editor</h1>
@@ -18,12 +60,35 @@ pageScript: /assets/editor.js
       as you go, so a refresh or a closed tab loses nothing. Uploaded images are kept in
       this browser too.
     </p>
+    <p class="muted">
+      Fields marked <span class="required">required</span> have no fallback in the
+      published profile, so <strong>Download .json</strong> and <strong>Save to data/</strong>
+      check them before they run. Everything else is optional.
+    </p>
+    <p class="muted">
+      Every section heading and every entry inside one opens and closes when you click it.
+      <strong>Collapse all</strong> in the toolbar shuts every section; the one above each
+      list shuts that list's entries. Which sections you left open is remembered in this
+      browser, and a closed section is still saved and still published — collapsing only
+      hides it here.
+    </p>
+    <p class="muted">
+      <strong>The order you put things in is the order they are published.</strong> Drag a
+      row by its handle (<span class="grip-inline" aria-hidden="true">⠿</span>) to move it,
+      or focus the handle and press <kbd>↑</kbd>/<kbd>↓</kbd>. Nothing re-sorts behind your
+      back, so put what you most want read at the top; <strong>Sort by date</strong> puts a
+      list back in newest-first order whenever you want it.
+    </p>
     <p class="muted" data-mode-note>Checking how this page is running…</p>
+    {# Rows move without anything visible changing for a screen reader, so every
+       move says where the row landed. #}
+    <p class="visually-hidden" data-reorder-status role="status" aria-live="polite"></p>
   </header>
 
   <div class="editor-toolbar" role="group" aria-label="Save and export">
     <span class="save-status" data-save-status aria-live="polite">Loading…</span>
     <span class="toolbar-spacer"></span>
+    <button type="button" class="btn" data-action="toggle-all" aria-live="polite">Collapse all</button>
     <button type="button" class="btn btn-primary" data-action="save-server" hidden>Save to data/</button>
     <button type="button" class="btn" data-action="export">Download .json</button>
     <button type="button" class="btn" data-action="import">Load .json</button>
@@ -31,83 +96,131 @@ pageScript: /assets/editor.js
     <input type="file" accept="application/json,.json" data-import-input hidden>
   </div>
 
-  <p class="notice" data-message hidden></p>
-
   <form class="editor-form" data-form autocomplete="on">
 
-    <fieldset>
-      <legend>Basics</legend>
-      <div class="grid-2">
-        <label>First name
-          <input type="text" data-path="profile.firstName" autocomplete="given-name">
+    <fieldset class="collapsible">
+      {{ sectionHead("basics", "Basics") }}
+      <div class="section-body" id="section-basics">
+        <div class="grid-2">
+          <label>First name <span class="required">required</span>
+            <input type="text" data-path="profile.firstName" autocomplete="given-name" required>
+          </label>
+          <label>Last name <span class="required">required</span>
+            <input type="text" data-path="profile.lastName" autocomplete="family-name" required>
+          </label>
+        </div>
+        <label>Headline <span class="required">required</span>
+          <textarea rows="3" data-path="profile.headline"
+            placeholder="Cloud Infrastructure Engineer" required></textarea>
+          <small>Sits under your name. Line breaks are kept, so you can run it over more than one line.</small>
         </label>
-        <label>Last name
-          <input type="text" data-path="profile.lastName" autocomplete="family-name">
+        <div class="grid-2">
+          <label>Location <span class="optional">optional</span>
+            <input type="text" data-path="profile.location" placeholder="Amman, Jordan">
+            <small>Leave blank to publish no location.</small>
+          </label>
+          <label>Pronouns <span class="optional">optional</span>
+            <select data-path="profile.pronouns">
+              <option value="">Not specified</option>
+              <option value="he/him">he/him</option>
+              <option value="she/her">she/her</option>
+            </select>
+            <small>Leave as Not specified to publish no pronouns at all.</small>
+          </label>
+        </div>
+        <label>Email
+          <input type="email" data-path="profile.email" autocomplete="email" placeholder="you@example.com">
+          <small>Published in the HTML, the JSON-LD and /llms.txt. Leave blank to publish no email.</small>
+        </label>
+
+        <h3 class="subhead">Languages</h3>
+        <p class="muted">
+          Every language you can work in professionally, with your honest level. This is not
+          decoration: the <strong>Language Gate</strong> that <code>/apply</code> and
+          <code>/rank</code> run treats an undeclared language as a hard no rather than a gap
+          to talk around, so leave out what you do not actually work in — and add what you do,
+          or German-language postings cannot be scored at all.
+        </p>
+        <div data-list="languages" class="entry-editor-list"></div>
+        {{ listTools("languages", "+ Add language", false) }}
+      </div>
+    </fieldset>
+
+    <fieldset class="collapsible">
+      {{ sectionHead("about", "About") }}
+      <div class="section-body" id="section-about">
+        <label>About me <span class="required">required</span>
+          <textarea rows="7" data-path="profile.bio" required
+            placeholder="Two to four sentences. Write it the way you would want an AI assistant to summarize you to someone else."></textarea>
+          <small>The single most-quoted piece of text when an assistant summarizes you. State facts, not marketing.</small>
         </label>
       </div>
-      <label>Headline
-        <input type="text" data-path="profile.headline" placeholder="Cloud Infrastructure Engineer">
-        <small>One line under your name. Also used in the page title.</small>
-      </label>
-      <div class="grid-2">
-        <label>Location
-          <input type="text" data-path="profile.location" placeholder="Amman, Jordan">
-        </label>
-        <label>Pronouns <span class="optional">optional</span>
-          <select data-path="profile.pronouns">
-            <option value="">Not specified</option>
-            <option value="he/him">he/him</option>
-            <option value="she/her">she/her</option>
-          </select>
-          <small>Leave as Not specified to publish no pronouns at all.</small>
-        </label>
+    </fieldset>
+
+    <fieldset class="collapsible">
+      {{ sectionHead("education", "Education", true) }}
+      <div class="section-body" id="section-education">
+        <div data-list="education" class="entry-editor-list"></div>
+        {{ listTools("education", "+ Add education", true) }}
       </div>
-      <label>Email
-        <input type="email" data-path="profile.email" autocomplete="email" placeholder="you@example.com">
-        <small>Published in the HTML, the JSON-LD and /llms.txt. Leave blank to publish no email.</small>
-      </label>
     </fieldset>
 
-    <fieldset>
-      <legend>About</legend>
-      <label>About me
-        <textarea rows="7" data-path="profile.bio"
-          placeholder="Two to four sentences. Write it the way you would want an AI assistant to summarize you to someone else."></textarea>
-        <small>The single most-quoted piece of text when an assistant summarizes you. State facts, not marketing.</small>
-      </label>
+    <fieldset class="collapsible">
+      {{ sectionHead("experience", "Experience", true) }}
+      <div class="section-body" id="section-experience">
+        <div data-list="experience" class="entry-editor-list"></div>
+        {{ listTools("experience", "+ Add position", true) }}
+      </div>
     </fieldset>
 
-    <fieldset>
-      <legend>Education</legend>
-      <div data-list="education" class="entry-editor-list"></div>
-      <button type="button" class="btn" data-add="education">+ Add education</button>
+    <fieldset class="collapsible">
+      {{ sectionHead("projects", "Projects", true) }}
+      <div class="section-body" id="section-projects">
+        <p class="muted">
+          Work you can point at that no employer owns: a side project, a university
+          capstone, an open-source contribution. Published to <code>data/projects.json</code>,
+          to <code>/llms.txt</code>, and as the <em>Independent Projects</em> section of the
+          profile the job-search commands read.
+        </p>
+        <div data-list="projects" class="entry-editor-list"></div>
+        {{ listTools("projects", "+ Add project", true) }}
+      </div>
     </fieldset>
 
-    <fieldset>
-      <legend>Experience</legend>
-      <div data-list="experience" class="entry-editor-list"></div>
-      <button type="button" class="btn" data-add="experience">+ Add position</button>
+    <fieldset class="collapsible">
+      {{ sectionHead("certificates", "Licenses &amp; certifications", true) }}
+      <div class="section-body" id="section-certificates">
+        <div data-list="certificates" class="entry-editor-list"></div>
+        {{ listTools("certificates", "+ Add certification", true) }}
+      </div>
     </fieldset>
 
-    <fieldset>
-      <legend>Licenses &amp; certifications</legend>
-      <div data-list="certificates" class="entry-editor-list"></div>
-      <button type="button" class="btn" data-add="certificates">+ Add certification</button>
+    <fieldset class="collapsible">
+      {{ sectionHead("links", "Links", true) }}
+      <div class="section-body" id="section-links">
+        <div data-list="links" class="entry-editor-list"></div>
+        {{ listTools("links", "+ Add link", false) }}
+      </div>
     </fieldset>
 
-    <fieldset>
-      <legend>Links</legend>
-      <div data-list="links" class="entry-editor-list"></div>
-      <button type="button" class="btn" data-add="links">+ Add link</button>
-    </fieldset>
-
-    <fieldset>
-      <legend>Extra skills</legend>
-      <p class="muted">
-        Skills that no role or certificate already covers. The site unions these with every
-        skill listed on a position or certification.
-      </p>
-      <div data-skills="profile.skills"></div>
+    <fieldset class="collapsible">
+      {{ sectionHead("skills", "Extra skills", true) }}
+      <div class="section-body" id="section-skills">
+        <p class="muted">
+          Skills that no role, project or certificate already covers. The site unions these
+          with every skill listed on a position, a project or a certification.
+        </p>
+        <p class="muted">
+          Every skills box takes a whole list at once — paste one skill per line, or
+          comma-separated. <strong>+ Add skills</strong> browses a catalogue by field and
+          searches it, German labels included. <strong>From a job ad</strong> takes a pasted
+          advert and pulls the skills out of it. The type-ahead offers your own skills first,
+          then ones it has seen in adverts, then the catalogue — and anything you type is
+          accepted whether or not it has heard of it. Duplicates are dropped whatever their
+          capitalisation.
+        </p>
+        <div data-skills="profile.skills"></div>
+      </div>
     </fieldset>
   </form>
 
@@ -127,7 +240,8 @@ pageScript: /assets/editor.js
       Because you are running <code>npm run editor</code>, <strong>Save to data/</strong> is
       available and skips the download entirely: it writes
       <code>data/profile.json</code>, <code>data/experience.json</code>,
-      <code>data/certificates.json</code> and the images straight into the repository.
+      <code>data/projects.json</code>, <code>data/certificates.json</code> and the images
+      straight into the repository.
     </p>
   </section>
 </div>

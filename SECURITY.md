@@ -1,21 +1,41 @@
 # Security Policy
 
-## Supported Versions
+## Supported versions
 
-Use this section to tell people about which versions of your project are
-currently being supported with security updates.
+This is a personal project with no released versions. **`main` is what is
+supported** — it is what GitHub Pages deploys and what the workflow runs from.
+Fixes land there; there are no backports, because there is nothing to backport
+to.
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 5.1.x   | :white_check_mark: |
-| 5.0.x   | :x:                |
-| 4.0.x   | :white_check_mark: |
-| < 4.0   | :x:                |
+## Reporting a vulnerability
 
-## Reporting a Vulnerability
+Please report security findings privately via **[GitHub private vulnerability reporting](https://github.com/Hamza928505/CareerToAI/security/advisories/new)** rather than a public issue. You will get a response within a few days, credit in the fix unless you prefer otherwise, and public disclosure coordinated with the patch.
 
-Use this section to tell people how to report a vulnerability.
+If the private form is unavailable, open a public issue that describes the *class* of problem without a working recipe, and note that you have details to share privately.
 
-Tell them where to go, how often they can expect to get an update on a
-reported vulnerability, what to expect if the vulnerability is accepted or
-declined, etc.
+If the finding is in the upstream [ai-job-search](https://github.com/MadsLorentzen/ai-job-search) framework rather than in this repository's own code, report it there as well — the `job-search/` tree here is vendored from it, so upstream's users are affected too.
+
+## Threat model, honestly stated
+
+This is an agentic workflow: an LLM with file access reads untrusted web content (job postings) alongside your personal data (CV, profile, application history). That combination is the main risk surface, and it cannot be fully eliminated - only narrowed. What the framework does about it:
+
+- **Untrusted-input rules**: `/apply` and `/rank` treat posting text as data, never instructions - agents are told not to follow directions embedded in postings and not to fetch URLs found inside posting text (the user-supplied posting URL is the one exception). Reviewer research starts from the company identity the user confirmed, never from links in the posting body.
+- **Permission allowlist**: `.claude/settings.json` pre-approves only the specific commands the workflow needs; the `security-guards` CI job fails any PR that widens it, adds package-manifest lifecycle scripts, or weakens the personal-data gitignore rules. Note the allowlist governs Bash commands - the model's native WebFetch/WebSearch tools are outside its reach, which is exactly why the instruction-level rules above exist.
+- **Personal data boundaries**: your populated profile, tracker, salary data, and application archive are gitignored; documents never leave the machine by design (`/notion-sync` syncs filenames only; nothing uploads document content anywhere).
+
+Instruction-level defenses raise the bar; they are not a sandbox. If you run this workflow against job boards you do not trust at all, review what the agent fetched and wrote before sending anything out.
+
+## What this repository publishes
+
+The site half is deliberately public: `data/profile.json`, `data/experience.json`,
+`data/projects.json` and `data/certificates.json` are served as raw JSON and
+restated in `/llms.txt`, so **anything written into them is published**. The
+tracker is the opposite — `data/tracker.csv` holds employers' contact names,
+e-mails and phone numbers and is gitignored, with `data/tracker.example.csv`
+carrying only the header. Check which of the two a fact belongs in before
+writing it.
+
+## Scope notes
+
+- Portal CLI skills make live requests only when you run them; CI never does.
+- Community fork skills listed in the [forks index](https://github.com/MadsLorentzen/ai-job-search/discussions/78) are **not** covered by this policy - review the code you copy, as the index itself says.

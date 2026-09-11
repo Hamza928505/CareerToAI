@@ -8,8 +8,9 @@
 <link rel="canonical" href="{{ page.url | absUrl }}">
 
 {% if noindex %}
-{# The editor is a private authoring tool, not profile content. Keeping it out
-   of the index means crawlers spend their budget on the pages that matter. #}
+{# The editor and the workspace are private authoring tools, not profile
+   content. Keeping them out of the index means crawlers spend their budget on
+   the pages that matter. #}
 <meta name="robots" content="noindex, nofollow">
 {% else %}
 {# The opposite of LinkedIn's bot-blocking: every crawler is explicitly welcome. #}
@@ -33,32 +34,103 @@
 {# Signposts for agents that prefer plain text or raw JSON over HTML. #}
 <link rel="alternate" type="text/plain" href="{{ '/llms.txt' | absUrl }}" title="Plain-text profile summary">
 <link rel="alternate" type="application/json" href="{{ '/data/certificates.json' | absUrl }}" title="Certificate data as JSON">
+<link rel="alternate" type="application/json" href="{{ '/data/projects.json' | absUrl }}" title="Project data as JSON">
 <link rel="sitemap" type="application/xml" href="{{ '/sitemap.xml' | absUrl }}">
 
 {% if schemaType == "person" %}
 <script type="application/ld+json">
-{{- profile | personJsonLd(certificates, experience) | jsonld | safe -}}
+{{- profile | personJsonLd(certificates, experience, projects) | jsonld | safe -}}
 </script>
 {% endif %}
 
+{# Runs before the stylesheet: a saved theme is applied to <html> during head
+   parsing, so a dark-mode visitor never gets a flash of the light page. #}
+<script>
+  try {
+    var t = localStorage.getItem("theme");
+    if (t === "dark" || t === "light") document.documentElement.dataset.theme = t;
+  } catch (e) { /* private mode: fall back to the system setting */ }
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="{{ '/assets/style.css' | url }}">
 {% if pageStyles %}<link rel="stylesheet" href="{{ pageStyles | url }}">{% endif %}
+{% if site.adsenseClient and not noindex %}
+{# Loaded async so it never blocks first paint. The rails already reserve their
+   space in CSS, so a slow or unfilled unit does not shift the page. #}
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client={{ site.adsenseClient }}" crossorigin="anonymous"></script>
+{% endif %}
 </head>
 <body>
+{# A rail keeps its reserved width whether or not a unit fills it. Live units
+   are served only on indexable pages, because the AdSense loader above is
+   itself gated on `not noindex` — a private tool page shows the placeholder
+   and nothing else, rather than an <ins> that can never fill. #}
+{% macro adslot(slot, format, extraClass) %}
+{% if site.adsenseClient and slot and not noindex %}
+<ins class="adsbygoogle {{ extraClass }}" style="display:block{% if format == 'horizontal' %};width:100%{% endif %}"
+     data-ad-client="{{ site.adsenseClient }}" data-ad-slot="{{ slot }}"
+     data-ad-format="{{ format }}" data-full-width-responsive="{% if format == 'horizontal' %}true{% else %}false{% endif %}"></ins>
+<script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+{% else %}
+<div class="ad-slot {{ extraClass }}">Advertisement</div>
+{% endif %}
+{% endmacro %}
+
 <a class="skip-link" href="#main">Skip to main content</a>
 
 <header class="site-header">
-  <nav aria-label="Primary">
-    <ul>
-      <li><a href="{{ '/llms.txt' | url }}">llms.txt</a></li>
-      <li><a href="{{ '/editor/' | url }}"{% if page.url == '/editor/' %} aria-current="page"{% endif %}>Editor</a></li>
-    </ul>
-  </nav>
+  <div class="bar">
+    <a class="wordmark" href="{{ '/' | url }}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" aria-hidden="true">
+        <path d="M4 19V7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12"/><path d="M4 19h16"/><path d="M9 5V3h6v2"/><path d="M9 12h6"/>
+      </svg>
+      CareerToAI<span class="dot">.</span>
+    </a>
+    <nav aria-label="Primary">
+      <ul>
+        <li><a href="{{ '/' | url }}"{% if page.url == '/' %} aria-current="page"{% endif %}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9.5 12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1Z"/><path d="M9 21v-7h6v7"/></svg>
+          Profile</a></li>
+        <li><a href="{{ '/workspace/' | url }}"{% if page.url == '/workspace/' %} aria-current="page"{% endif %}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+          Workspace</a></li>
+        <li><a href="{{ '/editor/' | url }}"{% if page.url == '/editor/' %} aria-current="page"{% endif %}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+          Editor</a></li>
+        <li>
+          <button class="theme-toggle" type="button" id="theme-toggle"
+                  aria-label="Switch to dark theme" title="Switch theme">
+            <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
+            <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+          </button>
+        </li>
+      </ul>
+    </nav>
+  </div>
 </header>
 
-<main id="main">
-{{ content | safe }}
-</main>
+<div class="shell">
+  {# Advertising rails. They keep their reserved width whether or not a unit
+     fills, and disappear entirely below 1280px rather than squeezing the
+     reading column. #}
+  <aside class="ad-rail" aria-label="Advertisement">
+    {{ adslot(site.adsenseSlotLeft, "vertical", "ad-slot") }}
+  </aside>
+
+  <main id="main">
+    {{ content | safe }}
+
+    <div aria-label="Advertisement" role="complementary">
+      {{ adslot(site.adsenseSlotInline, "horizontal", "ad-slot--horizontal") }}
+    </div>
+  </main>
+
+  <aside class="ad-rail" aria-label="Advertisement">
+    {{ adslot(site.adsenseSlotRight, "vertical", "ad-slot") }}
+  </aside>
+</div>
 
 <footer class="site-footer">
   <p>
@@ -69,6 +141,38 @@
   </p>
   <p><small>Last built <time datetime="{{ site.buildDate }}">{{ site.buildDay }}</time>.</small></p>
 </footer>
+<script>
+  // Toggles between an explicit light and dark choice, remembers it, and keeps
+  // the button's label describing what pressing it will do.
+  (function () {
+    var button = document.getElementById("theme-toggle");
+    if (!button) return;
+
+    var root = document.documentElement;
+    var isDark = function () {
+      return root.dataset.theme
+        ? root.dataset.theme === "dark"
+        : matchMedia("(prefers-color-scheme: dark)").matches;
+    };
+
+    var label = function () {
+      button.setAttribute("aria-label", isDark() ? "Switch to light theme" : "Switch to dark theme");
+    };
+
+    label();
+    button.addEventListener("click", function () {
+      var next = isDark() ? "light" : "dark";
+      root.dataset.theme = next;
+      try { localStorage.setItem("theme", next); } catch (e) { /* private mode */ }
+      label();
+    });
+
+    // No explicit choice yet: follow the system if it changes mid-session.
+    matchMedia("(prefers-color-scheme: dark)").addEventListener("change", function () {
+      if (!root.dataset.theme) label();
+    });
+  })();
+</script>
 {% if pageScript %}<script type="module" src="{{ pageScript | url }}"></script>{% endif %}
 </body>
 </html>

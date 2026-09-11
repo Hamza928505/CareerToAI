@@ -2,5 +2,10 @@
   "url": "https://hamza928505.github.io/CareerToAI/",
   "title": "Profile & Certificate Vault",
   "language": "en",
-  "note": "url is overridden automatically by the SITE_URL env var. GitHub Actions sets it from the live Pages URL, so this value only affects local builds."
+  "note": "url is overridden automatically by the SITE_URL env var. GitHub Actions sets it from the live Pages URL, so this value only affects local builds.",
+  "adsenseClient": "",
+  "adsenseSlotLeft": "",
+  "adsenseSlotRight": "",
+  "adsenseSlotInline": "",
+  "adsenseNote": "Paste your AdSense publisher id (ca-pub-…) into adsenseClient and the three ad-unit ids to switch the reserved rails from placeholders to live units. Left empty, the layout still reserves the space, so turning ads on later shifts nothing."
 }
