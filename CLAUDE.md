@@ -20,7 +20,7 @@ or points at them.
 
 | Spine file | Owns | Generated from it |
 |---|---|---|
-| `data/profile.json`, `data/experience.json`, `data/certificates.json`, `data/profile-extras.json` | Who you are | the site's pages, and `.claude/skills/job-application-assistant/01-candidate-profile.md` via `npm run profile` |
+| `data/profile.json`, `data/experience.json`, `data/projects.json`, `data/certificates.json`, `data/profile-extras.json` | Who you are | the site's pages, and `.claude/skills/job-application-assistant/01-candidate-profile.md` via `npm run profile` |
 | `data/tracker.csv` | Every application, one row each | `internship-tracker.xlsx` via `npm run tracker` |
 | `data/tracker-schema.json` | The tracker's columns, and the **only** status vocabulary | the workbook's columns and validation, and what every command reads/writes |
 
@@ -34,6 +34,11 @@ Rules that follow from that:
   into `data/` in the same turn, then re-run `npm run profile`.
 - **One status vocabulary.** `data/tracker-schema.json` → `statuses`. Anything else
   is a bug, including a status you think reads better.
+- **Array order is publication order.** Education, experience, projects,
+  certificates and links publish in the order the JSON lists them; `lib/content.mjs`
+  re-sorts nothing on load. Reordering an array is a real edit to the profile, so
+  never rearrange one incidentally. `byDateDesc` is there when date order is
+  wanted explicitly, and `/editor/` reorders by dragging.
 - **The tracker stays out of git.** It holds employers' contact names, e-mails and
   phone numbers, and this repo publishes a public site. `data/tracker.csv` is
   gitignored; `data/tracker.example.csv` carries the header so the schema is still

@@ -66,6 +66,63 @@
   font-size: 1rem;
 }
 
+/* ---------- Collapsing ----------
+   Sections and entry rows both collapse the same way: a heading that is a
+   button, a chevron that turns, and a body hidden with [hidden] rather than
+   display:none in CSS, so the state lives in one place the script owns. */
+
+/* The browser's own `[hidden] { display: none }` is a user-agent rule, so any
+   author rule that sets `display` beats it — `.field-grid { display: grid }` did
+   exactly that, and collapsing an entry row set the attribute while the fields
+   stayed on screen. This puts `hidden` back in charge for the whole editor. */
+.editor [hidden] { display: none !important; }
+
+.section-toggle,
+.entry-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
+  padding: 0.15rem 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.section-toggle:hover,
+.entry-toggle:hover { color: var(--accent); }
+
+.section-toggle:focus-visible,
+.entry-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: var(--radius);
+}
+
+.chevron {
+  flex: none;
+  width: 0.9em;
+  height: 0.9em;
+  color: var(--muted);
+  transition: transform 0.15s ease;
+}
+
+[aria-expanded="true"] > .chevron { transform: rotate(90deg); }
+
+/* A collapsed section keeps its frame but stops reserving a body's worth of
+   padding, so eight closed sections read as a list rather than eight boxes. */
+.editor-form fieldset[data-open="false"] { padding-bottom: 0.35rem; }
+
+.entry-editor[data-open="false"] { padding-bottom: 0.6rem; }
+.entry-editor[data-open="false"] .entry-editor-head {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
 .editor-form label,
 .field-grid label {
   display: block;
@@ -165,7 +222,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
+  gap: 0.6rem;
   margin-bottom: 0.9rem;
   padding-bottom: 0.6rem;
   border-bottom: 1px solid var(--border);
@@ -173,10 +230,107 @@
 
 .entry-editor-head h3 {
   margin: 0;
+  min-width: 0;
+  flex: 1 1 auto;
   font-size: 0.95rem;
   font-weight: 600;
   color: var(--text);
 }
+
+/* The row title can be long — a pasted job title, a full certificate name.
+   Truncate it rather than letting it push Remove off the row. */
+.entry-toggle > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- Reordering ---------- */
+
+.entry-grip {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  padding: 0;
+  color: var(--muted);
+  background: none;
+  border: 0;
+  border-radius: var(--radius);
+  cursor: grab;
+}
+.entry-grip svg { width: 1.1rem; height: 1.1rem; }
+.entry-grip:hover { color: var(--accent); background: var(--accent-soft); }
+.entry-grip:active { cursor: grabbing; }
+.entry-grip:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+.entry-editor.is-dragging { opacity: 0.4; }
+
+/* Where the row will land. A 2px rule rather than a gap, so nothing reflows
+   mid-drag and the pointer keeps hitting the row it is over. */
+.entry-editor.drop-before,
+.entry-editor.drop-after { position: relative; }
+.entry-editor.drop-before::before,
+.entry-editor.drop-after::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--accent);
+  border-radius: 2px;
+}
+.entry-editor.drop-before::before { top: -0.55rem; }
+.entry-editor.drop-after::after { bottom: -0.55rem; }
+
+/* Touch devices get no HTML5 drag events; the grip is still a focusable button
+   with arrow keys, so it stays useful rather than becoming dead weight. */
+@media (hover: none) {
+  .entry-grip { cursor: default; }
+}
+
+/* ---------- Counts and list tools ---------- */
+
+.section-count {
+  flex: none;
+  min-width: 1.35rem;
+  margin-left: 0.15rem;
+  padding: 0.05rem 0.4rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  color: var(--muted);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+
+.section-toggle:hover .section-count { color: var(--accent); border-color: var(--accent); }
+
+.list-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.list-count { margin: 0; font-size: 0.8rem; }
+
+/* A second heading inside a fieldset — Languages under Basics. Sits below the
+   legend in weight, so the section still reads as one thing. */
+.editor-form .subhead {
+  margin: 1.5rem 0 0.4rem;
+  padding-top: 1.1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+  border-top: 1px solid var(--border);
+}
+
+.grip-inline { letter-spacing: -0.1em; }
 
 .empty { font-style: italic; }
 

@@ -4,8 +4,8 @@
  *
  *   npm run import-data -- ./careertoai-data.json
  *
- * Writes data/profile.json, data/experience.json, data/certificates.json and
- * the images into src/certs/ and src/media/. This is the published-mode
+ * Writes data/profile.json, data/experience.json, data/projects.json,
+ * data/certificates.json and the images into src/certs/ and src/media/. This is the published-mode
  * counterpart of the editor's "Save to data/" button, and both go through the
  * same lib/apply-data.mjs so they cannot drift apart.
  */
@@ -23,8 +23,8 @@ Import an editor export into the repository.
   npm run import-data -- <careertoai-data.json>
 
 Get the file from /editor/ using the "Download .json" button. Importing
-replaces data/profile.json, data/experience.json and data/certificates.json
-entirely — the export is the full picture, not a patch.
+replaces data/profile.json, data/experience.json, data/projects.json and
+data/certificates.json entirely — the export is the full picture, not a patch.
 `);
   process.exit(file ? 0 : 1);
 }
@@ -50,6 +50,7 @@ Imported ${path.basename(resolved)}
 
   ${result.counts.education} education entr${result.counts.education === 1 ? "y" : "ies"}
   ${result.counts.experience} position${result.counts.experience === 1 ? "" : "s"}
+  ${result.counts.projects} project${result.counts.projects === 1 ? "" : "s"}
   ${result.counts.certificates} certification${result.counts.certificates === 1 ? "" : "s"}
   ${result.images} image${result.images === 1 ? "" : "s"} published
 

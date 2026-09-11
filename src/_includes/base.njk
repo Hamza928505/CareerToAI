@@ -34,11 +34,12 @@
 {# Signposts for agents that prefer plain text or raw JSON over HTML. #}
 <link rel="alternate" type="text/plain" href="{{ '/llms.txt' | absUrl }}" title="Plain-text profile summary">
 <link rel="alternate" type="application/json" href="{{ '/data/certificates.json' | absUrl }}" title="Certificate data as JSON">
+<link rel="alternate" type="application/json" href="{{ '/data/projects.json' | absUrl }}" title="Project data as JSON">
 <link rel="sitemap" type="application/xml" href="{{ '/sitemap.xml' | absUrl }}">
 
 {% if schemaType == "person" %}
 <script type="application/ld+json">
-{{- profile | personJsonLd(certificates, experience) | jsonld | safe -}}
+{{- profile | personJsonLd(certificates, experience, projects) | jsonld | safe -}}
 </script>
 {% endif %}
 

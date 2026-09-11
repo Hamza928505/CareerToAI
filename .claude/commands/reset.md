@@ -290,8 +290,8 @@ Then tell the user what to do next based on what was reset:
 ## In this project
 
 - A profile reset clears `data/profile.json`, `data/experience.json`,
-  `data/certificates.json` and `data/profile-extras.json` back to their placeholder
-  shape, then re-runs `npm run profile`. Resetting `01-candidate-profile.md` alone
+  `data/projects.json`, `data/certificates.json` and `data/profile-extras.json` back
+  to their placeholder shape, then re-runs `npm run profile`. Resetting `01-candidate-profile.md` alone
   achieves nothing — the next build puts it straight back.
 - A tracker reset empties `data/tracker.csv` to its header row and re-runs
   `npm run tracker`.
