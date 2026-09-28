@@ -26,6 +26,7 @@ graphify-out/
 
 # Build output & deps
 _site/
+dist-static/
 node_modules/
 .cache/
 *.log
