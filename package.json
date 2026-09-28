@@ -6,6 +6,7 @@
   "description": "AI-readable personal profile and certificate vault. Static site, zero hosting cost.",
   "scripts": {
     "build": "eleventy",
+    "build:static": "node scripts/build-static.mjs",
     "serve": "eleventy --serve",
     "editor": "node scripts/editor-server.mjs",
     "clean": "node -e \"fs.rmSync('_site',{recursive:true,force:true})\"",
@@ -21,6 +22,7 @@
   "devDependencies": {
     "@11ty/eleventy": "^3.0.0",
     "@anthropic-ai/sdk": "^0.123.0",
+    "esbuild": "^0.28.2",
     "exceljs": "^4.4.0",
     "sharp": "^0.34.0",
     "sweetalert2": "^11.26.25",
