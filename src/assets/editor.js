@@ -2044,12 +2044,17 @@ async function saveStudentData(button) {
     const files = {};
     for (const input of fileInputs) {
       if (input.files[0]) {
+        const file = input.files[0];
+        const ext = file.name.split('.').pop().toLowerCase();
+        const baseName = input.dataset.docUpload.replace(/\.pdf$/, '');
+        const saveName = `${baseName}.${ext}`;
+
         const base64 = await new Promise((resolve) => {
           const reader = new FileReader();
           reader.onload = () => resolve(reader.result);
-          reader.readAsDataURL(input.files[0]);
+          reader.readAsDataURL(file);
         });
-        files[input.dataset.docUpload] = base64;
+        files[saveName] = base64;
       }
     }
     const reqBody = { data: payload, files };
@@ -2087,5 +2092,7 @@ async function loadStudentData() {
 // It must stay last: init() reads state, LISTS, statusEl and dialog, and those
 // are let/const bindings that are in the temporal dead zone until their line runs.
 if (root) init();
+
+
 
 
