@@ -1801,6 +1801,9 @@ async function detectLocalMode() {
   }
 
   root.querySelector("[data-action='save-server']").hidden = !localMode.available;
+  const saveStudentDataBtn = root.querySelector("[data-action='save-student-data']");
+  if (saveStudentDataBtn) saveStudentDataBtn.hidden = !localMode.available;
+  if (localMode.available) loadStudentData();
   root.querySelector("[data-local-help]").hidden = !localMode.available;
 
   if (note) {
@@ -1973,6 +1976,8 @@ function init() {
   root.querySelector("[data-action='save-server']").addEventListener("click", (event) =>
     saveToServer(event.currentTarget)
   );
+  const studentBtn = root.querySelector("[data-action='save-student-data']");
+  if (studentBtn) studentBtn.addEventListener("click", (event) => saveStudentData(event.currentTarget));
 
   // Clearing is unrecoverable, so make the user type the word rather than
   // click twice — a stray double-click should never be able to erase the lot.
@@ -2028,7 +2033,58 @@ function init() {
   });
 }
 
+async function saveStudentData(button) {
+  if (!(await passesValidation("saved"))) return;
+
+  button.disabled = true;
+  busy("Saving to Student-data...");
+  try {
+    const payload = await buildPayload();
+    const fileInputs = document.querySelectorAll("[data-doc-upload]");
+    const files = {};
+    for (const input of fileInputs) {
+      if (input.files[0]) {
+        const base64 = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.readAsDataURL(input.files[0]);
+        });
+        files[input.dataset.docUpload] = base64;
+      }
+    }
+    const reqBody = { data: payload, files };
+
+    const response = await fetch("${apiBase()}__editor/student-data", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(reqBody),
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || "HTTP \");
+    idle("Saved to Student-data.");
+  } catch (e) {
+    idle(e.message, true);
+  } finally {
+    button.disabled = false;
+  }
+}
+
+async function loadStudentData() {
+  try {
+    const response = await fetch("${apiBase()}__editor/student-data");
+    const result = await response.json();
+    if (result.ok && result.data) {
+      adoptState(result.data);
+      renderAll();
+      setStatus("Loaded from Student-data");
+    }
+  } catch (e) {
+    // silently fail
+  }
+}
+
 // Everything above is declaration; this is the only statement that runs on load.
 // It must stay last: init() reads state, LISTS, statusEl and dialog, and those
 // are let/const bindings that are in the temporal dead zone until their line runs.
 if (root) init();
+
