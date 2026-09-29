@@ -468,3 +468,252 @@ await loadTracker();
 
 
 
+// ----------------------------------------------------------- Tracker UI
+let currentWorkbook = null;
+let currentSheetName = null;
+let currentData = [];
+let currentHeaders = [];
+
+const fileInput = document.getElementById("tracker-upload");
+const btnUpload = document.getElementById("btn-upload-tracker");
+const btnAddRow = document.getElementById("btn-add-row");
+const btnSave = document.getElementById("btn-save-tracker");
+const tableWrap = document.getElementById("tracker-table-wrap");
+const tbody = document.getElementById("tracker-tbody");
+const theadTr = document.getElementById("tracker-thead-tr");
+
+if (btnUpload && fileInput) {
+  btnUpload.addEventListener("click", () => fileInput.click());
+  
+  fileInput.addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    btnUpload.innerHTML = '<i class="fa-solid fa-spinner fa-spin" style="margin-right: 0.3rem;"></i> Loading...';
+    
+    try {
+      const XLSX = await import('https://cdn.sheetjs.com/xlsx-0.20.1/package/xlsx.mjs');
+      const arrayBuffer = await file.arrayBuffer();
+      currentWorkbook = XLSX.read(arrayBuffer, { type: "array", cellDates: true });
+      
+      currentSheetName = currentWorkbook.SheetNames.includes("Applications") ? "Applications" : currentWorkbook.SheetNames[0];
+      const sheet = currentWorkbook.Sheets[currentSheetName];
+      
+      const rawData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+      if (rawData.length < 1) {
+        Swal.fire({ ...dialog, icon: "error", title: "Error", text: "The Excel file is empty.", confirmButtonText: "OK" });
+        btnUpload.innerHTML = '<i class="fa-solid fa-file-excel" style="margin-right: 0.3rem;"></i> Upload Excel';
+        return;
+      }
+      
+      currentHeaders = rawData[0];
+      currentData = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+      
+      renderTable();
+      
+      btnUpload.innerHTML = '<i class="fa-solid fa-file-excel" style="margin-right: 0.3rem;"></i> Upload Different File';
+      btnAddRow.style.display = "inline-block";
+      btnSave.style.display = "inline-block";
+      tableWrap.style.display = "block";
+      
+      Swal.fire({ ...dialog, 
+        toast: true,
+        position: 'bottom-end',
+        icon: 'success',
+        title: 'Tracker loaded successfully!',
+        showConfirmButton: false,
+        timer: 2000
+      });
+    } catch (err) {
+      console.error(err);
+      Swal.fire({ ...dialog, icon: "error", title: "Error", text: "Could not parse the Excel file.", confirmButtonText: "OK" });
+      btnUpload.innerHTML = '<i class="fa-solid fa-file-excel" style="margin-right: 0.3rem;"></i> Upload Excel';
+    }
+  });
+}
+
+function renderTable() {
+  theadTr.innerHTML = "<th style=\"position: sticky; left: 0; z-index: 2; background: var(--surface);\">Actions</th>" + 
+    currentHeaders.map(h => `<th>${h || ''}</th>`).join("");
+  
+  tbody.innerHTML = "";
+  currentData.forEach((row, index) => {
+    const tr = document.createElement("tr");
+    
+    // Actions column
+    const tdActions = document.createElement("td");
+    tdActions.style.whiteSpace = "nowrap";
+    tdActions.style.position = "sticky";
+    tdActions.style.left = "0";
+    tdActions.style.background = "var(--surface)";
+    tdActions.style.zIndex = "1";
+    tdActions.innerHTML = `
+      <button class="btn" style="padding: 0.2rem 0.5rem; font-size: 0.8em; margin-right: 0.3rem;" onclick="window.editTrackerRow(${index})">
+        <i class="fa-solid fa-pen"></i>
+      </button>
+      <button class="btn" style="padding: 0.2rem 0.5rem; font-size: 0.8em; color: var(--text-error);" onclick="window.deleteTrackerRow(${index})">
+        <i class="fa-solid fa-trash"></i>
+      </button>
+    `;
+    tr.appendChild(tdActions);
+    
+    currentHeaders.forEach(header => {
+      const td = document.createElement("td");
+      let val = row[header];
+      if (val instanceof Date) {
+        val = val.toLocaleDateString();
+      }
+      td.textContent = val;
+      // Truncate long text
+      td.style.maxWidth = "200px";
+      td.style.overflow = "hidden";
+      td.style.textOverflow = "ellipsis";
+      td.style.whiteSpace = "nowrap";
+      td.title = val;
+      tr.appendChild(td);
+    });
+    
+    tbody.appendChild(tr);
+  });
+}
+
+window.deleteTrackerRow = function(index) {
+  Swal.fire({ ...dialog, 
+    title: 'Delete Application?',
+    text: "You won't be able to revert this! (Unless you don't save)",
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Yes, delete it!'
+  }).then((result) => {
+    if (result.isConfirmed) {
+      currentData.splice(index, 1);
+      renderTable();
+      Swal.fire({ ...dialog, toast:true, position:'bottom-end', icon:'success', title:'Deleted!', showConfirmButton:false, timer:2000});
+    }
+  });
+};
+
+window.editTrackerRow = function(index) {
+  const row = currentData[index];
+  
+  const htmlForm = `
+    <div style="display:flex; flex-direction:column; gap:0.5rem; text-align:left;">
+      <label><strong>Company</strong><br/><input id="edit-company" class="swal2-input" style="margin:0; width:100%" value="${row['Company'] || row['Company name'] || ''}" /></label>
+      <label><strong>Position</strong><br/><input id="edit-pos" class="swal2-input" style="margin:0; width:100%" value="${row['Position'] || ''}" /></label>
+      <label><strong>Status</strong><br/>
+        <select id="edit-status" class="swal2-select" style="margin:0; width:100%">
+          <option ${row['Status']=='To apply'?'selected':''}>To apply</option>
+          <option ${row['Status']=='Applied'?'selected':''}>Applied</option>
+          <option ${row['Status']=='Interview scheduled'?'selected':''}>Interview scheduled</option>
+          <option ${row['Status']=='Offer'?'selected':''}>Offer</option>
+          <option ${row['Status']=='Rejected'?'selected':''}>Rejected</option>
+          <option ${row['Status']=='Ghosted'?'selected':''}>Ghosted</option>
+        </select>
+      </label>
+      <label><strong>Notes</strong><br/><input id="edit-notes" class="swal2-input" style="margin:0; width:100%" value="${row['Notes'] || ''}" /></label>
+    </div>
+  `;
+  
+  Swal.fire({ ...dialog, 
+    title: 'Edit Application',
+    html: htmlForm,
+    showCancelButton: true,
+    confirmButtonText: 'Save',
+    preConfirm: () => {
+      // Find the correct header names to modify based on the schema uploaded
+      const getHeader = (names) => currentHeaders.find(h => names.includes(h));
+      
+      const c = getHeader(['Company', 'Company name']);
+      if(c) row[c] = document.getElementById('edit-company').value;
+      
+      const p = getHeader(['Position']);
+      if(p) row[p] = document.getElementById('edit-pos').value;
+      
+      const s = getHeader(['Status', 'Application status']);
+      if(s) row[s] = document.getElementById('edit-status').value;
+      
+      const n = getHeader(['Notes']);
+      if(n) row[n] = document.getElementById('edit-notes').value;
+      
+      return true;
+    }
+  }).then((result) => {
+    if (result.isConfirmed) {
+      renderTable();
+    }
+  });
+};
+
+if(btnAddRow) {
+  btnAddRow.addEventListener("click", () => {
+    const row = {};
+    currentHeaders.forEach(h => row[h] = "");
+    
+    const htmlForm = `
+      <div style="display:flex; flex-direction:column; gap:0.5rem; text-align:left;">
+        <label><strong>Company</strong><br/><input id="add-company" class="swal2-input" style="margin:0; width:100%" /></label>
+        <label><strong>Position</strong><br/><input id="add-pos" class="swal2-input" style="margin:0; width:100%" /></label>
+        <label><strong>Status</strong><br/>
+          <select id="add-status" class="swal2-select" style="margin:0; width:100%">
+            <option>To apply</option>
+            <option>Applied</option>
+            <option>Interview scheduled</option>
+            <option>Offer</option>
+            <option>Rejected</option>
+            <option>Ghosted</option>
+          </select>
+        </label>
+      </div>
+    `;
+    
+    Swal.fire({ ...dialog, 
+      title: 'Add Application',
+      html: htmlForm,
+      showCancelButton: true,
+      confirmButtonText: 'Add',
+      preConfirm: () => {
+        const getHeader = (names) => currentHeaders.find(h => names.includes(h));
+        
+        const c = getHeader(['Company', 'Company name']);
+        if(c) row[c] = document.getElementById('add-company').value;
+        
+        const p = getHeader(['Position']);
+        if(p) row[p] = document.getElementById('add-pos').value;
+        
+        const s = getHeader(['Status', 'Application status']);
+        if(s) row[s] = document.getElementById('add-status').value;
+        
+        return true;
+      }
+    }).then((result) => {
+      if (result.isConfirmed) {
+        currentData.unshift(row); // Add to top
+        renderTable();
+      }
+    });
+  });
+}
+
+if(btnSave) {
+  btnSave.addEventListener("click", async () => {
+    try {
+      const XLSX = await import('https://cdn.sheetjs.com/xlsx-0.20.1/package/xlsx.mjs');
+      const newWs = XLSX.utils.json_to_sheet(currentData, { header: currentHeaders });
+      currentWorkbook.Sheets[currentSheetName] = newWs;
+      XLSX.writeFile(currentWorkbook, "job_search_tracker.xlsx");
+      
+      Swal.fire({ ...dialog, 
+        toast:true, 
+        position:'bottom-end', 
+        icon:'success', 
+        title:'Saved and downloaded!', 
+        showConfirmButton:false, 
+        timer:3000
+      });
+    } catch (err) {
+      console.error(err);
+      Swal.fire({ ...dialog, icon: "error", title: "Error", text: "Failed to save the file.", confirmButtonText: "OK" });
+    }
+  });
+}
+

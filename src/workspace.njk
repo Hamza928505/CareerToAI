@@ -64,6 +64,37 @@ eleventyExcludeFromCollections: true
   </div>
 </section>
 
+<!-- ----------------------------------------------------------- Tracker UI -->
+<section aria-labelledby="tracker-ui-h">
+  <h2 id="tracker-ui-h"><i class="fa-solid fa-table-list" style="margin-right: 0.4rem;"></i> Interactive Tracker</h2>
+  <p class="lede">
+    Upload your <code>job_search_tracker.xlsx</code> file to view, edit, and save your applications without opening Excel.
+  </p>
+
+  <div class="actions" style="margin-bottom: 1rem; display: flex; gap: 1rem; align-items: center;">
+    <input type="file" id="tracker-upload" accept=".xlsx" style="display: none;" />
+    <button class="btn btn--primary" id="btn-upload-tracker" type="button">
+      <i class="fa-solid fa-file-excel" style="margin-right: 0.3rem;"></i> Upload Excel
+    </button>
+    
+    <button class="btn" id="btn-add-row" type="button" style="display: none;">
+      <i class="fa-solid fa-plus" style="margin-right: 0.3rem;"></i> Add Application
+    </button>
+    <button class="btn" id="btn-save-tracker" type="button" style="display: none;">
+      <i class="fa-solid fa-download" style="margin-right: 0.3rem;"></i> Save & Download
+    </button>
+  </div>
+
+  <div class="table-wrap" id="tracker-table-wrap" style="display: none; max-height: 500px; overflow-y: auto;">
+    <table id="tracker-table">
+      <thead>
+        <tr id="tracker-thead-tr"></tr>
+      </thead>
+      <tbody id="tracker-tbody"></tbody>
+    </table>
+  </div>
+</section>
+
 <!-- ------------------------------------------------------------ Run a task -->
 <section aria-labelledby="tasks-h">
   <h2 id="tasks-h">Run a task</h2>
@@ -380,6 +411,7 @@ eleventyExcludeFromCollections: true
 
 <script type="application/json" id="gju-rules">{{ gju | dump | safe }}</script>
 <script type="application/json" id="tracker-schema">{{ tracker | dump | safe }}</script>
+
 
 
 
