@@ -2142,7 +2142,14 @@ function setupDropzones() {
       if (input.files && input.files.length > 0) {
         const file = input.files[0];
         const sizeKB = (file.size / 1024).toFixed(1);
-        nameDisplay.innerHTML = `<i class="fa-solid fa-file-lines"></i> ${file.name} <span style="color:var(--muted); font-size:0.85em;">(${sizeKB} KB)</span>`;
+        nameDisplay.textContent = "";
+        const icon = document.createElement("i");
+        icon.className = "fa-solid fa-file-lines";
+        const size = document.createElement("span");
+        size.style.color = "var(--muted)";
+        size.style.fontSize = "0.85em";
+        size.textContent = `(${sizeKB} KB)`;
+        nameDisplay.append(icon, document.createTextNode(` ${file.name} `), size);
         
         const { isConfirmed } = await Swal.fire({
           ...dialog,
