@@ -1,3 +1,16 @@
+import Swal from "./sweetalert2.esm.min.js";
+
+const dialog = {
+  buttonsStyling: false,
+  customClass: {
+    popup: "swal-popup",
+    title: "swal-title",
+    htmlContainer: "swal-html",
+    confirmButton: "btn btn-primary",
+    cancelButton: "btn",
+    denyButton: "btn btn-danger",
+  },
+};
 /**
  * Workspace behaviour.
  *
@@ -78,7 +91,7 @@ async function runTask(name, button) {
 
   card.dataset.busy = "true";
   button.disabled = true;
-  button.textContent = "Running…";
+  button.innerHTML = '<i class="fa-solid fa-spinner fa-spin" style="margin-right: 0.3rem;"></i>Running...';
   logWrap.hidden = false;
   $("#log-title").textContent = `Output — ${name}`;
   log.textContent = "";
@@ -121,12 +134,12 @@ $("#log-close")?.addEventListener("click", () => {
 $$("[data-copy]").forEach((btn) => {
   btn.addEventListener("click", async () => {
     const text = btn.dataset.copy;
-    const label = btn.textContent;
+    const label = btn.innerHTML;
     try {
       await navigator.clipboard.writeText(text);
-      btn.textContent = "Copied";
+      btn.innerHTML = '<i class="fa-solid fa-check" style="margin-right: 0.3rem;"></i>Copied';
     } catch {
-      btn.textContent = "Press Ctrl+C";
+      btn.innerHTML = '<i class="fa-regular fa-keyboard" style="margin-right: 0.3rem;"></i>Ctrl+C';
       const range = document.createRange();
       range.selectNodeContents(btn.closest(".cmd").querySelector(".cmd-text"));
       const sel = getSelection();
@@ -134,7 +147,7 @@ $$("[data-copy]").forEach((btn) => {
       sel.addRange(range);
     }
     setTimeout(() => {
-      btn.textContent = label;
+      btn.innerHTML = label;
     }, 2000);
   });
 });
@@ -269,20 +282,18 @@ $("#checker")?.addEventListener("submit", (event) => {
   form.querySelectorAll(".error").forEach((el) => el.remove());
   let firstBad = null;
 
+    let missing = [];
   for (const id of ["f-weeks", "f-country"]) {
     const input = document.getElementById(id);
     input.removeAttribute("aria-invalid");
     if (!input.value) {
       input.setAttribute("aria-invalid", "true");
-      const msg = document.createElement("span");
-      msg.className = "error";
-      msg.textContent =
-        id === "f-weeks" ? "How many weeks is the placement?" : "Pick the country of the placement.";
-      input.parentElement.append(msg);
+      missing.push(id === "f-weeks" ? "Duration (weeks)" : "Country");
       firstBad = firstBad || input;
     }
   }
   if (firstBad) {
+    Swal.fire({ ...dialog, icon: "warning", title: "Missing fields", html: `Please provide: <strong>${missing.join(", ")}</strong>`, confirmButtonText: "OK" });
     firstBad.focus();
     return;
   }
@@ -417,8 +428,7 @@ $("#row-form")?.addEventListener("submit", async (event) => {
 
   if (!company.value.trim()) {
     company.setAttribute("aria-invalid", "true");
-    status.dataset.state = "err";
-    status.textContent = "A row needs a company name — that is how every command finds it again.";
+    Swal.fire({ ...dialog, icon: "error", title: "Missing Company", html: `<p class="swal-note">A row needs a company name - that is how every command finds it again.</p>`, confirmButtonText: "OK" });
     company.focus();
     return;
   }
@@ -427,7 +437,7 @@ $("#row-form")?.addEventListener("submit", async (event) => {
   const row = Object.fromEntries(new FormData(form).entries());
   const submit = $("#row-submit");
   submit.disabled = true;
-  submit.textContent = "Adding…";
+  submit.innerHTML = '<i class="fa-solid fa-spinner fa-spin" style="margin-right: 0.3rem;"></i>Adding...';
 
   try {
     const res = await fetch(api("tracker"), {
@@ -438,16 +448,14 @@ $("#row-form")?.addEventListener("submit", async (event) => {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "could not write the tracker");
 
-    status.dataset.state = "ok";
-    status.textContent = `Added. ${data.rows} row(s) in data/tracker.csv — run “Rebuild the workbook” to recompute Fit %.`;
+    Swal.fire({ ...dialog, icon: "success", title: "Row Added", html: `Added. ${data.rows} row(s) in data/tracker.csv <br> run "Rebuild the workbook" to recompute Fit %.`, confirmButtonText: "Got it" }); form.reset();
     form.reset();
     loadTracker();
   } catch (error) {
-    status.dataset.state = "err";
-    status.textContent = error.message;
+    Swal.fire({ ...dialog, icon: "error", title: "Error", text: error.message, confirmButtonText: "OK" });
   } finally {
     submit.disabled = false;
-    submit.textContent = "Add to tracker";
+    submit.innerHTML = '<i class="fa-solid fa-file-csv" style="margin-right: 0.3rem;"></i>Add to tracker';
   }
 });
 
@@ -455,4 +463,8 @@ $("#row-form")?.addEventListener("submit", async (event) => {
 
 await detectMode();
 await loadTracker();
+
+
+
+
 
