@@ -1,6 +1,6 @@
 /* Editor-only styles. Loaded on /editor/ and nowhere else. */
 
-.editor { width: 100%; max-width: none; margin-inline: auto; }
+.editor { width: 100%; max-width: none; }
 .editor-intro h1 { margin-bottom: 0.5rem; }
 
 /* ---------- Toolbar ---------- */
@@ -646,5 +646,6 @@
   font-weight: 600 !important;
   font-size: 0.85rem;
 }
+
 
 
