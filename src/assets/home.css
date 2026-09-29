@@ -218,6 +218,20 @@ html { scroll-behavior: smooth; }
 
 /* ---------- Cards ---------- */
 
+.card-flex {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  margin: 1.5rem 0;
+  padding: 0;
+}
+
+@media (min-width: 40rem) {
+  .card-flex { flex-direction: row; align-items: stretch; }
+  .card-flex > * { flex: 1; }
+}
+
 .card-grid {
   list-style: none;
   display: grid;
@@ -599,3 +613,4 @@ html { scroll-behavior: smooth; }
   #contacts .facts { grid-template-columns: 1fr; gap: 0.25rem; }
   #contacts .facts dd { margin-bottom: 1.1rem; }
 }
+
