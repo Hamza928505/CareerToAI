@@ -603,18 +603,18 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 2rem 1rem;
-  border: 2px dashed var(--color-border, #ccc);
-  border-radius: 8px;
-  background-color: var(--color-bg-alt, #fafafa);
+  padding: 2.5rem 1.5rem;
+  border: 2px dashed var(--border);
+  border-radius: var(--radius-lg, 12px);
+  background-color: var(--surface-2);
   text-align: center;
   cursor: pointer;
   transition: all 0.2s ease;
-  min-height: 120px;
+  min-height: 140px;
 }
 .dropzone:hover, .dropzone.active {
-  border-color: var(--color-primary, #0056b3);
-  background-color: var(--color-primary-light, #f0f7ff);
+  border-color: var(--accent);
+  background-color: var(--accent-soft);
 }
 .dropzone input[type="file"] {
   position: absolute;
@@ -628,14 +628,21 @@
 .dropzone-label {
   font-weight: 600;
   margin-bottom: 0.25rem;
+  color: var(--text);
+  font-size: 1.05rem;
 }
 .dropzone-text {
-  font-size: 0.85em;
-  color: var(--color-muted, #666);
+  font-size: 0.9rem;
+  color: var(--muted);
 }
 .dropzone-file-name {
-  margin-top: 0.5rem;
-  font-size: 0.9em;
+  margin-top: 0.75rem;
+  font-size: 0.95rem;
   font-weight: 500;
-  color: var(--color-primary, #0056b3);
+  color: var(--accent);
+}
+.current-doc small {
+  color: var(--ok) !important;
+  font-weight: 600 !important;
+  font-size: 0.85rem;
 }
