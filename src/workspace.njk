@@ -135,6 +135,13 @@ eleventyExcludeFromCollections: true
   <ul class="cmd-list">
     <li class="cmd">
       <div>
+        <code class="cmd-text">/scrape</code>
+        <p>Searches all configured job portals and gathers matching postings.</p>
+      </div>
+      <button class="btn" type="button" data-copy="/scrape">Copy</button>
+    </li>
+    <li class="cmd">
+      <div>
         <code class="cmd-text">/apply &lt;url or pasted advert&gt;</code>
         <p>Checks eligibility, scores the fit, drafts the Anschreiben, records the row.</p>
       </div>
@@ -167,6 +174,34 @@ eleventyExcludeFromCollections: true
         <p>The gap between what the adverts ask for and what your profile holds.</p>
       </div>
       <button class="btn" type="button" data-copy="/upskill">Copy</button>
+    </li>
+    <li class="cmd">
+      <div>
+        <code class="cmd-text">/setup</code>
+        <p>Initializes your environment, compiles base templates, and validates your profile data.</p>
+      </div>
+      <button class="btn" type="button" data-copy="/setup">Copy</button>
+    </li>
+    <li class="cmd">
+      <div>
+        <code class="cmd-text">/add-portal</code>
+        <p>Creates a new scraper configuration to add a new job board to the search.</p>
+      </div>
+      <button class="btn" type="button" data-copy="/add-portal ">Copy</button>
+    </li>
+    <li class="cmd">
+      <div>
+        <code class="cmd-text">/expand</code>
+        <p>Fills in details or expands on bullet points in your Cover Letter or CV.</p>
+      </div>
+      <button class="btn" type="button" data-copy="/expand ">Copy</button>
+    </li>
+    <li class="cmd">
+      <div>
+        <code class="cmd-text">/html-report</code>
+        <p>Generates an interactive HTML dashboard of your application progress.</p>
+      </div>
+      <button class="btn" type="button" data-copy="/html-report">Copy</button>
     </li>
   </ul>
 </section>
@@ -321,3 +356,6 @@ eleventyExcludeFromCollections: true
    Passing them as JSON keeps the numbers in one place. #}
 <script type="application/json" id="gju-rules">{{ gju | dump | safe }}</script>
 <script type="application/json" id="tracker-schema">{{ tracker | dump | safe }}</script>
+
+
+
