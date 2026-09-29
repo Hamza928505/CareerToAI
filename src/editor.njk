@@ -90,6 +90,7 @@ pageScript: /assets/editor.js
     <span class="toolbar-spacer"></span>
     <button type="button" class="btn" data-action="toggle-all" aria-live="polite">Collapse all</button>
     <button type="button" class="btn btn-primary" data-action="save-server" hidden>Save to data/</button>
+    <button type="button" class="btn btn-primary" data-action="save-student-data" hidden>Save to Student-data</button>
     <button type="button" class="btn" data-action="export">Download .json</button>
     <button type="button" class="btn" data-action="import">Load .json</button>
     <button type="button" class="btn btn-danger" data-action="reset">Clear all</button>
@@ -97,6 +98,26 @@ pageScript: /assets/editor.js
   </div>
 
   <form class="editor-form" data-form autocomplete="on">
+    <fieldset class="collapsible">
+      {{ sectionHead("student-data", "Student Data & Base Documents") }}
+      <div class="section-body" id="section-student-data">
+        <p class="muted">Upload your base CV and Cover Letter here. They will be saved to <code>src/assets/Student-data/</code> for the AI to use.</p>
+        <div class="grid-2">
+          <label>Base CV (EN) (.pdf)
+            <input type="file" accept=".pdf" data-doc-upload="base_cv_en.pdf">
+          </label>
+          <label>Base Cover Letter (EN) (.pdf)
+            <input type="file" accept=".pdf" data-doc-upload="base_cover_letter_en.pdf">
+          </label>
+          <label>Base CV (DE) (.pdf)
+            <input type="file" accept=".pdf" data-doc-upload="base_cv_de.pdf">
+          </label>
+          <label>Base Cover Letter (DE) (.pdf)
+            <input type="file" accept=".pdf" data-doc-upload="base_cover_letter_de.pdf">
+          </label>
+        </div>
+      </div>
+    </fieldset>
 
     <fieldset class="collapsible">
       {{ sectionHead("basics", "Basics") }}
@@ -245,3 +266,4 @@ pageScript: /assets/editor.js
     </p>
   </section>
 </div>
+

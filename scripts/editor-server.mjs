@@ -271,6 +271,37 @@ async function handleTrackerWrite(req, res) {
   sendJson(res, 200, { ok: true, rows: written, updated: existing >= 0 });
 }
 
+async function handleStudentData(req, res) {
+  const dir = path.join(ROOT, "src", "assets", "Student-data");
+  if (req.method === "GET") {
+    const studentJsonPath = path.join(dir, "student.json");
+    if (fs.existsSync(studentJsonPath)) {
+      sendJson(res, 200, { ok: true, data: JSON.parse(fs.readFileSync(studentJsonPath, "utf8")) });
+    } else {
+      sendJson(res, 200, { ok: false });
+    }
+  } else if (req.method === "POST") {
+    const payload = await readBody(req);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    
+    if (payload.data) {
+      fs.writeFileSync(path.join(dir, "student.json"), JSON.stringify(payload.data, null, 2));
+    }
+    
+    if (payload.files) {
+      for (const [name, base64] of Object.entries(payload.files)) {
+        if (!base64) continue;
+        const match = /^data:([^;,]+)?(;base64)?,(.*)$/s.exec(base64);
+        if (match) {
+          fs.writeFileSync(path.join(dir, name), Buffer.from(match[3], "base64"));
+        }
+      }
+    }
+    await build();
+    sendJson(res, 200, { ok: true });
+  }
+}
+
 const server = http.createServer(async (req, res) => {
   let pathname = new URL(req.url, `http://${HOST}`).pathname;
 
@@ -332,3 +363,4 @@ Site preview:     http://${HOST}:${PORT}${prefix}
 Press Ctrl+C to stop.
 `);
 });
+
