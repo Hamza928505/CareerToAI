@@ -102,14 +102,22 @@ pageScript: /assets/editor.js
       {{ sectionHead("student-data", "Student Data & Base Documents") }}
       <div class="section-body" id="section-student-data">
         <p class="muted">Upload your base CV and Cover Letter here. They will be saved to <code>src/assets/Student-data/</code> for the AI to use.</p>
-        <div class="grid-2">
-          <label>Base CV (EN) (.pdf, .docx)<span class="current-doc" data-doc-display="base_cv_en"></span>
-            <input type="file" accept=".pdf,.docx" data-doc-upload="base_cv_en">
-          </label>
-          <label>Base Cover Letter (EN) (.pdf, .docx)<span class="current-doc" data-doc-display="base_cover_letter_en"></span>
-            <input type="file" accept=".pdf,.docx" data-doc-upload="base_cover_letter_en">
-          </label>
-        </div>
+                  <div class="grid-2">
+            <div class="dropzone" data-dropzone>
+              <span class="dropzone-label">Base CV (EN)</span>
+              <span class="dropzone-text">Drag & drop .pdf or .docx here, or click to browse</span>
+              <span class="current-doc" data-doc-display="base_cv_en"></span>
+              <span class="dropzone-file-name" data-file-name="base_cv_en"></span>
+              <input type="file" accept=".pdf,.docx" data-doc-upload="base_cv_en">
+            </div>
+            <div class="dropzone" data-dropzone>
+              <span class="dropzone-label">Base Cover Letter (EN)</span>
+              <span class="dropzone-text">Drag & drop .pdf or .docx here, or click to browse</span>
+              <span class="current-doc" data-doc-display="base_cover_letter_en"></span>
+              <span class="dropzone-file-name" data-file-name="base_cover_letter_en"></span>
+              <input type="file" accept=".pdf,.docx" data-doc-upload="base_cover_letter_en">
+            </div>
+          </div>
       </div>
     </fieldset>
 
@@ -260,6 +268,8 @@ pageScript: /assets/editor.js
     </p>
   </section>
 </div>
+
+
 
 
 

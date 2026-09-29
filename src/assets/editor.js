@@ -1,17 +1,17 @@
-﻿/**
+/**
  * Profile editor.
  *
  * This is the ONLY JavaScript on the site, and it runs on one page that is
  * marked noindex. The profile pages themselves are static HTML rendered at
- * build time â€” nothing here affects what a crawler or an AI assistant reads.
+ * build time — nothing here affects what a crawler or an AI assistant reads.
  *
  * Storage: text in localStorage, image blobs in IndexedDB (localStorage's ~5MB
  * quota cannot hold base64 certificate scans). Both are private to this browser
  * on this device; the page uploads nothing on its own.
  *
  * Two modes, detected at load:
- *   published â€” export a .json you feed to `npm run import-data`
- *   local     â€” `npm run editor` is running, so "Save to data/" writes files
+ *   published — export a .json you feed to `npm run import-data`
+ *   local     — `npm run editor` is running, so "Save to data/" writes files
  *               directly and AI extraction is available (the key stays server-side)
  */
 
@@ -29,7 +29,7 @@ const IMAGE_STORE = "images";
 const root = document.querySelector("[data-editor]");
 
 // ---------------------------------------------------------------------------
-// IndexedDB â€” image blobs, keyed by a uuid the entry stores as `imageKey`
+// IndexedDB — image blobs, keyed by a uuid the entry stores as `imageKey`
 // ---------------------------------------------------------------------------
 
 let dbPromise = null;
@@ -104,7 +104,7 @@ function withKeys(list) {
 }
 
 // ---------------------------------------------------------------------------
-// List definitions â€” the whole form is generated from these
+// List definitions — the whole form is generated from these
 // ---------------------------------------------------------------------------
 
 /** LinkedIn's employment types, in the order the profile owner asked for. */
@@ -113,7 +113,7 @@ const EMPLOYMENT_TYPES = [
   "Self-employed", "Part-time", "Full-time",
 ];
 
-/** Where the work happens â€” distinct from *where the company is*. */
+/** Where the work happens — distinct from *where the company is*. */
 const LOCATION_TYPES = ["On-site", "Hybrid", "Remote"];
 
 /**
@@ -167,7 +167,7 @@ const LISTS = {
     target: () => state.profile.languages,
     label: "language",
     plural: "languages",
-    heading: (e) => [e.language, e.level].filter(Boolean).join(" â€” ") || "New language",
+    heading: (e) => [e.language, e.level].filter(Boolean).join(" — ") || "New language",
     blank: () => ({ _key: uid(), language: "", level: "", notes: "" }),
     fields: [
       { name: "language", label: "Language", type: "text", placeholder: "German" },
@@ -184,7 +184,7 @@ const LISTS = {
     label: "position",
     plural: "positions",
     sortKey: (e) => `${dateKey(e.startDate)}-${e.endDate ? "0" : "1"}`,
-    heading: (e) => [e.title, e.organization].filter(Boolean).join(" â€” ") || "New position",
+    heading: (e) => [e.title, e.organization].filter(Boolean).join(" — ") || "New position",
     blank: () => ({
       _key: uid(), id: "", title: "", organization: "", employmentType: "", location: "",
       locationType: "", startDate: "", endDate: "", description: "", skills: [], imageKey: "",
@@ -230,7 +230,7 @@ const LISTS = {
       { name: "startDate", label: "Start", type: "month" },
       { name: "endDate", label: "End", type: "month", hint: "Leave blank if you are still working on it" },
       { name: "description", label: "Description", type: "textarea", rows: 5, full: true,
-        hint: "What it does and what you built. Written in sentences â€” the candidate profile splits it into bullets." },
+        hint: "What it does and what you built. Written in sentences — the candidate profile splits it into bullets." },
     ],
     skills: true,
     image: { label: "Attachment", hint: "Optional image shown with this project." },
@@ -297,13 +297,13 @@ function save() {
   } catch (error) {
     // Quota, private browsing, or site data blocked. Say so rather than
     // silently losing the next hour of typing.
-    setStatus("Could not save to this browser â€” export your .json now", "error");
+    setStatus("Could not save to this browser — export your .json now", "error");
     console.error("[editor] localStorage write failed:", error);
   }
 }
 
 function scheduleSave() {
-  setStatus("Savingâ€¦");
+  setStatus("Saving…");
   clearTimeout(saveTimer);
   saveTimer = setTimeout(save, 400);
 }
@@ -370,7 +370,7 @@ function selectControl(field, value) {
       ...options.map((option) => el("option", { value: option, textContent: option })),
     ]
   );
-  // After the options exist â€” assigning .value first would find nothing to match.
+  // After the options exist — assigning .value first would find nothing to match.
   control.value = value;
   return control;
 }
@@ -408,11 +408,11 @@ function skillsWidget(listName, item) {
 // There are far more skills in the world than any bundled list can hold, so the
 // editor does not try. Suggestions come from four sources, best first:
 //
-//   1. yours       â€” every skill already on a role, a certificate or the profile
-//   2. seen        â€” skills harvested from job adverts you have pasted, kept in
+//   1. yours       — every skill already on a role, a certificate or the profile
+//   2. seen        — skills harvested from job adverts you have pasted, kept in
 //                    this browser only; the list grows into your own field
-//   3. library     â€” the curated seed in skill-library.js, one group per field
-//   4. taxonomy    â€” ESCO's ~14,000 skills, English and German, only if you ran
+//   3. library     — the curated seed in skill-library.js, one group per field
+//   4. taxonomy    — ESCO's ~14,000 skills, English and German, only if you ran
 //                    `npm run skills:import`. Search-only and lazily fetched.
 //
 // Free text always wins: anything you type is accepted whether or not any of
@@ -423,7 +423,7 @@ function skillsWidget(listName, item) {
 const parseSkills = (text) =>
   String(text)
     .split(/[\n\r,;]+/)
-    .map((s) => s.trim().replace(/^[-*â€¢]\s*/, ""))
+    .map((s) => s.trim().replace(/^[-*•]\s*/, ""))
     .filter(Boolean);
 
 /** Append the ones that are new, comparing case-insensitively. Returns the count. */
@@ -557,7 +557,7 @@ function suggestionsFor(skills) {
 const RESULT_MAX = 240;
 
 /**
- * Browse the curated library by field, or search everything at once â€” including
+ * Browse the curated library by field, or search everything at once — including
  * the ESCO taxonomy, which is why the search box matches German labels too.
  */
 async function pickFromLibrary(skills) {
@@ -593,7 +593,7 @@ async function pickFromLibrary(skills) {
         hits.push(row(name, group.group, owned.has(key)));
       }
     }
-    const fromLibrary = section(`Library â€” ${hits.length} match${hits.length === 1 ? "" : "es"}`, hits);
+    const fromLibrary = section(`Library — ${hits.length} match${hits.length === 1 ? "" : "es"}`, hits);
 
     const wide = [];
     for (const entry of taxonomy) {
@@ -605,11 +605,11 @@ async function pickFromLibrary(skills) {
       wide.push(row(entry.label, entry.de || entry.group, owned.has(key)));
     }
     const more = section(
-      wide.length >= RESULT_MAX ? `ESCO â€” first ${RESULT_MAX}, keep typing` : `ESCO â€” ${wide.length}`,
+      wide.length >= RESULT_MAX ? `ESCO — first ${RESULT_MAX}, keep typing` : `ESCO — ${wide.length}`,
       wide
     );
 
-    return fromLibrary + more || `<p class="swal-note">Nothing matches â€œ${escapeHtml(term)}â€. Type it into the box instead â€” free text is always accepted.</p>`;
+    return fromLibrary + more || `<p class="swal-note">Nothing matches “${escapeHtml(term)}”. Type it into the box instead — free text is always accepted.</p>`;
   };
 
   const scope = taxonomy.length
@@ -621,7 +621,7 @@ async function pickFromLibrary(skills) {
     title: "Add skills",
     width: "46rem",
     html:
-      `<input type="search" class="swal-filter" placeholder="Search skillsâ€¦" aria-label="Search skills">` +
+      `<input type="search" class="swal-filter" placeholder="Search skills…" aria-label="Search skills">` +
       `<div class="swal-library" data-results>${browse}</div>` +
       `<p class="swal-note">${scope}</p>`,
     showCancelButton: true,
@@ -677,10 +677,10 @@ async function pickFromAdvert(skills) {
     title: "Skills from a job advert",
     width: "42rem",
     html:
-      `<p class="swal-note">Paste the advert â€” the requirements section is enough. German is fine.</p>` +
-      `<textarea class="swal-textarea" rows="10" placeholder="Wir suchen eine/n Praktikant/inâ€¦"></textarea>` +
+      `<p class="swal-note">Paste the advert — the requirements section is enough. German is fine.</p>` +
+      `<textarea class="swal-textarea" rows="10" placeholder="Wir suchen eine/n Praktikant/in…"></textarea>` +
       (canUseAi
-        ? `<label class="swal-check"><input type="checkbox" data-ai checked> Let Claude read it â€” finds skills no list contains. Runs on your machine.</label>`
+        ? `<label class="swal-check"><input type="checkbox" data-ai checked> Let Claude read it — finds skills no list contains. Runs on your machine.</label>`
         : `<p class="swal-note">Matching against the catalogue. Run <code>npm run editor</code> to have Claude read the advert instead.</p>`),
     showCancelButton: true,
     confirmButtonText: "Find skills",
@@ -704,7 +704,7 @@ async function pickFromAdvert(skills) {
   let via = "the catalogue";
 
   if (ai) {
-    busy("Reading the advertâ€¦");
+    busy("Reading the advert…");
     try {
       const response = await fetch(`${apiBase()}__editor/skills`, {
         method: "POST",
@@ -742,7 +742,7 @@ async function pickFromAdvert(skills) {
       ...dialog,
       icon: "info",
       title: "No skills recognised",
-      html: `<p class="swal-note">Nothing in the text matched. Type the skills in by hand â€” and consider <code>npm run skills:import</code> for a much wider catalogue.</p>`,
+      html: `<p class="swal-note">Nothing in the text matched. Type the skills in by hand — and consider <code>npm run skills:import</code> for a much wider catalogue.</p>`,
       confirmButtonText: "OK",
     });
     return null;
@@ -763,7 +763,7 @@ async function pickFromAdvert(skills) {
     title: `${found.length} skill${found.length === 1 ? "" : "s"} in this advert`,
     width: "42rem",
     html:
-      `<p class="swal-note">Untick anything you cannot honestly claim â€” this goes on your profile. Read by ${escapeHtml(via)}.</p>` +
+      `<p class="swal-note">Untick anything you cannot honestly claim — this goes on your profile. Read by ${escapeHtml(via)}.</p>` +
       `<div class="swal-library"><section><ul>${items}</ul></section></div>`,
     showCancelButton: true,
     confirmButtonText: "Add ticked",
@@ -777,7 +777,7 @@ async function pickFromAdvert(skills) {
   return chosen.isConfirmed ? chosen.value || [] : null;
 }
 
-/** Chips + a text box. Enter or comma commits; the Ã— on a chip removes it. */
+/** Chips + a text box. Enter or comma commits; the × on a chip removes it. */
 function renderSkills(container, skills, owner) {
   container.replaceChildren();
   // The Extra skills heading carries a count like every other section, and this
@@ -797,7 +797,7 @@ function renderSkills(container, skills, owner) {
           type: "button",
           className: "chip-remove",
           title: `Remove ${skill}`,
-          textContent: "Ã—",
+          textContent: "×",
           onclick: () => {
             skills.splice(index, 1);
             redraw();
@@ -900,7 +900,7 @@ async function renderImage(container, listName, item, config) {
 
   const record = await getImage(item.imageKey).catch(() => null);
   if (!record) {
-    // The entry references an image this browser no longer has â€” most likely
+    // The entry references an image this browser no longer has — most likely
     // the JSON was edited elsewhere, or site data was cleared.
     item.imageKey = "";
     container.append(input, el("small", { textContent: "Previously attached image is no longer in this browser." }));
@@ -961,7 +961,7 @@ const chevron = () => {
 
 /**
  * Which entry rows are open, by their _key. Kept here rather than in `state`
- * because it is a view preference, not profile data â€” it must never reach an
+ * because it is a view preference, not profile data — it must never reach an
  * export or data/*.json. Rows default to open, so nothing collapses under
  * someone who never asked for it.
  */
@@ -970,7 +970,7 @@ const collapsedRows = new Set();
 // ---------------------------------------------------------------------------
 // Reordering
 //
-// The array order is the published order â€” lib/content.mjs stopped re-sorting,
+// The array order is the published order — lib/content.mjs stopped re-sorting,
 // so what you arrange here is what /llms.txt, the JSON-LD and the generated
 // candidate profile say. Dragging is the obvious way to do that and the
 // keyboard is the reliable one, so the grip does both: it is a real button that
@@ -1023,7 +1023,7 @@ function refocusGrip(listName, key) {
 }
 
 /**
- * The per-list "Collapse all" for entry rows â€” the counterpart of the toolbar
+ * The per-list "Collapse all" for entry rows — the counterpart of the toolbar
  * button, which works on whole sections. Its label says what pressing it does,
  * and it hides itself below two rows, where a row's own title already is the
  * whole control.
@@ -1093,7 +1093,7 @@ function renderList(listName) {
     // by default, and the attribute is what every browser actually reads.
     handle.setAttribute("draggable", "true");
     handle.dataset.grip = `${listName}.${item._key}`;
-    handle.setAttribute("aria-label", `Reorder ${config.heading(item)} â€” ${position}`);
+    handle.setAttribute("aria-label", `Reorder ${config.heading(item)} — ${position}`);
 
     const heading = el("h3", {}, [
       el("button", {
@@ -1214,7 +1214,7 @@ function initDropZone(listName) {
 }
 
 /**
- * "3 positions", "1 education entry", "None yet" â€” written into both the
+ * "3 positions", "1 education entry", "None yet" — written into both the
  * section heading and the row above the list. The heading is the one that
  * matters: it is what a collapsed section still tells you.
  */
@@ -1240,7 +1240,7 @@ function renderCounts() {
 // Collapsible sections
 //
 // The fieldset legends are toggle buttons rendered by editor.njk. Which
-// sections are open is a view preference, so it is stored under its own key â€”
+// sections are open is a view preference, so it is stored under its own key —
 // clearing the profile must not also rearrange the page, and an export must
 // never carry it.
 // ---------------------------------------------------------------------------
@@ -1367,7 +1367,7 @@ function onInput(event) {
   setByPath(control.dataset.path, control.value);
 
   // Keep the collapsed-row heading in step with the field that names it. The
-  // label is the <span> inside the toggle button, not the <h3> itself â€”
+  // label is the <span> inside the toggle button, not the <h3> itself —
   // writing to the h3 would delete the button.
   const [listName, key] = control.dataset.path.split(".");
   const config = LISTS[listName];
@@ -1434,7 +1434,7 @@ const busy = (title) =>
 // value the build cannot parse, so it blocks outright. A *missing* required
 // field is one the published profile has no fallback for; it blocks too, but
 // with a way past, because the export doubles as a backup. A *warning* is an
-// incomplete entry that lib/apply-data.mjs silently drops â€” which is exactly
+// incomplete entry that lib/apply-data.mjs silently drops — which is exactly
 // the kind of thing you want told to your face before you publish, but not a
 // reason to refuse the save.
 // ---------------------------------------------------------------------------
@@ -1480,7 +1480,7 @@ function checkDates(entry, label, errors, opts = {}) {
 /**
  * The fields the published profile has no sensible fallback for. Anything not
  * on this list is genuinely optional, and the form says so on the field itself
- * â€” the two must not contradict each other.
+ * — the two must not contradict each other.
  */
 const REQUIRED = [
   { field: "firstName", label: "First name" },
@@ -1536,7 +1536,7 @@ function validate() {
 
   state.experience.forEach((role, i) => {
     const label =
-      [trimmed(role.title), trimmed(role.organization)].filter(Boolean).join(" â€” ") ||
+      [trimmed(role.title), trimmed(role.organization)].filter(Boolean).join(" — ") ||
       `Position ${i + 1}`;
     if (!trimmed(role.title) && !trimmed(role.organization)) {
       warnings.push(`Position ${i + 1} has neither a job title nor a company and will not be published.`);
@@ -1550,7 +1550,7 @@ function validate() {
       return warnings.push(`Language ${i + 1} has no language name and will not be published.`);
     }
     // A language with no level reaches the site but not the Language Gate,
-    // which filters on both â€” so say so rather than let it look declared.
+    // which filters on both — so say so rather than let it look declared.
     if (!trimmed(entry.level)) {
       warnings.push(`${name} has no level, so the Language Gate will not count it.`);
     }
@@ -1597,7 +1597,7 @@ function focusField(field) {
   const control = root?.querySelector(`[data-path="profile.${field}"]`);
   if (!control) return;
   // A field inside a collapsed section cannot be scrolled to or focused, so
-  // open its section first â€” being sent to an invisible field is worse than
+  // open its section first — being sent to an invisible field is worse than
   // losing the collapse.
   revealSection(control);
   control.scrollIntoView?.({ block: "center", behavior: "smooth" });
@@ -1627,7 +1627,7 @@ async function passesValidation(verb) {
       html:
         `<p class="swal-note">The published profile has no fallback for these, so fill them in before you publish:</p>` +
         bullets(missing.map((m) => m.label)) +
-        `<p class="swal-note">Your work is already saved in this browser â€” going back loses nothing. Continue anyway only if you want an incomplete backup.</p>`,
+        `<p class="swal-note">Your work is already saved in this browser — going back loses nothing. Continue anyway only if you want an incomplete backup.</p>`,
       showCancelButton: true,
       confirmButtonText: "Back to the form",
       cancelButtonText: `Continue anyway`,
@@ -1702,7 +1702,7 @@ async function buildPayload() {
 async function exportJson() {
   if (!(await passesValidation("exported"))) return;
 
-  busy("Preparing downloadâ€¦");
+  busy("Preparing download…");
   const payload = await buildPayload();
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
@@ -1751,7 +1751,7 @@ async function importJson(file) {
   });
   if (!confirmed.isConfirmed) return;
 
-  busy("Loadingâ€¦");
+  busy("Loading…");
   adoptState(payload);
 
   let failedImages = 0;
@@ -1819,7 +1819,7 @@ async function saveToServer(button) {
   if (!(await passesValidation("saved"))) return;
 
   button.disabled = true;
-  busy("Writing files and rebuildingâ€¦");
+  busy("Writing files and rebuilding…");
   try {
     const payload = await buildPayload();
     const response = await fetch(`${apiBase()}__editor/save`, {
@@ -1839,7 +1839,7 @@ async function saveToServer(button) {
           ...result.written,
           ...(result.images ? [`${result.images} image(s) into src/certs/ and src/media/`] : []),
         ]) +
-        "<p class=\"swal-note\">Nothing is live yet â€” commit and push to publish.</p>",
+        "<p class=\"swal-note\">Nothing is live yet — commit and push to publish.</p>",
       confirmButtonText: "OK",
     });
   } catch (error) {
@@ -1852,8 +1852,8 @@ async function saveToServer(button) {
 async function extractWithAI(button, item, record) {
   const original = button.textContent;
   button.disabled = true;
-  button.textContent = "Readingâ€¦";
-  busy("Reading the certificate with Claudeâ€¦");
+  button.textContent = "Reading…";
+  busy("Reading the certificate with Claude…");
   try {
     const response = await fetch(`${apiBase()}__editor/extract`, {
       method: "POST",
@@ -1867,7 +1867,7 @@ async function extractWithAI(button, item, record) {
     const result = await response.json();
     if (!response.ok) throw new Error(result.error || `HTTP ${response.status}`);
 
-    // Only fill blanks â€” never overwrite something already typed.
+    // Only fill blanks — never overwrite something already typed.
     const filled = [];
     for (const [field, value] of Object.entries(result.fields)) {
       if (field === "skills") {
@@ -1889,7 +1889,7 @@ async function extractWithAI(button, item, record) {
       title: filled.length ? "Filled in the blank fields" : "Nothing left to fill in",
       html: filled.length
         ? bullets(filled) +
-          "<p class=\"swal-note\">Fields you had already typed were left alone. Check every one of these before publishing â€” the model can misread a certificate.</p>"
+          "<p class=\"swal-note\">Fields you had already typed were left alone. Check every one of these before publishing — the model can misread a certificate.</p>"
         : "<p class=\"swal-note\">Every field the model returned already had a value, so nothing was changed.</p>",
       confirmButtonText: "OK",
     });
@@ -1913,6 +1913,8 @@ function init() {
   form.addEventListener("change", onInput);
   form.addEventListener("submit", (event) => event.preventDefault());
 
+  setupDropzones();
+
   for (const button of root.querySelectorAll("[data-add]")) {
     button.addEventListener("click", () => {
       const name = button.dataset.add;
@@ -1920,8 +1922,8 @@ function init() {
       renderList(name);
       scheduleSave();
       const rows = root.querySelectorAll(`[data-list="${name}"] .entry-editor`);
-      // A new row is open by design â€” it is empty, and nobody adds one to leave
-      // it alone â€” so the cursor always lands in a visible field.
+      // A new row is open by design — it is empty, and nobody adds one to leave
+      // it alone — so the cursor always lands in a visible field.
       rows[rows.length - 1]?.querySelector("input, textarea")?.focus();
     });
   }
@@ -1943,7 +1945,7 @@ function init() {
       renderList(name);
       announce(`${items.length} ${config.plural} ${collapse ? "collapsed" : "expanded"}.`);
       // The re-render replaced the node the click landed on in every other
-      // list, but this button lives outside the list â€” keep the focus on it.
+      // list, but this button lives outside the list — keep the focus on it.
       root.querySelector(`[data-rows-toggle="${name}"]`)?.focus();
     });
   }
@@ -1953,7 +1955,7 @@ function init() {
       const name = button.dataset.sort;
       const config = LISTS[name];
       const items = config.target();
-      // Newest first â€” what the site used to impose before the order became
+      // Newest first — what the site used to impose before the order became
       // yours. Sorting a copy and writing it back in place keeps `target()`
       // pointing at the same array the rest of the editor holds.
       const sorted = [...items].sort((a, b) => config.sortKey(b).localeCompare(config.sortKey(a)));
@@ -1980,7 +1982,7 @@ function init() {
   if (studentBtn) studentBtn.addEventListener("click", (event) => saveStudentData(event.currentTarget));
 
   // Clearing is unrecoverable, so make the user type the word rather than
-  // click twice â€” a stray double-click should never be able to erase the lot.
+  // click twice — a stray double-click should never be able to erase the lot.
   root.querySelector("[data-action='reset']").addEventListener("click", async () => {
     const { value } = await Swal.fire({
       ...dialog,
@@ -2011,7 +2013,7 @@ function init() {
     } catch { /* nothing stored to remove */ }
     renderAll();
     setStatus("Empty");
-    toast("success", "Cleared â€” nothing is left in this browser");
+    toast("success", "Cleared — nothing is left in this browser");
   });
 
   initSections();
@@ -2021,7 +2023,7 @@ function init() {
   // soon as they arrive, and their absence is not an error.
   loadPoolFile().then((skills) => { if (skills.length) renderAll(); });
   renderAll();
-  setStatus(restored ? "Loaded from this browser" : "Empty â€” start typing");
+  setStatus(restored ? "Loaded from this browser" : "Empty — start typing");
   detectLocalMode();
 
   // A pending debounce would otherwise be lost on a fast tab close.
@@ -2090,7 +2092,7 @@ async function loadStudentData() {
           const baseName = doc.replace(/\.(pdf|docx)$/, "");
           const displayEl = document.querySelector(`[data-doc-display="${baseName}"]`);
           if (displayEl) {
-            displayEl.innerHTML = ` <br><small style="color: var(--color-green); font-weight: bold;">✓ Saved on disk: ${doc}</small>`;
+            displayEl.innerHTML = ` <br><small style="color: var(--color-green); font-weight: bold;">? Saved on disk: ${doc}</small>`;
           }
         }
       }
@@ -2100,10 +2102,50 @@ async function loadStudentData() {
   }
 }
 
+
+// Set up drag and drop zones
+function setupDropzones() {
+  document.querySelectorAll("[data-dropzone]").forEach(zone => {
+    const input = zone.querySelector("input[type='file']");
+    const nameDisplay = zone.querySelector("[data-file-name]");
+
+    ["dragenter", "dragover"].forEach(evt => {
+      zone.addEventListener(evt, (e) => {
+        e.preventDefault();
+        zone.classList.add("active");
+      });
+    });
+
+    ["dragleave", "drop"].forEach(evt => {
+      zone.addEventListener(evt, (e) => {
+        e.preventDefault();
+        zone.classList.remove("active");
+      });
+    });
+
+    zone.addEventListener("drop", (e) => {
+      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        input.files = e.dataTransfer.files;
+        input.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+    });
+
+    input.addEventListener("change", () => {
+      if (input.files && input.files.length > 0) {
+        nameDisplay.innerHTML = `<br>Pending save: ${input.files[0].name}`;
+      } else {
+        nameDisplay.innerHTML = "";
+      }
+    });
+  });
+}
+
 // Everything above is declaration; this is the only statement that runs on load.
 // It must stay last: init() reads state, LISTS, statusEl and dialog, and those
 // are let/const bindings that are in the temporal dead zone until their line runs.
 if (root) init();
+
+
 
 
 
