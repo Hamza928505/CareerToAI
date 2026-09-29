@@ -45,11 +45,11 @@ pageScript: /assets/editor.js
   {#- Collapses the rows of this list only. The toolbar's Collapse all works on
       whole sections; this one is for the drop-downs inside one of them. It
       hides itself below two rows, where a row's own title is enough. -#}
-  <button type="button" class="btn btn-small" data-rows-toggle="{{ id }}" hidden>Collapse all</button>
+  <button type="button" class="btn btn-small" data-rows-toggle="{{ id }}" hidden><i class="fa-solid fa-compress" style="margin-right: 0.3rem;"></i>Collapse all</button>
   {% if dated %}
-  <button type="button" class="btn btn-small" data-sort="{{ id }}">Sort by date</button>
+  <button type="button" class="btn btn-small" data-sort="{{ id }}"><i class="fa-solid fa-arrow-down-short-wide" style="margin-right: 0.3rem;"></i>Sort by date</button>
   {% endif %}
-  <button type="button" class="btn btn-small" data-add="{{ id }}">{{ addLabel }}</button>
+  <button type="button" class="btn btn-small" data-add="{{ id }}"><i class="fa-solid fa-plus" style="margin-right: 0.3rem;"></i>{{ addLabel }}</button>
 </div>
 {% endmacro %}
 
@@ -89,12 +89,12 @@ pageScript: /assets/editor.js
   <div class="editor-toolbar" role="group" aria-label="Save and export">
     <span class="save-status" data-save-status aria-live="polite">Loading…</span>
     <span class="toolbar-spacer"></span>
-    <button type="button" class="btn" data-action="toggle-all" aria-live="polite">Collapse all</button>
-    <button type="button" class="btn btn-primary" data-action="save-server" hidden>Save to data/</button>
-    <button type="button" class="btn btn-primary" data-action="save-student-data" hidden>Save to Student-data</button>
-    <button type="button" class="btn" data-action="export">Download .json</button>
-    <button type="button" class="btn" data-action="import">Load .json</button>
-    <button type="button" class="btn btn-danger" data-action="reset">Clear all</button>
+    <button type="button" class="btn" data-action="toggle-all" aria-live="polite"><i class="fa-solid fa-compress" style="margin-right: 0.3rem;"></i>Collapse all</button>
+    <button type="button" class="btn btn-primary" data-action="save-server" hidden><i class="fa-solid fa-database" style="margin-right: 0.3rem;"></i>Save to data/</button>
+    <button type="button" class="btn btn-primary" data-action="save-student-data" hidden><i class="fa-solid fa-cloud-arrow-up" style="margin-right: 0.3rem;"></i>Save to Student-data</button>
+    <button type="button" class="btn" data-action="export"><i class="fa-solid fa-download" style="margin-right: 0.3rem;"></i>Download .json</button>
+    <button type="button" class="btn" data-action="import"><i class="fa-solid fa-upload" style="margin-right: 0.3rem;"></i>Load .json</button>
+    <button type="button" class="btn btn-danger" data-action="reset"><i class="fa-solid fa-trash-can" style="margin-right: 0.3rem;"></i>Clear all</button>
     <input type="file" accept="application/json,.json" data-import-input hidden>
   </div>
 
@@ -275,6 +275,7 @@ pageScript: /assets/editor.js
     </p>
   </section>
 </div>
+
 
 
 

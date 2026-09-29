@@ -850,7 +850,7 @@ function renderSkills(container, skills, owner) {
     el("button", {
       type: "button",
       className: "btn btn-small",
-      textContent: label,
+      innerHTML: label,
       onclick: async () => {
         const chosen = await run(skills);
         if (!chosen) return;
@@ -864,8 +864,8 @@ function renderSkills(container, skills, owner) {
     chips,
     el("div", { className: "skills-entry" }, [
       input,
-      pickerButton("+ Add skills", pickFromLibrary),
-      pickerButton("From a job ad", pickFromAdvert),
+      pickerButton('<i class="fa-solid fa-list-check" style="margin-right: 0.3rem;"></i>Add skills', pickFromLibrary),
+      pickerButton('<i class="fa-solid fa-file-contract" style="margin-right: 0.3rem;"></i>From a job ad', pickFromAdvert),
     ]),
     options
   );
@@ -914,8 +914,7 @@ async function renderImage(container, listName, item, config) {
 
   const remove = el("button", {
     type: "button",
-    className: "btn btn-small",
-    textContent: "Remove image",
+    className: "btn btn-small", innerHTML: '<i class="fa-solid fa-image" style="margin-right: 0.3rem;"></i>Remove image',
     onclick: async () => {
       await deleteImage(item.imageKey).catch(() => {});
       item.imageKey = "";
@@ -933,7 +932,7 @@ async function renderImage(container, listName, item, config) {
       el("button", {
         type: "button",
         className: "btn btn-small",
-        textContent: "Extract with AI",
+        innerHTML: '<i class="fa-solid fa-wand-magic-sparkles" style="margin-right: 0.3rem;"></i>Extract with AI',
         onclick: (event) => extractWithAI(event.currentTarget, item, record),
       })
     );
@@ -1035,7 +1034,7 @@ function syncRowsToggle(listName) {
   const items = config.target();
   button.hidden = items.length < 2;
   const anyOpen = items.some((item) => !collapsedRows.has(item._key));
-  button.textContent = anyOpen ? "Collapse all" : "Expand all";
+  button.innerHTML = anyOpen ? '<i class="fa-solid fa-compress" style="margin-right: 0.3rem;"></i>Collapse all' : '<i class="fa-solid fa-expand" style="margin-right: 0.3rem;"></i>Expand all';
   button.setAttribute("aria-label", `${anyOpen ? "Collapse" : "Expand"} all ${config.plural}`);
 }
 
@@ -1114,8 +1113,7 @@ function renderList(listName) {
 
     const remove = el("button", {
       type: "button",
-      className: "btn btn-small btn-danger",
-      textContent: "Remove",
+      className: "btn btn-small btn-danger", innerHTML: '<i class="fa-solid fa-trash-can" style="margin-right: 0.3rem;"></i>Remove',
       onclick: async () => {
         if (item.imageKey) await deleteImage(item.imageKey).catch(() => {});
         collapsedRows.delete(item._key);
@@ -1278,7 +1276,7 @@ function syncToggleAllLabel() {
   const button = root.querySelector("[data-action='toggle-all']");
   if (!button) return;
   const anyOpen = sectionToggles().some((t) => t.getAttribute("aria-expanded") === "true");
-  button.textContent = anyOpen ? "Collapse all" : "Expand all";
+  button.innerHTML = anyOpen ? '<i class="fa-solid fa-compress" style="margin-right: 0.3rem;"></i>Collapse all' : '<i class="fa-solid fa-expand" style="margin-right: 0.3rem;"></i>Expand all';
 }
 
 function initSections() {
@@ -1850,9 +1848,9 @@ async function saveToServer(button) {
 }
 
 async function extractWithAI(button, item, record) {
-  const original = button.textContent;
+  const original = button.innerHTML;
   button.disabled = true;
-  button.textContent = "Reading…";
+  button.innerHTML = '<i class="fa-solid fa-spinner fa-spin" style="margin-right: 0.3rem;"></i>Reading...';
   busy("Reading the certificate with Claude…");
   try {
     const response = await fetch(`${apiBase()}__editor/extract`, {
@@ -1897,7 +1895,7 @@ async function extractWithAI(button, item, record) {
     alertError("Extraction failed", error.message);
   } finally {
     button.disabled = false;
-    button.textContent = original;
+    button.innerHTML = original;
   }
 }
 
@@ -2173,5 +2171,10 @@ function setupDropzones() {
 // It must stay last: init() reads state, LISTS, statusEl and dialog, and those
 // are let/const bindings that are in the temporal dead zone until their line runs.
 if (root) init();
+
+
+
+
+
 
 
