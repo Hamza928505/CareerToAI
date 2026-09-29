@@ -362,15 +362,42 @@ function renderStats(rows) {
   $("#stat-interview").textContent = count(
     (r) => (r.status || "").trim() === "Interview" || r.interview,
   );
-}
 
-async function loadTracker() {
-  if (!local) {
-    ["#stat-total", "#stat-open", "#stat-toapply", "#stat-interview"].forEach((s) => {
-      $(s).textContent = "—";
+  if (window.renderChart && rows.length > 0) {
+    const statusCounts = {};
+    rows.forEach(r => {
+      const s = (r.status || "Unknown").trim();
+      statusCounts[s] = (statusCounts[s] || 0) + 1;
     });
-    return;
+    const statusData = Object.keys(statusCounts).map(k => ({ label: k, value: statusCounts[k] }));
+    try {
+      window.renderChart(document.getElementById("chart-status"), {
+        chart: "pie",
+        data: statusData
+      });
+    } catch (e) { console.error("Chart error:", e); }
+
+    const monthCounts = {};
+    rows.forEach(r => {
+      if (r.sent) {
+        const d = new Date(r.sent);
+        if (!isNaN(d)) {
+          const m = d.toISOString().substring(0, 7);
+          monthCounts[m] = (monthCounts[m] || 0) + 1;
+        }
+      }
+    });
+    const timelineData = Object.keys(monthCounts).sort().map(k => ({ label: k, value: monthCounts[k] }));
+    if (timelineData.length > 0) {
+      try {
+        window.renderChart(document.getElementById("chart-timeline"), {
+          chart: "bar-vertical",
+          data: timelineData
+        });
+      } catch (e) { console.error("Chart error:", e); }
+    }
   }
+}
   try {
     const res = await fetch(api("tracker"), { cache: "no-store" });
     const data = await res.json();
@@ -428,3 +455,4 @@ $("#row-form")?.addEventListener("submit", async (event) => {
 
 await detectMode();
 await loadTracker();
+

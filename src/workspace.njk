@@ -279,6 +279,23 @@ eleventyExcludeFromCollections: true
   <div id="verdict" class="verdict" hidden aria-live="polite"></div>
 </section>
 
+<section aria-labelledby="analytics-h">
+  <h2 id="analytics-h">Analytics Dashboard</h2>
+  <p class="lede">
+    A real-time overview of your application progress.
+  </p>
+  <div class="grid-2" style="margin-top: 1.5rem; gap: 2rem;">
+    <div class="card" style="padding: 1rem; border-radius: var(--radius-lg); background: var(--surface); border: 1px solid var(--border);">
+      <h3 style="margin-top: 0; font-size: 1.1rem;">Application Status</h3>
+      <div id="chart-status" style="height: 300px;"></div>
+    </div>
+    <div class="card" style="padding: 1rem; border-radius: var(--radius-lg); background: var(--surface); border: 1px solid var(--border);">
+      <h3 style="margin-top: 0; font-size: 1.1rem;">Applications over Time</h3>
+      <div id="chart-timeline" style="height: 300px;"></div>
+    </div>
+  </div>
+</section>
+
 <!-- --------------------------------------------------------------- Tracker -->
 <section aria-labelledby="tracker-h">
   <h2 id="tracker-h">Your tracker</h2>
@@ -354,8 +371,17 @@ eleventyExcludeFromCollections: true
 
 {# The checker and the table are driven by the same rules the workbook uses.
    Passing them as JSON keeps the numbers in one place. #}
+<script src="/assets/opencharts/lib/chart.umd.min.js"></script>
+<script src="/assets/opencharts/lib/d3.min.js"></script>
+<script type="module">
+  import { render } from '/assets/opencharts/js/opencharts.js';
+  window.renderChart = render;
+</script>
+
 <script type="application/json" id="gju-rules">{{ gju | dump | safe }}</script>
 <script type="application/json" id="tracker-schema">{{ tracker | dump | safe }}</script>
+
+
 
 
 
