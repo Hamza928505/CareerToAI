@@ -275,11 +275,20 @@ async function handleStudentData(req, res) {
   const dir = path.join(ROOT, "src", "assets", "Student-data");
   if (req.method === "GET") {
     const studentJsonPath = path.join(dir, "student.json");
+    let data = null;
     if (fs.existsSync(studentJsonPath)) {
-      sendJson(res, 200, { ok: true, data: JSON.parse(fs.readFileSync(studentJsonPath, "utf8")) });
-    } else {
-      sendJson(res, 200, { ok: false });
+      data = JSON.parse(fs.readFileSync(studentJsonPath, "utf8"));
     }
+    const existingDocs = [];
+    if (fs.existsSync(dir)) {
+      const files = fs.readdirSync(dir);
+      for (const file of files) {
+        if (file !== "student.json" && !file.startsWith(".")) {
+          existingDocs.push(file);
+        }
+      }
+    }
+    sendJson(res, 200, { ok: true, data, existingDocs });
   } else if (req.method === "POST") {
     const payload = await readBody(req);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
@@ -364,5 +373,6 @@ Site preview:     http://${HOST}:${PORT}${prefix}
 Press Ctrl+C to stop.
 `);
 });
+
 
 
