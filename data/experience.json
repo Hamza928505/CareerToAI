@@ -1,16 +1,74 @@
 [
   {
-    "id": "infrastructure-engineer-example-corp",
-    "title": "Infrastructure Engineer",
-    "organization": "Example Corp",
-    "employmentType": "Full-time",
-    "location": "",
-    "locationType": "Remote",
-    "startDate": "2023-04",
-    "endDate": "",
-    "description": "Sample entry so the Experience section renders on a fresh clone. Runs the team's AWS estate: Terraform modules for account and network baselines, a Kubernetes platform two dozen services deploy onto, and the on-call rotation that keeps it honest.",
-    "skills": ["Terraform", "Kubernetes", "AWS", "Incident Response", "CI/CD"],
+    "id": "full-stack-developer-umniah",
+    "title": "Full Stack Developer",
+    "organization": "Umniah",
+    "employmentType": "Full time",
+    "location": "Amman, Jordan",
+    "locationType": "Hybrid",
+    "startDate": "2025-07",
+    "endDate": "2025-10",
+    "description": "First of three summer semesters in Umniah's Dual Studies program, based in the Digital & IT department. A hybrid, three-month intensive focused on front-end web development.\nDelivered 57 responsive web pages using HTML5, CSS3 and JavaScript, applying consistent semantic markup, structure and cross-browser compatibility across the full set.\nBuilt mobile-first layouts with Bootstrap 5 — grid system, components and utility classes — for maintainable, reusable UI patterns instead of one-off CSS.\nUsed jQuery for DOM manipulation, event handling and dynamic behaviour, including form validation and interactive UI components.\nWorked inside a live Digital & IT team environment, iterating on review feedback from senior developers rather than building in isolation.\nEstablished the front-end foundation I built on in the following two semesters, when the same skills were paired with a C#/.NET back end.",
+    "skills": [
+      "ASP.NET",
+      "ASP.NET MVC",
+      "ASP.NET Core",
+      "ASP.NET Web API",
+      "Full-Stack Development",
+      "REST APIs",
+      "C#",
+      "Object-Oriented Programming (OOP)",
+      "HTML5",
+      "HTML",
+      "Cascading Style Sheets (CSS)",
+      "JavaScript",
+      "Bootstrap5",
+      "MySQL"
+    ],
     "attachmentImage": "",
-    "addedAt": "2023-04-10"
+    "addedAt": "2026-09-29"
+  },
+  {
+    "id": "back-end-developer-umniah",
+    "title": "Back End Developer",
+    "organization": "Umniah",
+    "employmentType": "Full time",
+    "location": "Amman, Jordan",
+    "locationType": "Hybrid",
+    "startDate": "2024-07",
+    "endDate": "2024-10",
+    "description": "Second semester of the Dual Studies program at Umniah — a hybrid, three-month placement in the Digital & IT department. Focus moved from the front end to back-end engineering, APIs and databases.\n\n  \n\n• Built a complete login and user-management system with full CRUD operations, covering registration, authentication, session handling and create/read/update/delete on user records.\n\n\n\n• Programmed in C# using object-oriented principles — classes, inheritance, encapsulation and interfaces — to keep the codebase modular and extensible.\n\n\n\n• Developed and consumed REST APIs on the .NET stack, defining endpoints and connecting them to the front-end layer I had learned to build the previous summer.\n\n\n\n• Tested and debugged every endpoint in Postman, validating request and response payloads, status codes and error handling before integration.\n\n\n\n• Designed and queried relational SQL databases — table schemas, relationships and joins — as the persistence layer behind the system.",
+    "skills": [
+      "C#",
+      "ASP.NET MVC",
+      "ASP.NET Core",
+      "ASP.NET Web API",
+      "ASP.NET",
+      "MySQL"
+    ],
+    "attachmentImage": "",
+    "addedAt": "2026-09-29"
+  },
+  {
+    "id": "frontend-developer-umniah",
+    "title": "Frontend Developer",
+    "organization": "Umniah",
+    "employmentType": "Full time",
+    "location": "Amman, Jordan",
+    "locationType": "Hybrid",
+    "startDate": "2023-07",
+    "endDate": "2023-10",
+    "description": "Final semester of the Dual Studies program at Umniah — a hybrid, three-month placement in the Digital & IT department, delivering a production system end to end as the sole developer.\n\n  \n\n• Independently designed, built and tested a full-stack back-office system that lets customers submit complaints, including image attachments, directly to Umniah's call centre team.\n\n\n\n• Owned the entire stack alone: front-end interface, back-end logic, REST APIs, database design, image upload and storage handling, and testing — every line of code was mine.\n\n\n\n• Gave call centre agents a single structured place to receive complaints together with their supporting images, rather than handling them across separate channels.\n\n\n\n• The system is still in active production use at Umniah today, continuing to serve the call centre team well beyond the end of my placement.\n\n\n\n• Combined the front-end skills from semester one with the C#, .NET, REST API and SQL foundation from semester two into one self-directed delivery.",
+    "skills": [
+      "JavaScript",
+      "HTML",
+      "Cascading Style Sheets (CSS)",
+      "Bootstrap5",
+      "Front-End Development",
+      "Front-end Coding",
+      "HTML5"
+    ],
+    "attachmentImage": "",
+    "addedAt": "2026-09-29"
   }
 ]
