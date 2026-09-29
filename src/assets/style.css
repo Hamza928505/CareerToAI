@@ -299,9 +299,10 @@ body {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: var(--rail-gap);
+  width: 80%;
   max-width: var(--shell-max);
   margin: 0 auto;
-  padding: 0 var(--s4) var(--s8);
+  padding: 0 0 var(--s8);
 }
 
 @media (min-width: 1280px) { :root { --shell-max: 1200px; } }
@@ -348,7 +349,8 @@ body {
 }
 
 .site-header .bar {
-  max-width: var(--shell-max);
+  width: 100%;
+  max-width: none;
   margin: 0 auto;
   padding: var(--s3) var(--s4);
   display: flex;
@@ -436,7 +438,8 @@ body {
 }
 
 .site-footer {
-  max-width: var(--shell-max);
+  width: 100%;
+  max-width: none;
   margin: var(--s8) auto 0;
   padding: var(--s5) var(--s4) var(--s7);
   border-top: 1px solid var(--border-default);
@@ -759,6 +762,8 @@ figcaption { color: var(--text-secondary); font-size: 0.875rem; margin-top: var(
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
   overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
 }
+
+
 
 
 
