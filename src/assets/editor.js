@@ -2108,6 +2108,7 @@ function setupDropzones() {
   document.querySelectorAll("[data-dropzone]").forEach(zone => {
     const input = zone.querySelector("input[type='file']");
     const nameDisplay = zone.querySelector("[data-file-name]");
+    const typeLabel = zone.querySelector(".dropzone-label").innerText;
 
     ["dragenter", "dragover"].forEach(evt => {
       zone.addEventListener(evt, (e) => {
@@ -2130,25 +2131,36 @@ function setupDropzones() {
       }
     });
 
-    input.addEventListener("change", () => {
+    input.addEventListener("change", async () => {
       if (input.files && input.files.length > 0) {
-        nameDisplay.innerHTML = `<br>Pending save: ${input.files[0].name}`;
+        const file = input.files[0];
+        const sizeKB = (file.size / 1024).toFixed(1);
+        nameDisplay.innerHTML = `<i class="fa-solid fa-file-lines"></i> ${file.name} <span style="color:var(--muted); font-size:0.85em;">(${sizeKB} KB)</span>`;
+        
+        const { isConfirmed } = await Swal.fire({
+          ...dialog,
+          icon: "question",
+          title: "Upload Document?",
+          html: `<p class="swal-note">Are you sure you want to save <strong>${file.name}</strong> as your ${typeLabel}?</p>`,
+          showCancelButton: true,
+          confirmButtonText: "Yes, save it",
+          cancelButtonText: "Cancel"
+        });
+
+        if (isConfirmed) {
+          const btn = document.querySelector("[data-action='save-student-data']");
+          if (btn) saveStudentData(btn);
+        } else {
+          input.value = "";
+          nameDisplay.innerHTML = "";
+        }
       } else {
         nameDisplay.innerHTML = "";
       }
     });
   });
 }
-
 // Everything above is declaration; this is the only statement that runs on load.
 // It must stay last: init() reads state, LISTS, statusEl and dialog, and those
 // are let/const bindings that are in the temporal dead zone until their line runs.
 if (root) init();
-
-
-
-
-
-
-
-

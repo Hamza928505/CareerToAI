@@ -603,18 +603,45 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 2.5rem 1.5rem;
+  padding: 3rem 1.5rem;
   border: 2px dashed var(--border);
   border-radius: var(--radius-lg, 12px);
   background-color: var(--surface-2);
   text-align: center;
   cursor: pointer;
-  transition: all 0.2s ease;
-  min-height: 140px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  min-height: 180px;
+  overflow: hidden;
+}
+.dropzone::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--accent);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  pointer-events: none;
 }
 .dropzone:hover, .dropzone.active {
   border-color: var(--accent);
-  background-color: var(--accent-soft);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+}
+.dropzone:hover::before, .dropzone.active::before {
+  opacity: 0.03;
+}
+.dropzone.active {
+  transform: scale(1.02);
+  border-width: 3px;
+}
+.dropzone-icon {
+  font-size: 2.5rem;
+  color: var(--accent);
+  margin-bottom: 1rem;
+  transition: transform 0.3s ease;
+}
+.dropzone:hover .dropzone-icon, .dropzone.active .dropzone-icon {
+  transform: translateY(-4px) scale(1.1);
 }
 .dropzone input[type="file"] {
   position: absolute;
@@ -624,28 +651,53 @@
   left: 0;
   opacity: 0;
   cursor: pointer;
+  z-index: 10;
 }
 .dropzone-label {
   font-weight: 600;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.5rem;
   color: var(--text);
-  font-size: 1.05rem;
+  font-size: 1.15rem;
 }
 .dropzone-text {
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   color: var(--muted);
+  max-width: 80%;
+  line-height: 1.4;
+}
+.dropzone-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 1rem;
+  align-items: center;
+  z-index: 5;
 }
 .dropzone-file-name {
-  margin-top: 0.75rem;
   font-size: 0.95rem;
   font-weight: 500;
-  color: var(--accent);
+  color: var(--text);
+  background: var(--bg-main);
+  padding: 0.5rem 1rem;
+  border-radius: 99px;
+  border: 1px solid var(--border);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 .current-doc small {
   color: var(--ok) !important;
   font-weight: 600 !important;
   font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: color-mix(in srgb, var(--ok) 10%, transparent);
+  padding: 0.25rem 0.75rem;
+  border-radius: 4px;
 }
+
 
 
 
