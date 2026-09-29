@@ -103,10 +103,10 @@ pageScript: /assets/editor.js
       <div class="section-body" id="section-student-data">
         <p class="muted">Upload your base CV and Cover Letter here. They will be saved to <code>src/assets/Student-data/</code> for the AI to use.</p>
         <div class="grid-2">
-          <label>Base CV (EN) (.pdf, .docx)
+          <label>Base CV (EN) (.pdf, .docx)<span class="current-doc" data-doc-display="base_cv_en"></span>
             <input type="file" accept=".pdf,.docx" data-doc-upload="base_cv_en">
           </label>
-          <label>Base Cover Letter (EN) (.pdf, .docx)
+          <label>Base Cover Letter (EN) (.pdf, .docx)<span class="current-doc" data-doc-display="base_cover_letter_en"></span>
             <input type="file" accept=".pdf,.docx" data-doc-upload="base_cover_letter_en">
           </label>
         </div>
@@ -260,6 +260,7 @@ pageScript: /assets/editor.js
     </p>
   </section>
 </div>
+
 
 
 
