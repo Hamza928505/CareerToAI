@@ -1,36 +1,50 @@
 {
-  "firstName": "TODO: First",
-  "lastName": "TODO: Last",
-  "headline": "TODO: One-line professional headline, e.g. 'Cloud Infrastructure Engineer'",
-  "pronouns": "",
-  "location": "TODO: City, Country",
-  "email": "TODO: you@example.com",
-  "bio": "TODO: 2-4 sentences in plain prose. Write it the way you would want an AI assistant to summarize you to someone else: what you do, what you specialize in, what you are working toward. Avoid marketing language — state facts, because this text is read by machines as much as by people.",
+  "firstName": "Hamza",
+  "lastName": "Salameh",
+  "headline": "Final-year Computer Science Student @GJU | Full-Stack .NET Developer with 3 years of production experience at Umniah | C#, ASP.NET, REST APIs, SQL | Full-stack developer | Linux & Red Hat (RH124/RH134)",
+  "pronouns": "he/him",
+  "location": "Amman, Jordan",
+  "email": "H.Salameh03@gju.edu.jo",
+  "bio": "In the summer of 2025, I built a back-office system for Umniah's call centre team — front end, back end, database and testing, alone. It's still running today.\n\n\n\nThat was the final semester of a three-year Dual Studies programme at Umniah, Jordan's second-largest telecom operator, where I spent July to October each year inside the Digital & IT department. Each summer built on the one before it:\n\n\n\n2023 — Front end. 57 web pages in HTML, CSS, JavaScript, Bootstrap 5 and jQuery.\n\n\n\n2024 — Back end. C#, object-oriented design, .NET and REST APIs, tested in Postman and backed by SQL. I built a complete login system with full CRUD operations.\n\n\n\n2025 — Both. A full-stack system letting customers send complaints and supporting images straight to the call centre team, written and tested end to end by me.\n\n\n\nThree years of production work before finishing my degree taught me the thing coursework doesn't: code is judged by whether it still works when you are no longer there to maintain it.\n\n\n\nAlongside this I'm a final-year Computer Science student at the German Jordanian University. My graduation project, Visual Sentinel, detects drones from synchronised dual-Raspberry-Pi stereo video and estimates their 3D position entirely on the edge, with no cloud dependency. I cross-validated two approaches — geometric stereo triangulation and a PyTorch model regressing distance from YOLOv8 features — across 107 structured field experiments.\n\n\n\nWhat I work with:\n\n- Back end — C#, ASP.NET, .NET, REST APIs, SQL / MySQL\n\n- Front end — JavaScript, HTML, CSS, Bootstrap 5, jQuery\n\n- ML and vision — Python, PyTorch, YOLOv8, OpenCV, NumPy\n\n- Systems — Linux, Red Hat System Administration I & II (RH124, RH134), Git, Bash\n\n\n\nI compete when I can: IEEEXtreme 18.0 and 19.0, GJU SEEIT hackathons in app development and problem solving, and a 40-hour Capture the Flag programme with Jordan's National Cyber Security Center.\n\nCurrently finishing my degree, and always happy to talk about .NET, backend architecture, or computer vision on edge hardware.\n\n\n\ngithub.com/Hamza928505",
   "jobTitle": "",
   "worksFor": "",
   "education": [
     {
-      "school": "TODO: University name",
-      "industry": "TODO: Industry or field, e.g. 'Software Engineering'",
-      "degree": "",
-      "fieldOfStudy": "",
-      "startDate": "",
-      "endDate": "",
-      "description": ""
+      "school": "German Jordanian University",
+      "industry": "Computer Science",
+      "degree": "Bachelor",
+      "fieldOfStudy": "Computer Science",
+      "startDate": "2022-09",
+      "endDate": "2027-09",
+      "description": "I’m a Computer Science student with a passion for software development and cybersecurity. I have experience with .NET, MySQL, and front-end development (HTML, CSS, JavaScript, Bootstrap). Currently, I’m expanding my knowledge in cloud computing (Azure) and ethical hacking. My goal is to contribute to innovative projects that improve security and user experience."
     }
   ],
   "languages": [
     {
-      "language": "TODO: a language you can work in, e.g. German",
-      "level": "",
+      "language": "Arabic",
+      "level": "Native",
+      "notes": ""
+    },
+    {
+      "language": "English",
+      "level": "B1 (intermediate)",
+      "notes": ""
+    },
+    {
+      "language": "German",
+      "level": "B1 (intermediate)",
       "notes": ""
     }
   ],
   "links": [
-    { "label": "GitHub", "url": "https://github.com/TODO" },
-    { "label": "LinkedIn", "url": "https://www.linkedin.com/in/TODO" }
+    {
+      "label": "Github",
+      "url": "https://github.com/Hamza928505"
+    },
+    {
+      "label": "LinkedIn",
+      "url": "https://www.linkedin.com/in/hamza-salameh-287a53258/"
+    }
   ],
-  "skills": [
-    "TODO: a skill not implied by any certificate or role"
-  ]
+  "skills": []
 }
