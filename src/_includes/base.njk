@@ -76,14 +76,17 @@
     <nav aria-label="Primary">
       <ul>
         <li><a href="{{ '/' | url }}"{% if page.url == '/' %} aria-current="page"{% endif %}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9.5 12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1Z"/><path d="M9 21v-7h6v7"/></svg>
+          <i class="fa-solid fa-user" style="margin-right: 0.3rem;"></i>
           Profile</a></li>
+          <li><a href="{{ '/guide/' | url }}"{% if page.url == '/guide/' %} aria-current="page"{% endif %}>
+            <i class="fa-solid fa-book" style="margin-right: 0.3rem;"></i>
+            GY Guide</a></li>
         <li><a href="{{ '/workspace/' | url }}"{% if page.url == '/workspace/' %} aria-current="page"{% endif %}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
-          Workspace</a></li>
+            <i class="fa-solid fa-desktop" style="margin-right: 0.3rem;"></i>
+            Workspace</a></li>
         <li><a href="{{ '/editor/' | url }}"{% if page.url == '/editor/' %} aria-current="page"{% endif %}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-          Editor</a></li>
+            <i class="fa-solid fa-pen-to-square" style="margin-right: 0.3rem;"></i>
+            Editor</a></li>
         <li>
           <button class="theme-toggle" type="button" id="theme-toggle"
                   aria-label="Switch to dark theme" title="Switch theme">
@@ -152,6 +155,10 @@
 {% if pageScript %}<script type="module" src="{{ pageScript | url }}"></script>{% endif %}
 </body>
 </html>
+
+
+
+
 
 
 
