@@ -36,7 +36,7 @@ import { resolveSite } from "../lib/site.mjs";
 const site = resolveSite();
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const siteDir = path.join(root, "_site");
-const outDir = path.resolve(root, process.argv[2] || "dist-static");
+const outDir = path.resolve(root, "dist-static");
 
 // 1. The normal Eleventy build. Absolute URLs (canonical, Open Graph, sitemap)
 //    keep pointing at the real site: a copy on disk should still say where
