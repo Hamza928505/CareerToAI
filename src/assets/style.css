@@ -733,8 +733,8 @@ table.data tbody tr:hover td { background: var(--bg-subtle); }
    Profile-page pieces
    ========================================= */
 
-.facts { display: grid; grid-template-columns: max-content 1fr; gap: var(--s2) var(--s4); margin: 0 0 var(--s4); }
-.facts dt { font: 500 0.75rem/1.7 var(--font-mono); color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.facts { margin: 0 0 var(--s4); }
+.facts dt { padding-top: 1rem; font: 500 0.75rem/1.7 var(--font-mono); color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
 .facts dd { margin: 0; }
 .facts.compact { font-size: 0.9375rem; }
 
