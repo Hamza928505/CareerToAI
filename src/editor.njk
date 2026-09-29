@@ -16,7 +16,8 @@ pageScript: /assets/editor.js
   in this browser. The chevron is inline rather than a background image so it
   can turn with the button's aria-expanded state.
 #}
-{% macro sectionHead(id, label, counts) %}
+
+{% macro sectionHead(id, label, icon, counts) %}
 <legend>
   <button type="button" class="section-toggle" data-section-toggle="{{ id }}"
           aria-expanded="true" aria-controls="section-{{ id }}">
@@ -24,13 +25,13 @@ pageScript: /assets/editor.js
          stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
       <path d="m9 18 6-6-6-6"/>
     </svg>
-    <span>{{ label | safe }}</span>
-    {#- The count is what a collapsed section still tells you, so it is filled in
-        by the script on every render rather than only at build time. -#}
-    {% if counts %}<span class="section-count" data-section-count="{{ id }}"></span>{% endif %}
+    {% if icon %}<i class="fa-solid {{ icon }}" style="margin-right: 0.5rem; color: var(--accent);"></i>{% endif %}
+    {{ label | safe }}
+    {% if counts %}<span class="count" data-count="{{ id }}"></span>{% endif %}
   </button>
 </legend>
 {% endmacro %}
+
 
 {#
   The row of controls above a repeatable list: how many entries it holds, and —
@@ -99,7 +100,7 @@ pageScript: /assets/editor.js
 
   <form class="editor-form" data-form autocomplete="on">
     <fieldset class="collapsible">
-      {{ sectionHead("student-data", "Student Data & Base Documents") }}
+      {{ sectionHead("student-data", "Student Data & Base Documents", "fa-file-invoice") }}
       <div class="section-body" id="section-student-data">
         <p class="muted">Upload your base CV and Cover Letter here. They will be saved to <code>src/assets/Student-data/</code> for the AI to use.</p>
                   <div class="grid-2">
@@ -128,7 +129,7 @@ pageScript: /assets/editor.js
     </fieldset>
 
     <fieldset class="collapsible">
-      {{ sectionHead("basics", "Basics") }}
+      {{ sectionHead("basics", "Basics", "fa-user") }}
       <div class="section-body" id="section-basics">
         <div class="grid-2">
           <label>First name <span class="required">required</span>
@@ -176,7 +177,7 @@ pageScript: /assets/editor.js
     </fieldset>
 
     <fieldset class="collapsible">
-      {{ sectionHead("about", "About") }}
+      {{ sectionHead("about", "About", "fa-address-card") }}
       <div class="section-body" id="section-about">
         <label>About me <span class="required">required</span>
           <textarea rows="7" data-path="profile.bio" required
@@ -187,7 +188,7 @@ pageScript: /assets/editor.js
     </fieldset>
 
     <fieldset class="collapsible">
-      {{ sectionHead("education", "Education", true) }}
+      {{ sectionHead("education", "Education", "fa-graduation-cap", true) }}
       <div class="section-body" id="section-education">
         <div data-list="education" class="entry-editor-list"></div>
         {{ listTools("education", "+ Add education", true) }}
@@ -195,7 +196,7 @@ pageScript: /assets/editor.js
     </fieldset>
 
     <fieldset class="collapsible">
-      {{ sectionHead("experience", "Experience", true) }}
+      {{ sectionHead("experience", "Experience", "fa-briefcase", true) }}
       <div class="section-body" id="section-experience">
         <div data-list="experience" class="entry-editor-list"></div>
         {{ listTools("experience", "+ Add position", true) }}
@@ -203,7 +204,7 @@ pageScript: /assets/editor.js
     </fieldset>
 
     <fieldset class="collapsible">
-      {{ sectionHead("projects", "Projects", true) }}
+      {{ sectionHead("projects", "Projects", "fa-lightbulb", true) }}
       <div class="section-body" id="section-projects">
         <p class="muted">
           Work you can point at that no employer owns: a side project, a university
@@ -217,7 +218,7 @@ pageScript: /assets/editor.js
     </fieldset>
 
     <fieldset class="collapsible">
-      {{ sectionHead("certificates", "Licenses &amp; certifications", true) }}
+      {{ sectionHead("certificates", "Licenses &amp; certifications", "fa-certificate", true) }}
       <div class="section-body" id="section-certificates">
         <div data-list="certificates" class="entry-editor-list"></div>
         {{ listTools("certificates", "+ Add certification", true) }}
@@ -225,7 +226,7 @@ pageScript: /assets/editor.js
     </fieldset>
 
     <fieldset class="collapsible">
-      {{ sectionHead("links", "Links", true) }}
+      {{ sectionHead("links", "Links", "fa-link", true) }}
       <div class="section-body" id="section-links">
         <div data-list="links" class="entry-editor-list"></div>
         {{ listTools("links", "+ Add link", false) }}
@@ -233,7 +234,7 @@ pageScript: /assets/editor.js
     </fieldset>
 
     <fieldset class="collapsible">
-      {{ sectionHead("skills", "Extra skills", true) }}
+      {{ sectionHead("skills", "Extra skills", "fa-star", true) }}
       <div class="section-body" id="section-skills">
         <p class="muted">
           Skills that no role, project or certificate already covers. The site unions these
@@ -274,6 +275,7 @@ pageScript: /assets/editor.js
     </p>
   </section>
 </div>
+
 
 
 

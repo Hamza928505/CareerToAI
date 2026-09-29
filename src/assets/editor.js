@@ -2092,7 +2092,16 @@ async function loadStudentData() {
           const baseName = doc.replace(/\.(pdf|docx)$/, "");
           const displayEl = document.querySelector(`[data-doc-display="${baseName}"]`);
           if (displayEl) {
-            displayEl.innerHTML = ` <br><small style="color: var(--color-green); font-weight: bold;">? Saved on disk: ${doc}</small>`;
+            displayEl.innerHTML = `<i class="fa-solid fa-circle-check" style="color: var(--ok);"></i> Currently saved on disk: <strong>${doc}</strong>`;
+            displayEl.style.display = "inline-flex";
+            displayEl.style.alignItems = "center";
+            displayEl.style.gap = "0.4rem";
+            displayEl.style.padding = "0.5rem 1rem";
+            displayEl.style.background = "color-mix(in srgb, var(--ok) 10%, transparent)";
+            displayEl.style.borderRadius = "99px";
+            displayEl.style.fontSize = "0.9rem";
+            displayEl.style.color = "var(--text)";
+            displayEl.style.marginTop = "0.5rem";
           }
         }
       }
@@ -2164,3 +2173,5 @@ function setupDropzones() {
 // It must stay last: init() reads state, LISTS, statusEl and dialog, and those
 // are let/const bindings that are in the temporal dead zone until their line runs.
 if (root) init();
+
+
