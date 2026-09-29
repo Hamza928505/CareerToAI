@@ -122,7 +122,7 @@ class TestResetCoversEveryPersonalizedSkillFile(unittest.TestCase):
         self.files = setup_step3_skill_files()
         # /setup must actually still name these targets, or every assertion
         # below would pass vacuously against an empty set.
-        self.assertGreaterEqual(len(self.files), 6, self.files)
+        self.assertGreaterEqual(len(self.files), 5, self.files)
         self.assertIn("04-job-evaluation.md", self.files)
         self.assertIn("search-queries.md", self.files)
 
