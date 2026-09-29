@@ -166,3 +166,6 @@ job-search/.agents/usage/
 
 # Brainstorm mockups (superpowers visual companion) - never ship
 job-search/.superpowers/
+
+# Custom python-generated tracker
+job_search_tracker.xlsx
