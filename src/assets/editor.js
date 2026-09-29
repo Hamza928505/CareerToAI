@@ -2054,13 +2054,13 @@ async function saveStudentData(button) {
     }
     const reqBody = { data: payload, files };
 
-    const response = await fetch("${apiBase()}__editor/student-data", {
+    const response = await fetch(`${apiBase()}__editor/student-data`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(reqBody),
     });
     const result = await response.json();
-    if (!response.ok) throw new Error(result.error || "HTTP \");
+    if (!response.ok) throw new Error(result.error || `HTTP ${response.status}`);
     idle("Saved to Student-data.");
   } catch (e) {
     idle(e.message, true);
@@ -2071,7 +2071,7 @@ async function saveStudentData(button) {
 
 async function loadStudentData() {
   try {
-    const response = await fetch("${apiBase()}__editor/student-data");
+    const response = await fetch(`${apiBase()}__editor/student-data`);
     const result = await response.json();
     if (result.ok && result.data) {
       adoptState(result.data);
@@ -2087,4 +2087,5 @@ async function loadStudentData() {
 // It must stay last: init() reads state, LISTS, statusEl and dialog, and those
 // are let/const bindings that are in the temporal dead zone until their line runs.
 if (root) init();
+
 
