@@ -491,52 +491,88 @@ const tableWrap = document.getElementById("tracker-table-wrap");
 const tbody = document.getElementById("tracker-tbody");
 const theadTr = document.getElementById("tracker-thead-tr");
 
+const dropZone = document.getElementById("tracker-drop-zone");
+
+const processExcelFile = async (file) => {
+  if (!file) return;
+  
+  if (btnUpload) btnUpload.innerHTML = '<i class="fa-solid fa-spinner fa-spin" style="margin-right: 0.3rem;"></i> Loading...';
+  
+  try {
+    const XLSX = await import('https://cdn.sheetjs.com/xlsx-0.20.1/package/xlsx.mjs');
+    const arrayBuffer = await file.arrayBuffer();
+    currentWorkbook = XLSX.read(arrayBuffer, { type: "array", cellDates: true });
+    
+    // Smart sheet selection
+    let sheetName = currentWorkbook.SheetNames[0];
+    if (currentWorkbook.SheetNames.includes("Applications")) {
+      sheetName = "Applications";
+    } else if (currentWorkbook.SheetNames.includes("Search")) {
+      sheetName = "Search";
+    }
+    currentSheetName = sheetName;
+    
+    const sheet = currentWorkbook.Sheets[currentSheetName];
+    
+    const rawData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+    if (rawData.length < 1) {
+      Swal.fire({ ...dialog, icon: "error", title: "Error", text: "The Excel file is empty.", confirmButtonText: "OK" });
+      if (btnUpload) btnUpload.innerHTML = '<i class="fa-solid fa-file-excel" style="margin-right: 0.3rem;"></i> Upload Different File';
+      return;
+    }
+    
+    currentHeaders = rawData[0];
+    
+    // Skip empty trailing rows in Excel
+    const data = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+    currentData = data.filter(row => Object.values(row).some(v => v !== ""));
+    
+    renderTable();
+    
+    if (dropZone) dropZone.style.display = "none";
+    if (btnUpload) {
+      btnUpload.style.display = "inline-block";
+      btnUpload.innerHTML = '<i class="fa-solid fa-file-excel" style="margin-right: 0.3rem;"></i> Upload Different File';
+    }
+    if (btnAddRow) btnAddRow.style.display = "inline-block";
+    if (btnSave) btnSave.style.display = "inline-block";
+    if (tableWrap) tableWrap.style.display = "block";
+    
+    Swal.fire({ ...dialog, 
+      toast: true,
+      position: 'bottom-end',
+      icon: 'success',
+      title: `Loaded ${currentData.length} records from '${sheetName}'`,
+      showConfirmButton: false,
+      timer: 3000
+    });
+  } catch (err) {
+    console.error(err);
+    Swal.fire({ ...dialog, icon: "error", title: "Error", text: "Could not parse the Excel file.", confirmButtonText: "OK" });
+    if (btnUpload) btnUpload.innerHTML = '<i class="fa-solid fa-file-excel" style="margin-right: 0.3rem;"></i> Upload Different File';
+  }
+};
+
 if (btnUpload && fileInput) {
   btnUpload.addEventListener("click", () => fileInput.click());
-  
-  fileInput.addEventListener("change", async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    
-    btnUpload.innerHTML = '<i class="fa-solid fa-spinner fa-spin" style="margin-right: 0.3rem;"></i> Loading...';
-    
-    try {
-      const XLSX = await import('https://cdn.sheetjs.com/xlsx-0.20.1/package/xlsx.mjs');
-      const arrayBuffer = await file.arrayBuffer();
-      currentWorkbook = XLSX.read(arrayBuffer, { type: "array", cellDates: true });
-      
-      currentSheetName = currentWorkbook.SheetNames.includes("Applications") ? "Applications" : currentWorkbook.SheetNames[0];
-      const sheet = currentWorkbook.Sheets[currentSheetName];
-      
-      const rawData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-      if (rawData.length < 1) {
-        Swal.fire({ ...dialog, icon: "error", title: "Error", text: "The Excel file is empty.", confirmButtonText: "OK" });
-        btnUpload.innerHTML = '<i class="fa-solid fa-file-excel" style="margin-right: 0.3rem;"></i> Upload Excel';
-        return;
-      }
-      
-      currentHeaders = rawData[0];
-      currentData = XLSX.utils.sheet_to_json(sheet, { defval: "" });
-      
-      renderTable();
-      
-      btnUpload.innerHTML = '<i class="fa-solid fa-file-excel" style="margin-right: 0.3rem;"></i> Upload Different File';
-      btnAddRow.style.display = "inline-block";
-      btnSave.style.display = "inline-block";
-      tableWrap.style.display = "block";
-      
-      Swal.fire({ ...dialog, 
-        toast: true,
-        position: 'bottom-end',
-        icon: 'success',
-        title: 'Tracker loaded successfully!',
-        showConfirmButton: false,
-        timer: 2000
-      });
-    } catch (err) {
-      console.error(err);
-      Swal.fire({ ...dialog, icon: "error", title: "Error", text: "Could not parse the Excel file.", confirmButtonText: "OK" });
-      btnUpload.innerHTML = '<i class="fa-solid fa-file-excel" style="margin-right: 0.3rem;"></i> Upload Excel';
+  fileInput.addEventListener("change", (e) => processExcelFile(e.target.files[0]));
+}
+
+if (dropZone) {
+  dropZone.addEventListener("click", () => fileInput.click());
+  dropZone.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    dropZone.style.background = "var(--surface-active, #f0f0f0)";
+  });
+  dropZone.addEventListener("dragleave", (e) => {
+    e.preventDefault();
+    dropZone.style.background = "var(--surface)";
+  });
+  dropZone.addEventListener("drop", (e) => {
+    e.preventDefault();
+    dropZone.style.background = "var(--surface)";
+    if (e.dataTransfer.files.length) {
+      processExcelFile(e.dataTransfer.files[0]);
     }
   });
 }
@@ -725,5 +761,6 @@ if(btnSave) {
     }
   });
 }
+
 
 
