@@ -319,6 +319,7 @@ const server = http.createServer(async (req, res) => {
     if (pathname === "/__editor/extract" && req.method === "POST") return await handleExtract(req, res);
     if (pathname === "/__editor/skills" && req.method === "POST") return await handleSkills(req, res);
     if (pathname === "/__editor/run" && req.method === "POST") return await handleRun(req, res);
+    if (pathname === "/__editor/student-data") return await handleStudentData(req, res);
     if (pathname === "/__editor/tracker") {
       if (req.method === "POST") return await handleTrackerWrite(req, res);
       return handleTrackerRead(res);
@@ -363,4 +364,5 @@ Site preview:     http://${HOST}:${PORT}${prefix}
 Press Ctrl+C to stop.
 `);
 });
+
 

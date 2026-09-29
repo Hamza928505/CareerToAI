@@ -2066,9 +2066,9 @@ async function saveStudentData(button) {
     });
     const result = await response.json();
     if (!response.ok) throw new Error(result.error || `HTTP ${response.status}`);
-    idle("Saved to Student-data.");
+    await Swal.fire({ ...dialog, icon: "success", title: "Saved to Student-data", confirmButtonText: "OK" });
   } catch (e) {
-    idle(e.message, true);
+    Swal.close(); await alertError("Failed to save", e.message);
   } finally {
     button.disabled = false;
   }
@@ -2092,6 +2092,7 @@ async function loadStudentData() {
 // It must stay last: init() reads state, LISTS, statusEl and dialog, and those
 // are let/const bindings that are in the temporal dead zone until their line runs.
 if (root) init();
+
 
 
 
