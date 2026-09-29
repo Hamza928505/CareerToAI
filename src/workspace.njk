@@ -79,7 +79,7 @@ eleventyExcludeFromCollections: true
     <p class="dim" style="margin: 0;">or click to browse from your computer (job_search_tracker.xlsx or internship-tracker.xlsx)</p>
   </div>
 
-  <div class="actions" style="margin-bottom: 1rem; display: flex; gap: 1rem; align-items: center; justify-content: space-between;">
+  <div class="actions" style="margin-bottom: 1rem; display: flex; gap: 1rem; align-items: center; justify-content: space-between; flex-wrap: wrap;">
     <div>
       <button class="btn btn--primary" id="btn-upload-tracker" type="button" style="display: none;">
         <i class="fa-solid fa-file-excel" style="margin-right: 0.3rem;"></i> Upload Different File
@@ -95,7 +95,7 @@ eleventyExcludeFromCollections: true
     </div>
   </div>
 
-  <div class="table-wrap" id="tracker-table-wrap" style="display: none; max-height: 500px; overflow-y: auto;">
+  <div class="table-wrap" id="tracker-table-wrap" style="display: none; max-height: 500px; overflow: auto; width: 100%;">
     <table id="tracker-table">
       <thead>
         <tr id="tracker-thead-tr"></tr>
@@ -421,6 +421,7 @@ eleventyExcludeFromCollections: true
 
 <script type="application/json" id="gju-rules">{{ gju | dump | safe }}</script>
 <script type="application/json" id="tracker-schema">{{ tracker | dump | safe }}</script>
+
 
 
 
