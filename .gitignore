@@ -144,10 +144,12 @@ job_search_tracker.csv
 # Upskill reports (personal output). Depth-independent like the job_scraper
 # rules above: the upskill skill resolves `upskill/` relative to its own
 # directory, so a report can land at .claude/skills/upskill/upskill/*.md
-# where the rooted rule cannot see it. `**/upskill/*.md` is not usable here -
+# where the rooted rule cannot see it. `**/upskill/*.md
+!**/upskill/SKILL.md` is not usable here -
 # the skill directory shares the `upskill` name, so it would also ignore the
 # skill's own SKILL.md - hence the report-file prefix is pinned instead.
 **/upskill/*.md
+!**/upskill/SKILL.md
 **/upskill/report-*.md
 
 # Company research cache (/apply Step 3, /interview Step 2 - personal search
