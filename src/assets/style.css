@@ -304,39 +304,15 @@ body {
   padding: 0 var(--s4) var(--s8);
 }
 
-@media (min-width: 1280px) {
-  :root { --shell-max: 1560px; }
-  .shell { grid-template-columns: var(--rail) minmax(0, 1fr) var(--rail); align-items: start; }
-}
+@media (min-width: 1280px) { :root { --shell-max: 1200px; } }
 
-@media (min-width: 1600px) {
-  :root { --rail: 300px; --shell-max: 1840px; }
-}
+
 
 .shell > main { min-width: 0; }
 
-.ad-rail { display: none; position: sticky; top: var(--s5); }
 
-@media (min-width: 1280px) { .ad-rail { display: block; } }
 
-.ad-slot {
-  border: 1px dashed var(--border-strong);
-  border-radius: var(--radius-lg);
-  background: var(--bg-surface);
-  color: var(--text-muted);
-  font: 500 0.6875rem/1 var(--font-mono);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  min-height: 600px;
-}
 
-.ad-slot--horizontal { min-height: 100px; margin: var(--s6) 0 0; }
-
-@media (min-width: 1280px) { .ad-slot--horizontal { display: none; } }
 
 .skip-link {
   position: absolute;
@@ -783,3 +759,6 @@ figcaption { color: var(--text-secondary); font-size: 0.875rem; margin-top: var(
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
   overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
 }
+
+
+
