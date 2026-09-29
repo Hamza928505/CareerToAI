@@ -111,7 +111,7 @@ REQUIRED_IGNORE_RULES = [
     "data/tracker.csv",
     "**/gmail_sync/",
     "**/reports/",
-    "**/upskill/*.md",
+    "**/upskill/*.md",`n    "!**/upskill/SKILL.md",
     # Depth-independent twin of the rule above. The upskill *skill* resolves
     # `upskill/` relative to its own directory - the same observed behavior
     # the **/job_scraper rules exist for - so reports can land at

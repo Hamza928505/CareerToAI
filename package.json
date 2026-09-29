@@ -1,32 +1,37 @@
 {
-  "name": "career-to-ai",
-  "version": "1.0.0",
-  "private": true,
-  "type": "module",
-  "description": "AI-readable personal profile and certificate vault. Static site, zero hosting cost.",
-  "scripts": {
-    "build": "eleventy",
-    "serve": "eleventy --serve",
-    "editor": "node scripts/editor-server.mjs",
-    "clean": "node -e \"fs.rmSync('_site',{recursive:true,force:true})\"",
-    "add-cert": "node scripts/add-cert.mjs",
-    "import-data": "node scripts/import-data.mjs",
-    "make-samples": "node scripts/make-sample-images.mjs",
-    "tracker": "node scripts/make-internship-tracker.mjs",
-    "skills:import": "node scripts/import-esco-skills.mjs",
-    "skills:harvest": "node scripts/harvest-tracker-skills.mjs",
-    "profile": "node scripts/build-profile-md.mjs",
-    "profile:check": "node scripts/build-profile-md.mjs --check"
-  },
-  "devDependencies": {
-    "@11ty/eleventy": "^3.0.0",
-    "@anthropic-ai/sdk": "^0.123.0",
-    "exceljs": "^4.4.0",
-    "sharp": "^0.34.0",
-    "sweetalert2": "^11.26.25",
-    "zod": "^4.5.4"
-  },
-  "engines": {
-    "node": ">=20"
-  }
+    "name":  "career-to-ai",
+    "version":  "1.0.0",
+    "private":  true,
+    "type":  "module",
+    "description":  "AI-readable personal profile and certificate vault. Static site, zero hosting cost.",
+    "scripts":  {
+                    "build":  "eleventy",
+                    "build:static":  "node scripts/build-static.mjs",
+                    "serve":  "eleventy --serve",
+                    "editor":  "node scripts/editor-server.mjs",
+                    "clean":  "node -e \"fs.rmSync(\u0027_site\u0027,{recursive:true,force:true})\"",
+                    "add-cert":  "node scripts/add-cert.mjs",
+                    "import-data":  "node scripts/import-data.mjs",
+                    "make-samples":  "node scripts/make-sample-images.mjs",
+                    "tracker":  "node scripts/make-internship-tracker.mjs",
+                    "skills:import":  "node scripts/import-esco-skills.mjs",
+                    "skills:harvest":  "node scripts/harvest-tracker-skills.mjs",
+                    "profile":  "node scripts/build-profile-md.mjs",
+                    "profile:check":  "node scripts/build-profile-md.mjs --check"
+                },
+    "devDependencies":  {
+                            "@11ty/eleventy":  "^3.0.0",
+                            "@anthropic-ai/sdk":  "^0.123.0",
+                            "esbuild":  "^0.28.2",
+                            "exceljs":  "^4.4.0",
+                            "sharp":  "^0.35.5",
+                            "sweetalert2":  "^11.26.25",
+                            "zod":  "^4.5.4"
+                        },
+    "engines":  {
+                    "node":  "\u003e=20"
+                },
+    "overrides":  {
+                      "uuid":  "^11.1.1"
+                  }
 }

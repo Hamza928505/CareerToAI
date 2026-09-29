@@ -248,7 +248,7 @@ class GitignoreGuardTests(GuardRepoFixture):
     def test_generated_report_rules_are_required(self):
         # Reports are generated from the user's tracker and application archive,
         # so losing these ignore rules can expose personal job-search history.
-        sensitive_outputs = ["reports/", "upskill/*.md", "**/upskill/report-*.md"]
+        sensitive_outputs = ["**/reports/", "**/upskill/*.md", "**/upskill/report-*.md"]
         remaining = [
             rule
             for rule in security_guards.REQUIRED_IGNORE_RULES
