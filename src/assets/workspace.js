@@ -409,6 +409,15 @@ function renderStats(rows) {
     }
   }
 }
+
+async function loadTracker() {
+  if (!local) {
+    ["#stat-total", "#stat-open", "#stat-toapply", "#stat-interview"].forEach((s) => {
+      let el = document.querySelector(s);
+      if (el) el.textContent = "�";
+    });
+    return;
+  }
   try {
     const res = await fetch(api("tracker"), { cache: "no-store" });
     const data = await res.json();
@@ -716,4 +725,5 @@ if(btnSave) {
     }
   });
 }
+
 
