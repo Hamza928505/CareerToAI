@@ -56,27 +56,11 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="{{ '/assets/style.css' | url }}">
 {% if pageStyles %}<link rel="stylesheet" href="{{ pageStyles | url }}">{% endif %}
-{% if site.adsenseClient and not noindex %}
-{# Loaded async so it never blocks first paint. The rails already reserve their
-   space in CSS, so a slow or unfilled unit does not shift the page. #}
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client={{ site.adsenseClient }}" crossorigin="anonymous"></script>
-{% endif %}
+
 </head>
 <body>
-{# A rail keeps its reserved width whether or not a unit fills it. Live units
-   are served only on indexable pages, because the AdSense loader above is
-   itself gated on `not noindex` — a private tool page shows the placeholder
-   and nothing else, rather than an <ins> that can never fill. #}
-{% macro adslot(slot, format, extraClass) %}
-{% if site.adsenseClient and slot and not noindex %}
-<ins class="adsbygoogle {{ extraClass }}" style="display:block{% if format == 'horizontal' %};width:100%{% endif %}"
-     data-ad-client="{{ site.adsenseClient }}" data-ad-slot="{{ slot }}"
-     data-ad-format="{{ format }}" data-full-width-responsive="{% if format == 'horizontal' %}true{% else %}false{% endif %}"></ins>
-<script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
-{% else %}
-<div class="ad-slot {{ extraClass }}">Advertisement</div>
-{% endif %}
-{% endmacro %}
+
+
 
 <a class="skip-link" href="#main">Skip to main content</a>
 
@@ -112,24 +96,15 @@
 </header>
 
 <div class="shell">
-  {# Advertising rails. They keep their reserved width whether or not a unit
-     fills, and disappear entirely below 1280px rather than squeezing the
-     reading column. #}
-  <aside class="ad-rail" aria-label="Advertisement">
-    {{ adslot(site.adsenseSlotLeft, "vertical", "ad-slot") }}
-  </aside>
+  
 
   <main id="main">
     {{ content | safe }}
 
-    <div aria-label="Advertisement" role="complementary">
-      {{ adslot(site.adsenseSlotInline, "horizontal", "ad-slot--horizontal") }}
-    </div>
+    
   </main>
 
-  <aside class="ad-rail" aria-label="Advertisement">
-    {{ adslot(site.adsenseSlotRight, "vertical", "ad-slot") }}
-  </aside>
+  
 </div>
 
 <footer class="site-footer">
@@ -176,3 +151,8 @@
 {% if pageScript %}<script type="module" src="{{ pageScript | url }}"></script>{% endif %}
 </body>
 </html>
+
+
+
+
+
