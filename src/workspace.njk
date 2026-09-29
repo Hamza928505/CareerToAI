@@ -80,7 +80,7 @@ eleventyExcludeFromCollections: true
         Regenerates <code>01-candidate-profile.md</code> from your profile JSON, so
         every cover letter and interview answer argues from current facts.
       </p>
-      <button class="btn btn--primary" type="button" data-run="profile">Run</button>
+      <button class="btn btn--primary" type="button" data-run="profile"><i class="fa-solid fa-play" style="margin-right: 0.3rem;"></i>Run</button>
     </article>
 
     <article class="card task" data-task="tracker">
@@ -90,7 +90,7 @@ eleventyExcludeFromCollections: true
         Renders <code>internship-tracker.xlsx</code> from your tracker rows, with
         every Fit&nbsp;% and Check formula recomputed. Safe to re-run.
       </p>
-      <button class="btn btn--primary" type="button" data-run="tracker">Run</button>
+      <button class="btn btn--primary" type="button" data-run="tracker"><i class="fa-solid fa-play" style="margin-right: 0.3rem;"></i>Run</button>
     </article>
 
     <article class="card task" data-task="skills">
@@ -100,7 +100,7 @@ eleventyExcludeFromCollections: true
         Pulls the requirements out of every tracked posting into your skill pool,
         so the editor suggests the words employers actually use.
       </p>
-      <button class="btn" type="button" data-run="skills">Run</button>
+      <button class="btn" type="button" data-run="skills"><i class="fa-solid fa-play" style="margin-right: 0.3rem;"></i>Run</button>
     </article>
 
     <article class="card task" data-task="build">
@@ -110,14 +110,14 @@ eleventyExcludeFromCollections: true
         Regenerates <code>_site/</code> so the published profile matches what is in
         <code>data/</code> right now.
       </p>
-      <button class="btn" type="button" data-run="build">Run</button>
+      <button class="btn" type="button" data-run="build"><i class="fa-solid fa-play" style="margin-right: 0.3rem;"></i>Run</button>
     </article>
   </div>
 
   <div class="log-wrap" id="log-wrap" hidden>
     <div class="log-head">
       <span class="eyebrow" id="log-title">Output</span>
-      <button class="btn" type="button" id="log-close">Close</button>
+      <button class="btn" type="button" id="log-close"><i class="fa-solid fa-xmark" style="margin-right: 0.3rem;"></i>Close</button>
     </div>
     <pre class="log" id="log" tabindex="0" aria-live="polite" aria-atomic="false"></pre>
   </div>
@@ -138,70 +138,70 @@ eleventyExcludeFromCollections: true
         <code class="cmd-text">/scrape</code>
         <p>Searches all configured job portals and gathers matching postings.</p>
       </div>
-      <button class="btn" type="button" data-copy="/scrape">Copy</button>
+      <button class="btn" type="button" data-copy="/scrape"><i class="fa-regular fa-copy" style="margin-right: 0.3rem;"></i>Copy</button>
     </li>
     <li class="cmd">
       <div>
         <code class="cmd-text">/apply &lt;url or pasted advert&gt;</code>
         <p>Checks eligibility, scores the fit, drafts the Anschreiben, records the row.</p>
       </div>
-      <button class="btn" type="button" data-copy="/apply ">Copy</button>
+      <button class="btn" type="button" data-copy="/apply "><i class="fa-regular fa-copy" style="margin-right: 0.3rem;"></i>Copy</button>
     </li>
     <li class="cmd">
       <div>
         <code class="cmd-text">/rank</code>
         <p>What deserves attention today — overdue follow-ups first, then best unsent.</p>
       </div>
-      <button class="btn" type="button" data-copy="/rank">Copy</button>
+      <button class="btn" type="button" data-copy="/rank"><i class="fa-regular fa-copy" style="margin-right: 0.3rem;"></i>Copy</button>
     </li>
     <li class="cmd">
       <div>
         <code class="cmd-text">/outcome &lt;company&gt; &lt;what happened&gt;</code>
         <p>Records the result and draws the lesson from it.</p>
       </div>
-      <button class="btn" type="button" data-copy="/outcome ">Copy</button>
+      <button class="btn" type="button" data-copy="/outcome "><i class="fa-regular fa-copy" style="margin-right: 0.3rem;"></i>Copy</button>
     </li>
     <li class="cmd">
       <div>
         <code class="cmd-text">/interview &lt;company&gt;</code>
         <p>Builds a prep pack from the archived posting and what you submitted.</p>
       </div>
-      <button class="btn" type="button" data-copy="/interview ">Copy</button>
+      <button class="btn" type="button" data-copy="/interview "><i class="fa-regular fa-copy" style="margin-right: 0.3rem;"></i>Copy</button>
     </li>
     <li class="cmd">
       <div>
         <code class="cmd-text">/upskill</code>
         <p>The gap between what the adverts ask for and what your profile holds.</p>
       </div>
-      <button class="btn" type="button" data-copy="/upskill">Copy</button>
+      <button class="btn" type="button" data-copy="/upskill"><i class="fa-regular fa-copy" style="margin-right: 0.3rem;"></i>Copy</button>
     </li>
     <li class="cmd">
       <div>
         <code class="cmd-text">/setup</code>
         <p>Initializes your environment, compiles base templates, and validates your profile data.</p>
       </div>
-      <button class="btn" type="button" data-copy="/setup">Copy</button>
+      <button class="btn" type="button" data-copy="/setup"><i class="fa-regular fa-copy" style="margin-right: 0.3rem;"></i>Copy</button>
     </li>
     <li class="cmd">
       <div>
         <code class="cmd-text">/add-portal</code>
         <p>Creates a new scraper configuration to add a new job board to the search.</p>
       </div>
-      <button class="btn" type="button" data-copy="/add-portal ">Copy</button>
+      <button class="btn" type="button" data-copy="/add-portal "><i class="fa-regular fa-copy" style="margin-right: 0.3rem;"></i>Copy</button>
     </li>
     <li class="cmd">
       <div>
         <code class="cmd-text">/expand</code>
         <p>Fills in details or expands on bullet points in your Cover Letter or CV.</p>
       </div>
-      <button class="btn" type="button" data-copy="/expand ">Copy</button>
+      <button class="btn" type="button" data-copy="/expand "><i class="fa-regular fa-copy" style="margin-right: 0.3rem;"></i>Copy</button>
     </li>
     <li class="cmd">
       <div>
         <code class="cmd-text">/html-report</code>
         <p>Generates an interactive HTML dashboard of your application progress.</p>
       </div>
-      <button class="btn" type="button" data-copy="/html-report">Copy</button>
+      <button class="btn" type="button" data-copy="/html-report"><i class="fa-regular fa-copy" style="margin-right: 0.3rem;"></i>Copy</button>
     </li>
   </ul>
 </section>
@@ -271,8 +271,8 @@ eleventyExcludeFromCollections: true
     </p>
 
     <div class="checker-actions">
-      <button class="btn btn--primary" type="submit">Check it</button>
-      <button class="btn" type="reset">Clear</button>
+      <button class="btn btn--primary" type="submit"><i class="fa-solid fa-check-double" style="margin-right: 0.3rem;"></i>Check it</button>
+      <button class="btn" type="reset"><i class="fa-solid fa-eraser" style="margin-right: 0.3rem;"></i>Clear</button>
     </div>
   </form>
 
@@ -363,7 +363,7 @@ eleventyExcludeFromCollections: true
         <input id="r-wants" name="wants" placeholder="Python, PyTorch, Docker">
         <span class="help">A comma-separated list scores exactly; prose is estimated.</span>
       </p>
-      <button class="btn btn--primary" type="submit" id="row-submit">Add to tracker</button>
+      <button class="btn btn--primary" type="submit" id="row-submit"><i class="fa-solid fa-file-csv" style="margin-right: 0.3rem;"></i>Add to tracker</button>
       <p class="form-status" id="row-status" role="status"></p>
     </form>
   </details>
@@ -380,6 +380,7 @@ eleventyExcludeFromCollections: true
 
 <script type="application/json" id="gju-rules">{{ gju | dump | safe }}</script>
 <script type="application/json" id="tracker-schema">{{ tracker | dump | safe }}</script>
+
 
 
 
