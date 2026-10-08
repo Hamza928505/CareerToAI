@@ -335,7 +335,7 @@ class GitignorePatternBehaviorTests(unittest.TestCase):
             text=True,
         )
         self.assertEqual(result.returncode, 0, f"{path}: not ignored by the shipped .gitignore")
-        self.assertIn("job-search/documents/applications/**", result.stdout)
+        self.assertIn("documents/applications/**", result.stdout)
 
 
 class GitignoreNegationTests(GuardRepoFixture):

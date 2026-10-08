@@ -1,6 +1,4 @@
----
-description: Searches all configured job portals and gathers matching postings.
----
+# /scrape — search the job portals and gather matching postings
 
 # PROJECT SPINE
 - `data/profile.json`: Your professional profile.
