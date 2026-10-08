@@ -24,11 +24,11 @@ duplicate none of them.
    rules elsewhere. Each carries a `PROJECT SPINE` header naming the three shared
    files.
 
-3. **The tracker.** `data/tracker.csv`, shaped by `data/tracker-schema.json`, whose
+3. **The tracker.** `data/applications.csv`, shaped by `data/tracker-schema.json`, whose
    `statuses` list is the only status vocabulary in the repo.
-   `internship-tracker.xlsx` is rendered from the CSV by `npm run tracker`.
+   `job_search_tracker.xlsx` is rendered from the CSV by `npm run tracker`.
    The CSV is gitignored — it holds employers' contact details and this repo
-   publishes a public site. `data/tracker.example.csv` carries the header.
+   publishes a public site. The CSV is gitignored because it contains employers? personal contact details.
 
 4. **Portal search skills.** `job-search/.agents/skills/*/SKILL.md`, in the portable
    Agent Skills format, each with its own Bun CLI under `cli/`. Codex and

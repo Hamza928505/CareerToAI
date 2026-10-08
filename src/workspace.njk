@@ -1,7 +1,7 @@
 ---
 layout: base.njk
-title: Workspace — run your internship search
-description: One place to check your application tracker, score a posting against the GJU German Year rules, and run the build steps that keep your profile and tracker in sync.
+title: Workspace - search, review, apply
+description: Search for jobs, edit your workbook, and decide who applies from one workspace.
 permalink: /workspace/
 noindex: true
 pageStyles: /assets/workspace.css
@@ -9,42 +9,37 @@ pageScript: /assets/workspace.js
 eleventyExcludeFromCollections: true
 ---
 
+<div class="workspace">
 <div class="ws-head hero">
   <div>
-    <span class="eyebrow">Workspace</span>
-    <h1>Run your <span class="hero-accent">internship search</span></h1>
-    <p class="lede">
-      Your tracker, the GJU rules, and every command that keeps your profile and
-      workbook in step — in one place.
-    </p>
+    <span class="eyebrow">Your German Year</span>
+    <h1>Your German Year <span class="hero-accent">starts here.</span></h1>
+    <p class="lede">Every application you send is one step closer. Pick where to begin, and we'll show you what to do next.</p>
   </div>
   <p class="mode" id="mode" data-state="checking">
-    <span class="pill pill--idle" id="mode-pill">Checking…</span>
+    <span class="pill pill--idle" id="mode-pill">Checking connection...</span>
   </p>
 </div>
 
 <div class="notice" id="published-notice" hidden>
   <p>
-    <strong>You are on the published site.</strong> It is static — a web page on
-    GitHub Pages cannot write to your files or run a command on your machine, so
-    the buttons below are disabled and the tracker is empty here.
+    <strong>You're in preview mode.</strong> You can explore everything, and the
+    eligibility checker works right now. Saving needs your own copy.
   </p>
   <p>
-    To use the workspace for real, run <code>npm run editor</code> in the project
-    folder and open the address it prints. Everything on this page then works
-    against your own files. The eligibility checker below works either way.
+    To track your applications, run <code>npm run editor</code> on your computer.
   </p>
 </div>
 
 <!-- ---------------------------------------------------------------- Overview -->
-<section aria-labelledby="overview-h">
-  <h2 id="overview-h">Where things stand</h2>
+<section class="workspace-overview" aria-labelledby="overview-h">
+  <h2 id="overview-h" class="visually-hidden">Your application progress</h2>
 
   <div class="stat-row" id="stats">
     <div class="stat">
       <span class="stat-label">Tracked</span>
       <span class="stat-value" id="stat-total">—</span>
-      <span class="stat-note">applications in <code>data/tracker.csv</code></span>
+      <span class="stat-note">applications in <code>job_search_tracker.xlsx</code></span>
     </div>
     <div class="stat">
       <span class="stat-label">Still open</span>
@@ -62,193 +57,93 @@ eleventyExcludeFromCollections: true
       <span class="stat-note">invited or already sat</span>
     </div>
   </div>
-</section>
-
-<!-- ----------------------------------------------------------- Tracker UI -->
-<section aria-labelledby="tracker-ui-h">
-  <h2 id="tracker-ui-h"><i class="fa-solid fa-table-list" style="margin-right: 0.4rem;"></i> Interactive Tracker</h2>
-  <p class="lede">
-    Upload your <code>job_search_tracker.xlsx</code> file to view, edit, and save your applications without opening Excel.
-  </p>
-
-  <input type="file" id="tracker-upload" accept=".xlsx" style="display: none;" />
-  
-  <div id="tracker-drop-zone" style="border: 2px dashed var(--border); border-radius: 8px; padding: 2.5rem 1rem; text-align: center; cursor: pointer; margin-bottom: 1rem; transition: background 0.2s; background: var(--surface);">
-    <i class="fa-solid fa-cloud-arrow-up" style="font-size: 3rem; color: var(--accent); margin-bottom: 1rem;"></i>
-    <h3 style="margin: 0 0 0.5rem 0;">Drag & Drop your Excel file here</h3>
-    <p class="dim" style="margin: 0;">or click to browse from your computer (job_search_tracker.xlsx or internship-tracker.xlsx)</p>
-  </div>
-
-  <div class="actions" style="margin-bottom: 1rem; display: flex; gap: 1rem; align-items: center; justify-content: space-between; flex-wrap: wrap;">
-    <div>
-      <button class="btn btn--primary" id="btn-upload-tracker" type="button" style="display: none;">
-        <i class="fa-solid fa-file-excel" style="margin-right: 0.3rem;"></i> Upload Different File
-      </button>
-    </div>
-    <div style="display: flex; gap: 0.5rem;">
-      <button class="btn" id="btn-add-row" type="button" style="display: none;">
-        <i class="fa-solid fa-plus" style="margin-right: 0.3rem;"></i> Add Application
-      </button>
-      <button class="btn" id="btn-save-tracker" type="button" style="display: none;">
-        <i class="fa-solid fa-download" style="margin-right: 0.3rem;"></i> Save & Download
-      </button>
-    </div>
-  </div>
-
-  <div class="table-wrap" id="tracker-table-wrap" style="display: none; max-height: 500px; overflow: auto; width: 100%;">
-    <table id="tracker-table">
-      <thead>
-        <tr id="tracker-thead-tr"></tr>
-      </thead>
-      <tbody id="tracker-tbody"></tbody>
-    </table>
+  <div class="chart-card overview-chart" hidden>
+    <h3>How far your applications got</h3>
+    <p id="summary-chart-note" class="muted">Each stage counts everything that got that far, so the numbers only ever shrink. Every offer starts as a tracked posting.</p>
+    <p id="funnel-empty" class="notice-empty" hidden>Nothing sent yet, and that is fine. Your first application starts this chart, and every stage after it fills in as you go.</p>
+    <div id="chart-funnel" class="chart-container" aria-describedby="summary-chart-note"></div>
   </div>
 </section>
 
-<!-- ------------------------------------------------------------ Run a task -->
-<section aria-labelledby="tasks-h">
-  <h2 id="tasks-h">Run a task</h2>
-  <p class="lede">
-    These are the deterministic steps — no AI, no network. Each one reads
-    <code>data/</code> and writes a generated file.
-  </p>
-
-  <div class="grid task-grid">
-    <article class="card task" data-task="profile">
-      <span class="eyebrow">npm run profile</span>
-      <h3>Rebuild the candidate profile</h3>
-      <p>
-        Regenerates <code>01-candidate-profile.md</code> from your profile JSON, so
-        every cover letter and interview answer argues from current facts.
-      </p>
-      <button class="btn btn--primary" type="button" data-run="profile"><i class="fa-solid fa-play" style="margin-right: 0.3rem;"></i>Run</button>
-    </article>
-
-    <article class="card task" data-task="tracker">
-      <span class="eyebrow">npm run tracker</span>
-      <h3>Rebuild the workbook</h3>
-      <p>
-        Renders <code>internship-tracker.xlsx</code> from your tracker rows, with
-        every Fit&nbsp;% and Check formula recomputed. Safe to re-run.
-      </p>
-      <button class="btn btn--primary" type="button" data-run="tracker"><i class="fa-solid fa-play" style="margin-right: 0.3rem;"></i>Run</button>
-    </article>
-
-    <article class="card task" data-task="skills">
-      <span class="eyebrow">npm run skills:harvest</span>
-      <h3>Harvest advert skills</h3>
-      <p>
-        Pulls the requirements out of every tracked posting into your skill pool,
-        so the editor suggests the words employers actually use.
-      </p>
-      <button class="btn" type="button" data-run="skills"><i class="fa-solid fa-play" style="margin-right: 0.3rem;"></i>Run</button>
-    </article>
-
-    <article class="card task" data-task="build">
-      <span class="eyebrow">npm run build</span>
-      <h3>Rebuild this site</h3>
-      <p>
-        Regenerates <code>_site/</code> so the published profile matches what is in
-        <code>data/</code> right now.
-      </p>
-      <button class="btn" type="button" data-run="build"><i class="fa-solid fa-play" style="margin-right: 0.3rem;"></i>Run</button>
-    </article>
-  </div>
-
-  <div class="log-wrap" id="log-wrap" hidden>
-    <div class="log-head">
-      <span class="eyebrow" id="log-title">Output</span>
-      <button class="btn" type="button" id="log-close"><i class="fa-solid fa-xmark" style="margin-right: 0.3rem;"></i>Close</button>
+<form class="svc-card" id="settings-form" autocomplete="off" aria-labelledby="credits-h">
+  <header class="svc-head">
+    <div class="svc-title">
+      <h2 id="credits-h">Search &amp; AI services</h2>
+      <p class="muted" id="credits-note">Checked live from your own keys in <code>.env</code>. Only numbers show here, never the keys.</p>
     </div>
-    <pre class="log" id="log" tabindex="0" aria-live="polite" aria-atomic="false"></pre>
+    <div class="svc-tabs" role="tablist" aria-label="Search services sections">
+      <button type="button" role="tab" id="svc-tab-overview" aria-controls="svc-panel-overview" aria-selected="true" data-tab="overview">Overview</button>
+      <button type="button" role="tab" id="svc-tab-keys" aria-controls="svc-panel-keys" aria-selected="false" tabindex="-1" data-tab="keys" data-local-only hidden>Keys</button>
+      <button type="button" role="tab" id="svc-tab-ai" aria-controls="svc-panel-ai" aria-selected="false" tabindex="-1" data-tab="ai" data-local-only hidden>AI provider</button>
+    </div>
+  </header>
+
+  <div class="svc-body" id="credits">
+    <div role="tabpanel" id="svc-panel-overview" aria-labelledby="svc-tab-overview" tabindex="0">
+      <div class="svc-status" id="svc-status" hidden>
+        <span class="svc-avatar" aria-hidden="true"><i class="fa-solid fa-signal"></i></span>
+        <div class="svc-status-text"><strong id="svc-status-title"></strong><small id="svc-status-desc"></small></div>
+        <span class="svc-badge" id="svc-status-badge"></span>
+      </div>
+      <div class="svc-meter" id="svc-meter" hidden>
+        <div class="svc-meter-label"><span>Keys saved</span><span id="svc-meter-value"></span></div>
+        <div class="credit-bar" role="meter" aria-valuemin="0" aria-valuemax="100" aria-label="Keys saved"><div class="credit-fill" id="svc-meter-fill" data-level="ok"></div></div>
+      </div>
+      <ul class="credit-list" id="credit-list"></ul>
+      <div class="svc-stats" id="svc-stats" hidden>
+        <div class="svc-stat"><span>Services answering</span><strong id="svc-stat-ok">-</strong></div>
+        <div class="svc-stat"><span>AI provider</span><strong id="svc-stat-ai">Not set</strong></div>
+      </div>
+    </div>
+
+    <div role="tabpanel" id="svc-panel-keys" aria-labelledby="svc-tab-keys" tabindex="0" hidden>
+      <p class="muted">Keys are saved to <code>.env</code> on this computer. They are never shown again, and never sent to your browser or to GitHub. Type a new key to replace one, or remove it.</p>
+      <h3 class="svc-sub">Search services</h3>
+      <div id="settings-search" class="settings-rows"></div>
+      <h3 class="svc-sub">Other API keys</h3>
+      <div id="settings-custom" class="settings-rows"></div>
+      <div class="settings-add">
+        <input id="custom-name" type="text" autocomplete="off" spellcheck="false" placeholder="Name, e.g. SERPER_API_KEY" aria-label="Name of the new key">
+        <input id="custom-value" type="password" autocomplete="off" spellcheck="false" placeholder="Paste the key" aria-label="Value of the new key">
+        <button type="button" class="btn" id="custom-add"><i class="fa-solid fa-plus" aria-hidden="true"></i> Add key</button>
+      </div>
+      <small class="settings-help">A name must end in <code>_API_KEY</code>, <code>_KEY</code>, <code>_TOKEN</code> or <code>_SECRET</code>. Tools and MCP servers that read <code>${NAME}</code> pick it up.</small>
+    </div>
+
+    <div role="tabpanel" id="svc-panel-ai" aria-labelledby="svc-tab-ai" tabindex="0" hidden>
+      <p class="muted">Used for suggestions, job scoring and CV/letter tailoring. Pick one provider and add its key.</p>
+      <div id="settings-ai" class="settings-rows"></div>
+    </div>
   </div>
-</section>
 
-<!-- ------------------------------------------------------- Ask Claude Code -->
-<section aria-labelledby="claude-h">
-  <h2 id="claude-h">Ask Claude Code</h2>
-  <p class="lede">
-    These read a posting, weigh it and write German for you, so they need Claude
-    Code — a web page cannot do them. Copy one, paste it into your terminal
-    session in this folder.
-  </p>
+  <footer class="svc-foot">
+    <p id="settings-status" role="status" aria-live="polite"></p>
+    <div class="svc-foot-actions">
+      <button class="btn" type="button" id="credits-refresh" data-for="overview"><i class="fa-solid fa-rotate" aria-hidden="true"></i> Refresh</button>
+      <button class="btn" type="button" id="settings-test" data-for="ai" hidden><i class="fa-solid fa-plug" aria-hidden="true"></i> Test AI provider</button>
+      <button class="btn btn--primary" type="submit" id="settings-save" data-for="keys ai" hidden><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> Save changes</button>
+    </div>
+  </footer>
+</form>
 
-  <ul class="cmd-list">
-    <li class="cmd">
-      <div>
-        <code class="cmd-text">/scrape</code>
-        <p>Searches all configured job portals and gathers matching postings.</p>
-      </div>
-      <button class="btn" type="button" data-copy="/scrape"><i class="fa-regular fa-copy" style="margin-right: 0.3rem;"></i>Copy</button>
-    </li>
-    <li class="cmd">
-      <div>
-        <code class="cmd-text">/apply &lt;url or pasted advert&gt;</code>
-        <p>Checks eligibility, scores the fit, drafts the Anschreiben, records the row.</p>
-      </div>
-      <button class="btn" type="button" data-copy="/apply "><i class="fa-regular fa-copy" style="margin-right: 0.3rem;"></i>Copy</button>
-    </li>
-    <li class="cmd">
-      <div>
-        <code class="cmd-text">/rank</code>
-        <p>What deserves attention today — overdue follow-ups first, then best unsent.</p>
-      </div>
-      <button class="btn" type="button" data-copy="/rank"><i class="fa-regular fa-copy" style="margin-right: 0.3rem;"></i>Copy</button>
-    </li>
-    <li class="cmd">
-      <div>
-        <code class="cmd-text">/outcome &lt;company&gt; &lt;what happened&gt;</code>
-        <p>Records the result and draws the lesson from it.</p>
-      </div>
-      <button class="btn" type="button" data-copy="/outcome "><i class="fa-regular fa-copy" style="margin-right: 0.3rem;"></i>Copy</button>
-    </li>
-    <li class="cmd">
-      <div>
-        <code class="cmd-text">/interview &lt;company&gt;</code>
-        <p>Builds a prep pack from the archived posting and what you submitted.</p>
-      </div>
-      <button class="btn" type="button" data-copy="/interview "><i class="fa-regular fa-copy" style="margin-right: 0.3rem;"></i>Copy</button>
-    </li>
-    <li class="cmd">
-      <div>
-        <code class="cmd-text">/upskill</code>
-        <p>The gap between what the adverts ask for and what your profile holds.</p>
-      </div>
-      <button class="btn" type="button" data-copy="/upskill"><i class="fa-regular fa-copy" style="margin-right: 0.3rem;"></i>Copy</button>
-    </li>
-    <li class="cmd">
-      <div>
-        <code class="cmd-text">/setup</code>
-        <p>Initializes your environment, compiles base templates, and validates your profile data.</p>
-      </div>
-      <button class="btn" type="button" data-copy="/setup"><i class="fa-regular fa-copy" style="margin-right: 0.3rem;"></i>Copy</button>
-    </li>
-    <li class="cmd">
-      <div>
-        <code class="cmd-text">/add-portal</code>
-        <p>Creates a new scraper configuration to add a new job board to the search.</p>
-      </div>
-      <button class="btn" type="button" data-copy="/add-portal "><i class="fa-regular fa-copy" style="margin-right: 0.3rem;"></i>Copy</button>
-    </li>
-    <li class="cmd">
-      <div>
-        <code class="cmd-text">/expand</code>
-        <p>Fills in details or expands on bullet points in your Cover Letter or CV.</p>
-      </div>
-      <button class="btn" type="button" data-copy="/expand "><i class="fa-regular fa-copy" style="margin-right: 0.3rem;"></i>Copy</button>
-    </li>
-    <li class="cmd">
-      <div>
-        <code class="cmd-text">/html-report</code>
-        <p>Generates an interactive HTML dashboard of your application progress.</p>
-      </div>
-      <button class="btn" type="button" data-copy="/html-report"><i class="fa-regular fa-copy" style="margin-right: 0.3rem;"></i>Copy</button>
-    </li>
-  </ul>
+<section class="journey" aria-labelledby="journey-h">
+  <h2 id="journey-h" class="visually-hidden">Your journey and workspace sections</h2>
+  <ol class="journey-steps" id="journey-steps">
+    <li data-stage="check" data-state="todo"><a href="#flow-check"><span class="journey-dot">1</span><strong>Check</strong><small>GJU rules</small></a></li>
+    <li data-stage="search" data-state="todo"><a href="#flow-search"><span class="journey-dot">2</span><strong>Search</strong><small>Roles and locations</small></a></li>
+    <li data-stage="toapply" data-state="todo"><a href="#flow-review"><span class="journey-dot">3</span><strong>Shortlist</strong><small>Your workbook</small></a></li>
+    <li data-stage="applied" data-state="todo"><a href="#flow-apply"><span class="journey-dot">4</span><strong>Apply</strong><small>You or your assistant</small></a></li>
+    <li data-stage="insights" data-state="todo"><a href="#flow-insights"><span class="journey-dot">5</span><strong>Insights</strong><small>Charts</small></a></li>
+    <li data-stage="tools" data-state="todo"><a href="#flow-tools"><span class="journey-dot">6</span><strong>Tools</strong><small>Commands</small></a></li>
+  </ol>
+  <p class="journey-next" id="journey-next" role="status" aria-live="polite"><strong>Start with one posting.</strong> <span>Check it against the GJU rules below, then add it to your list. One is enough to begin.</span></p>
 </section>
 
 <!-- ------------------------------------------------------ Eligibility check -->
-<section aria-labelledby="check-h">
+<section class="workspace-utility workspace-check workspace-panel" id="flow-check" aria-labelledby="check-h">
+<details class="workspace-tools" open>
+  <summary><span>GJU eligibility checker</span><small>Check duration, location, pay, and language</small></summary>
+  <div class="utility-content">
   <h2 id="check-h">Check a posting against the GJU rules</h2>
   <p class="lede">
     The same thresholds the tracker scores with, read from
@@ -259,16 +154,19 @@ eleventyExcludeFromCollections: true
   <form class="card checker" id="checker" novalidate>
     <div class="field-row">
       <p class="field">
+        <label><input type="checkbox" id="f-werkstudent" name="werkstudent"> Werkstudent (part-time, about {{ gju.rules.werkstudentHoursPerMonth }} hours a month)</label>
+        <span class="help">Ticking this ignores the duration rule: a Werkstudent role is not measured in weeks.</span>
+      </p>
+      <p class="field">
         <label for="f-weeks">Duration in weeks <span aria-hidden="true">*</span></label>
-        <input type="number" id="f-weeks" name="weeks" min="1" max="52" inputmode="numeric" required>
+        <input type="number" id="f-weeks" name="weeks" value="{{ gju.rules.minWeeks }}" min="{{ gju.rules.minWeeks }}" max="52" inputmode="numeric" required>
         <span class="help">GJU requires at least {{ gju.rules.minWeeks }} weeks.</span>
       </p>
 
       <p class="field">
         <label for="f-country">Country <span aria-hidden="true">*</span></label>
         <select id="f-country" name="country" required>
-          <option value="">Choose…</option>
-          {% for c in gju.countries %}<option value="{{ c[0] }}">{{ c[0] }}</option>{% endfor %}
+          {% for c in gju.countries %}<option value="{{ c[0] }}"{% if c[0] == "Germany" %} selected{% endif %}>{{ c[0] }}</option>{% endfor %}
         </select>
         <span class="help">Anywhere outside the German-speaking countries needs approval.</span>
       </p>
@@ -287,7 +185,7 @@ eleventyExcludeFromCollections: true
       <p class="field">
         <label for="f-pay">Pay, EUR per month</label>
         <input type="number" id="f-pay" name="pay" min="0" step="10" inputmode="numeric">
-        <span class="help">A visa extension asks you to prove {{ gju.rules.minMonthlySalary }} EUR/month.</span>
+        <span class="help">Unpaid is allowed. The {{ gju.rules.minMonthlySalary }} EUR/month only matters if you stay beyond the year (visa extension) and your blocked account is not refilled. Leave this blank if you don't know.</span>
       </p>
 
       <p class="field">
@@ -295,7 +193,7 @@ eleventyExcludeFromCollections: true
         <select id="f-language" name="language">
           <option value="">Not stated</option>
           <option value="English">English</option>
-          <option value="Both">Both</option>
+          <option value="Both" selected>Both</option>
           <option value="German">German only</option>
         </select>
       </p>
@@ -312,112 +210,547 @@ eleventyExcludeFromCollections: true
     </p>
 
     <div class="checker-actions">
-      <button class="btn btn--primary" type="submit"><i class="fa-solid fa-check-double" style="margin-right: 0.3rem;"></i>Check it</button>
-      <button class="btn" type="reset"><i class="fa-solid fa-eraser" style="margin-right: 0.3rem;"></i>Clear</button>
+      <button class="btn btn--primary" type="submit"><i class="fa-solid fa-check-double btn-icon-spacing"></i>Check it</button>
+      <button class="btn" type="reset"><i class="fa-solid fa-eraser btn-icon-spacing"></i>Clear</button>
     </div>
   </form>
 
   <div id="verdict" class="verdict" hidden aria-live="polite"></div>
+  </div>
+</details>
 </section>
 
-<section aria-labelledby="analytics-h">
-  <h2 id="analytics-h">Analytics Dashboard</h2>
-  <p class="lede">
-    A real-time overview of your application progress.
-  </p>
-  <div class="grid-2" style="margin-top: 1.5rem; gap: 2rem;">
-    <div class="card" style="padding: 1rem; border-radius: var(--radius-lg); background: var(--surface); border: 1px solid var(--border);">
-      <h3 style="margin-top: 0; font-size: 1.1rem;">Application Status</h3>
-      <div id="chart-status" style="height: 300px;"></div>
+<!-- -------------------------------------------------------- Search Strategy -->
+<section class="strategy workspace-flow workspace-panel" id="flow-search" aria-labelledby="strategy-ui-h">
+  <div class="flow-heading strategy-heading">
+    <div class="flow-heading-copy">
+      <span class="flow-step">01 / Search</span>
+      <h2 id="strategy-ui-h">Job search strategy</h2>
+      <p class="lede">Pick the work you want and where you want to do it. Start your search right here.</p>
     </div>
-    <div class="card" style="padding: 1rem; border-radius: var(--radius-lg); background: var(--surface); border: 1px solid var(--border);">
-      <h3 style="margin-top: 0; font-size: 1.1rem;">Applications over Time</h3>
-      <div id="chart-timeline" style="height: 300px;"></div>
-    </div>
+    <a class="flow-next-link" href="#flow-review">Go to your workbook <i class="fa-solid fa-arrow-down" aria-hidden="true"></i></a>
   </div>
+
+  {% set strategyGroups = [
+    { key: 'roles', tab: 'Roles', title: 'Roles to look for', help: 'Choose the fields that match your work and interests.', options: ['Software Engineering', 'Backend', 'Full-Stack .NET', 'Computer Vision', 'Machine Learning', 'Frontend', 'Data Engineering', 'Cloud / DevOps'] },
+    { key: 'cities', tab: 'Places', title: 'Where to search', help: 'Select cities or a wider search area.', options: ['Berlin', 'Remote', 'Germany-wide', 'München', 'Hamburg', 'Frankfurt am Main', 'Köln', 'Stuttgart', 'Düsseldorf', 'Leipzig'] },
+    { key: 'types', tab: 'Types', title: 'Opportunity type', help: 'Choose the kinds of positions you want.', options: tracker.opportunityTypes }
+  ] %}
+  <form id="strategy-form" class="strategy-form sx-card">
+    <header class="sx-head">
+      <div class="sx-tabs" role="tablist" aria-label="What to search for">
+        {% for group in strategyGroups %}
+        <button type="button" role="tab" id="sx-tab-{{ group.key }}" class="sx-tab" data-sx-tab="{{ group.key }}" data-group="{{ group.key }}" aria-controls="sx-panel-{{ group.key }}" aria-selected="{{ 'true' if loop.first else 'false' }}"{% if not loop.first %} tabindex="-1"{% endif %}>{{ group.tab }}<span class="sx-count" data-sx-count="{{ group.key }}">0</span></button>
+        {% endfor %}
+      </div>
+      <div class="sx-total">
+        <strong id="strategy-count">0 search preferences selected</strong>
+        <p id="strategy-save-status" role="status" aria-live="polite">Your preferences are saved when you start a search.</p>
+      </div>
+    </header>
+
+    <div class="sx-body">
+      {% for group in strategyGroups %}
+      <div class="strategy-group sx-panel" id="sx-panel-{{ group.key }}" data-group="{{ group.key }}" role="tabpanel" aria-labelledby="strategy-{{ group.key }}-h" aria-describedby="strategy-{{ group.key }}-help"{% if not loop.first %} hidden{% endif %}>
+        <div class="strategy-group-copy">
+          <h3 id="strategy-{{ group.key }}-h">{{ group.title }}</h3>
+          <p id="strategy-{{ group.key }}-help">{{ group.help }}</p>
+        </div>
+        <div class="strategy-group-controls">
+          <div class="strategy-options" data-strategy-options="{{ group.key }}">
+            {% for option in group.options %}
+            <label class="strategy-choice"><input type="checkbox" name="{{ group.key }}" value="{{ option }}"><span>{{ option }}<i class="fa-solid fa-check" aria-hidden="true"></i></span></label>
+            {% endfor %}
+          </div>
+          <div class="strategy-add">
+            <label for="strat-custom-{{ group.key }}">{% if group.key == 'roles' %}Search all roles or add your own{% elif group.key == 'cities' %}Search all German cities or add a location{% else %}Add another opportunity type{% endif %}</label>
+            <div class="strategy-add-controls">
+              <input id="strat-custom-{{ group.key }}" type="search" maxlength="80" autocomplete="off" placeholder="{% if group.key == 'roles' %}Search a job title{% elif group.key == 'cities' %}Search a city{% else %}Type an opportunity type{% endif %}" data-strategy-custom="{{ group.key }}"{% if group.key != 'types' %} data-strategy-search="{{ group.key }}" aria-controls="strat-results-{{ group.key }}"{% endif %}>
+              <button class="btn" type="button" data-strategy-add="{{ group.key }}">{{ 'Add custom' if group.key != 'types' else 'Add' }}</button>
+              {% if group.key == 'roles' %}<button type="button" class="btn strategy-suggest" id="btn-suggest-strategy" disabled><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i> Suggest from my files</button>{% endif %}
+            </div>
+            {% if group.key == 'roles' %}<button class="strategy-browse" type="button" data-strategy-browse="roles" aria-controls="strat-results-roles" aria-expanded="false">Browse all roles <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></button>{% endif %}
+            {% if group.key != 'types' %}<div class="strategy-results" id="strat-results-{{ group.key }}" data-strategy-results="{{ group.key }}" hidden></div>{% endif %}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="sx-summary">
+      <span class="sx-summary-label">Your search</span>
+      <ul class="sx-chips" id="sx-chips" aria-label="Everything you chose so far"><li class="sx-empty">Nothing chosen yet.</li></ul>
+    </div>
+
+    <footer class="sx-foot">
+      <label class="search-profile"><input type="checkbox" id="search-use-profile" disabled> Score new jobs against my profile files <small id="search-ai-hint">Needs an AI provider in .env and your uploaded student files.</small></label>
+      <div class="sx-actions">
+        <button type="submit" class="btn" id="btn-save-strategy">Save strategy</button>
+        <button class="btn btn--primary" id="btn-start-search" type="button"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i> Search today's postings</button>
+      </div>
+    </footer>
+
+    <div class="sx-run">
+      <p id="search-run-status" role="status" aria-live="polite">Searches the 20 listed platforms. Only live individual postings with a verified publication date of today are added. Your notes and decisions stay with each job.</p>
+      <details class="search-sources"><summary>Show platforms included</summary><ul>
+        <li>Indeed · Jobmensa · Monster · StepStone · Arbeitsagentur Jobbörse · Stellenanzeigen · academics · Kimeta · Jobworld · meinestadt.de</li>
+        <li>meinpraktikum.de · Praktikumsstellen · praktika.de · praktikum.info · praktikum.de · connecticum · Jobware · UNICUM · bonding · Absolventa</li>
+      </ul></details>
+    </div>
+  </form>
 </section>
 
-<!-- --------------------------------------------------------------- Tracker -->
-<section aria-labelledby="tracker-h">
-  <h2 id="tracker-h">Your tracker</h2>
-  <p class="lede">
-    Read live from <code>data/tracker.csv</code>. It stays on your machine — it
-    holds employers' contact details, so it is never committed or published.
-  </p>
-
-  <div id="tracker-empty" class="empty">
-    <p>Nothing tracked yet. Run <code>/apply</code> on a posting, or add a row below.</p>
+<!-- ----------------------------------------------------------- Review workspace -->
+<section class="workspace-flow review-flow workspace-panel" id="flow-review" aria-labelledby="tracker-ui-h">
+  <div class="flow-heading">
+    <div class="flow-heading-copy">
+      <span class="flow-step">02 / Review & edit</span>
+      <h2 id="tracker-ui-h">Make your shortlist</h2>
+      <p class="lede">Your <code>job_search_tracker.xlsx</code> workbook opens here. Edit cells, add notes, and decide who applies to each job.</p>
+    </div>
+    <span class="workbook-label"><i class="fa-regular fa-file-excel" aria-hidden="true"></i> Excel workbook</span>
   </div>
 
-  <div class="table-wrap" id="tracker-wrap" hidden>
-    <table class="data" id="tracker-table">
-      <caption class="visually-hidden">Tracked internship applications</caption>
-      <thead>
-        <tr>
-          <th scope="col">Company</th>
-          <th scope="col">Role</th>
-          <th scope="col">Country</th>
-          <th scope="col">Weeks</th>
-          <th scope="col">Status</th>
-          <th scope="col">Sent</th>
-          <th scope="col">Flags</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
+  <div class="tracker-guidance"><i class="fa-regular fa-lightbulb" aria-hidden="true"></i><p>Set <strong>Apply? = Yes</strong> for jobs you want. Under <strong>Who applies</strong>, choose <strong>Me</strong> or <strong>Assistant</strong>. Open a row's details for longer notes and every field.</p></div>
 
-  <details class="card add-row" id="add-row">
-    <summary>Add a row by hand</summary>
-    <form id="row-form" novalidate>
-      <div class="field-row">
-        <p class="field">
-          <label for="r-company">Company <span aria-hidden="true">*</span></label>
-          <input id="r-company" name="company" required autocomplete="organization">
-        </p>
-        <p class="field">
-          <label for="r-role">Role</label>
-          <input id="r-role" name="role">
-        </p>
-      </div>
-      <div class="field-row">
-        <p class="field">
-          <label for="r-country">Country</label>
-          <select id="r-country" name="country">
-            <option value="">—</option>
-            {% for c in gju.countries %}<option value="{{ c[0] }}">{{ c[0] }}</option>{% endfor %}
-          </select>
-        </p>
-        <p class="field">
-          <label for="r-weeks">Weeks</label>
-          <input type="number" id="r-weeks" name="weeks" min="1" max="52" inputmode="numeric">
-        </p>
-        <p class="field">
-          <label for="r-status">Status</label>
-          <select id="r-status" name="status">
-            {% for s in tracker.statuses %}<option value="{{ s.value }}"{% if s.value == 'Researching' %} selected{% endif %}>{{ s.value }}</option>{% endfor %}
-          </select>
-        </p>
-      </div>
-      <p class="field">
-        <label for="r-wants">Skills they ask for</label>
-        <input id="r-wants" name="wants" placeholder="Python, PyTorch, Docker">
-        <span class="help">A comma-separated list scores exactly; prose is estimated.</span>
-      </p>
-      <button class="btn btn--primary" type="submit" id="row-submit"><i class="fa-solid fa-file-csv" style="margin-right: 0.3rem;"></i>Add to tracker</button>
-      <p class="form-status" id="row-status" role="status"></p>
-    </form>
+  <div class="tracker-toolbar">
+    <label class="tracker-filter">Find a job<input id="tracker-filter" type="search" placeholder="Company, role, city, keyword" /></label>
+    <label>Opportunity type<select id="tracker-opportunity-filter"><option value="">Any type</option>{% for type in tracker.opportunityTypes %}<option value="{{ type }}">{{ type }}</option>{% endfor %}<option value="_unspecified">Unspecified</option></select></label>
+    <label>City<select id="tracker-city-filter"><option value="">Any city</option></select></label>
+    <label>Minimum match<select id="tracker-score-filter"><option value="">Any score</option><option value="50">50+</option><option value="60">60+</option><option value="70">70+</option><option value="80">80+</option><option value="90">90+</option><option value="_unknown">Not scored</option></select></label>
+    <label>Status<select id="tracker-status-filter"><option value="">Any status</option></select></label>
+  </div>
+  <details class="tracker-more-filters" id="tracker-more-filters">
+    <summary>More filters <span id="tracker-filter-count"></span></summary>
+    <div class="tracker-toolbar tracker-toolbar--more">
+      <label>Date field<select id="tracker-date-field"><option value="date_posted">Date posted</option><option value="date_found">Date found</option><option value="deadline">Deadline</option><option value="date_applied">Date sent</option><option value="follow_up">Follow-up date</option><option value="last_contact_date">Last contact date</option><option value="start_date">Start date</option><option value="next_action_date">Next action date</option><option value="interview_date">Interview date</option><option value="response_date">Response date</option></select></label>
+      <label>From<input id="tracker-date-from" type="date" /></label>
+      <label>To<input id="tracker-date-to" type="date" /></label>
+      <label>Date available<select id="tracker-date-status-filter"><option value="">Any</option><option value="yes">Known date</option><option value="no">Missing date</option></select></label>
+      <label>Decision<select id="tracker-decision-filter"><option value="">Any decision</option><option>Yes</option><option>No</option><option>Maybe</option></select></label>
+      <label>Who applies<select id="tracker-applicant-filter"><option value="">Anyone</option><option>Me</option><option>Assistant</option></select></label>
+      <label>Work mode<select id="tracker-work-mode-filter"><option value="">Any mode</option><option>On-site</option><option>Hybrid</option><option>Remote</option><option value="_unspecified">Unspecified</option></select></label>
+      <label>Source<select id="tracker-source-filter"><option value="">Any source</option><option>LinkedIn</option><option>Company site</option><option>Referral</option><option>Job fair</option><option>Other</option></select></label>
+      <label>Posting link<select id="tracker-link-filter"><option value="">Any</option><option value="yes">Available</option><option value="no">Missing</option></select></label>
+      <label>Any other column<select id="tracker-field-filter"><option value="">Choose a column</option></select></label>
+      <label>Contains<input id="tracker-value-filter" type="search" placeholder="Value in chosen column" /></label>
+      <button class="btn tracker-clear-filters" id="tracker-clear-filters" type="button">Clear filters</button>
+    </div>
   </details>
+  <div class="tracker-view-bar">
+    <label for="tracker-column-view">Columns to show <select id="tracker-column-view"><option value="review">Shortlist essentials</option><option value="all">All columns</option><option value="contact">Company & contact</option><option value="requirements">Job requirements</option><option value="application">Application details</option></select></label>
+    <span id="tracker-total-count" class="tracker-count">Loading tracker...</span>
+    <button class="btn tracker-expand" id="tracker-expand" type="button" aria-pressed="false" title="Open the shortlist as a full-screen window (Esc closes it)"><i class="fa-solid fa-expand" aria-hidden="true"></i> <span>Open as window</span></button>
+  </div>
+
+  <div class="shadcn-table-wrap" id="tracker-table-wrap" hidden>
+    <div class="shadcn-table-scroll" tabindex="0" role="region" aria-label="Editable workbook. Scroll horizontally to see more columns.">
+      <table class="shadcn-table" id="tracker-table">
+        <caption class="visually-hidden">Job search workbook. Edit individual cells or open row details to edit all fields and notes.</caption>
+        <thead><tr id="tracker-thead-tr"></tr></thead>
+        <tbody id="tracker-tbody"></tbody>
+      </table>
+    </div>
+    <div class="shadcn-table-footer tracker-pagination">
+      <button class="btn" id="tracker-prev" type="button"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Previous</button>
+      <span id="tracker-page">Page 1</span>
+      <button class="btn" id="tracker-next" type="button">Next <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></button>
+    </div>
+  </div>
+
+  <div class="actions tracker-actions">
+    <div class="tracker-action-buttons">
+      <button class="btn btn--primary" id="btn-save-tracker" type="button"><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> Save changes</button>
+      <button class="btn" id="btn-add-row" type="button"><i class="fa-solid fa-plus" aria-hidden="true"></i> Add row</button>
+      <button class="btn" id="btn-reload-tracker" type="button"><i class="fa-solid fa-rotate" aria-hidden="true"></i> Reload workbook</button>
+      <a class="btn" id="btn-download-tracker" href="/__editor/excel" download="job_search_tracker.xlsx"><i class="fa-solid fa-download" aria-hidden="true"></i> Download Excel</a>
+    </div>
+    <p id="tracker-status" role="status" aria-live="polite">Loading your workbook...</p>
+  </div>
 </section>
+
+<!-- ----------------------------------------------------------- Application workspace -->
+<section class="workspace-flow apply-flow workspace-panel" id="flow-apply" aria-labelledby="apply-ui-h">
+  <div class="flow-heading">
+    <div class="flow-heading-copy">
+      <span class="flow-step">03 / Apply</span>
+      <h2 id="apply-ui-h">Take the next step</h2>
+      <p class="lede">Review the jobs assigned to you and to your assistant. You confirm before the assistant starts submitting.</p>
+    </div>
+    <a class="flow-next-link" href="#flow-review">Edit assignments <i class="fa-solid fa-arrow-up" aria-hidden="true"></i></a>
+  </div>
+
+  <div class="apply-overview">
+    <div class="apply-ready">
+      <h3>Assistant's queue</h3>
+      <p id="apply-summary" role="status" aria-live="polite">Loading selected applications...</p>
+      <p class="apply-criteria">Jobs assigned to <strong>Assistant</strong>, with <strong>Apply? = Yes</strong> and <strong>To apply</strong>, appear here.</p>
+      <button class="btn btn--primary" id="btn-apply-selected" type="button"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i> Review & apply</button>
+      <p id="apply-status" role="status" aria-live="polite">Your first application is previewed before submission.</p>
+    </div>
+    <aside class="apply-connection" aria-labelledby="apply-contact-h">
+      <h3 id="apply-contact-h">Your contact & application method</h3>
+      <p id="apply-contact">Loading the contact details saved in your profile...</p>
+      <p id="apply-tools" role="status">Checking your application connection...</p>
+      <p>Web forms use your saved contact details and application documents. Email applications need a connected email account and sending tool; until then, they are marked <strong>Needs input</strong>.</p>
+      <a href="{{ '/editor/' | url }}" class="flow-next-link">Update profile details <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+    </aside>
+  </div>
+  <div id="apply-queue" class="apply-queue" aria-label="Selected applications"></div>
+</section>
+
+<!-- ------------------------------------------------------------ Run a task or command -->
+<section class="workspace-utility workspace-panel" id="flow-tools" aria-labelledby="tasks-h">
+<details class="workspace-tools">
+  <summary><span>Tools & commands</span><small>Profile, workbook, and assistant utilities</small></summary>
+  <div class="utility-content">
+  <h2 id="tasks-h">Workspace tools</h2>
+  <p class="lede">
+    These are the AI commands to run in your assistant, and the deterministic steps that read <code>data/</code> and write generated files. You can copy the commands or try running them directly.
+  </p>
+
+  <div class="grid task-grid task-grid">
+    <!-- Tasks -->
+    <article class="card task" data-task="profile">
+      <span class="eyebrow">npm run profile</span>
+      <h3>Rebuild candidate profile</h3>
+      <p>Regenerates <code>01-candidate-profile.md</code> from your profile JSON.</p>
+      <div class="task-actions">
+        <button class="btn btn--primary" type="button" data-run="profile"><i class="fa-solid fa-play btn-icon-spacing"></i>Run</button>
+        <button class="btn" type="button" data-copy="npm run profile"><i class="fa-regular fa-copy btn-icon-spacing"></i>Copy</button>
+      </div>
+    </article>
+
+    <article class="card task" data-task="tracker">
+      <span class="eyebrow">npm run tracker</span>
+      <h3>Rebuild workbook</h3>
+      <p>Renders <code>job_search_tracker.xlsx</code> from your tracker rows.</p>
+      <div class="task-actions">
+        <button class="btn btn--primary" type="button" data-run="tracker"><i class="fa-solid fa-play btn-icon-spacing"></i>Run</button>
+        <button class="btn" type="button" data-copy="npm run tracker"><i class="fa-regular fa-copy btn-icon-spacing"></i>Copy</button>
+      </div>
+    </article>
+
+    <article class="card task" data-task="skills">
+      <span class="eyebrow">npm run skills:harvest</span>
+      <h3>Harvest advert skills</h3>
+      <p>Pulls the requirements out of every tracked posting into your skill pool.</p>
+      <div class="task-actions">
+        <button class="btn btn--primary" type="button" data-run="skills"><i class="fa-solid fa-play btn-icon-spacing"></i>Run</button>
+        <button class="btn" type="button" data-copy="npm run skills:harvest"><i class="fa-regular fa-copy btn-icon-spacing"></i>Copy</button>
+      </div>
+    </article>
+
+    <article class="card task" data-task="build">
+      <span class="eyebrow">npm run build</span>
+      <h3>Rebuild site</h3>
+      <p>Regenerates <code>_site/</code> so the published profile matches <code>data/</code>.</p>
+      <div class="task-actions">
+        <button class="btn btn--primary" type="button" data-run="build"><i class="fa-solid fa-play btn-icon-spacing"></i>Run</button>
+        <button class="btn" type="button" data-copy="npm run build"><i class="fa-regular fa-copy btn-icon-spacing"></i>Copy</button>
+      </div>
+    </article>
+
+
+    <!-- Tasks -->
+    <article class="card task" data-task="build:static">
+      <span class="eyebrow">npm run build:static</span>
+      <h3>Build static site</h3>
+      <p>Builds the static site using the custom script.</p>
+      <div class="task-actions">
+        <button class="btn btn--primary" type="button" data-run="build:static"><i class="fa-solid fa-play btn-icon-spacing"></i>Run</button>
+        <button class="btn" type="button" data-copy="npm run build:static"><i class="fa-regular fa-copy btn-icon-spacing"></i>Copy</button>
+      </div>
+    </article>
+
+    <article class="card task" data-task="serve">
+      <span class="eyebrow">npm run serve</span>
+      <h3>Serve the site locally</h3>
+      <p>Starts the Eleventy development server for live preview.</p>
+      <div class="task-actions">
+        <button class="btn btn--primary" type="button" data-run="serve"><i class="fa-solid fa-play btn-icon-spacing"></i>Run</button>
+        <button class="btn" type="button" data-copy="npm run serve"><i class="fa-regular fa-copy btn-icon-spacing"></i>Copy</button>
+      </div>
+    </article>
+
+    <article class="card task" data-task="editor">
+      <span class="eyebrow">npm run editor</span>
+      <h3>Start editor server</h3>
+      <p>Starts the local workspace editor server.</p>
+      <div class="task-actions">
+        <button class="btn btn--primary" type="button" data-run="editor"><i class="fa-solid fa-play btn-icon-spacing"></i>Run</button>
+        <button class="btn" type="button" data-copy="npm run editor"><i class="fa-regular fa-copy btn-icon-spacing"></i>Copy</button>
+      </div>
+    </article>
+
+    <article class="card task" data-task="clean">
+      <span class="eyebrow">npm run clean</span>
+      <h3>Clean output</h3>
+      <p>Removes the <code>_site/</code> folder.</p>
+      <div class="task-actions">
+        <button class="btn btn--primary" type="button" data-run="clean"><i class="fa-solid fa-play btn-icon-spacing"></i>Run</button>
+        <button class="btn" type="button" data-copy="npm run clean"><i class="fa-regular fa-copy btn-icon-spacing"></i>Copy</button>
+      </div>
+    </article>
+
+    <article class="card task" data-task="add-cert">
+      <span class="eyebrow">npm run add-cert</span>
+      <h3>Add certificate</h3>
+      <p>Runs the script to process a new certificate.</p>
+      <div class="task-actions">
+        <button class="btn btn--primary" type="button" data-run="add-cert"><i class="fa-solid fa-play btn-icon-spacing"></i>Run</button>
+        <button class="btn" type="button" data-copy="npm run add-cert"><i class="fa-regular fa-copy btn-icon-spacing"></i>Copy</button>
+      </div>
+    </article>
+
+    <article class="card task" data-task="import-data">
+      <span class="eyebrow">npm run import-data</span>
+      <h3>Import data</h3>
+      <p>Imports legacy or external profile data.</p>
+      <div class="task-actions">
+        <button class="btn btn--primary" type="button" data-run="import-data"><i class="fa-solid fa-play btn-icon-spacing"></i>Run</button>
+        <button class="btn" type="button" data-copy="npm run import-data"><i class="fa-regular fa-copy btn-icon-spacing"></i>Copy</button>
+      </div>
+    </article>
+
+    <article class="card task" data-task="make-samples">
+      <span class="eyebrow">npm run make-samples</span>
+      <h3>Make sample images</h3>
+      <p>Generates sample or thumbnail images.</p>
+      <div class="task-actions">
+        <button class="btn btn--primary" type="button" data-run="make-samples"><i class="fa-solid fa-play btn-icon-spacing"></i>Run</button>
+        <button class="btn" type="button" data-copy="npm run make-samples"><i class="fa-regular fa-copy btn-icon-spacing"></i>Copy</button>
+      </div>
+    </article>
+
+    <article class="card task" data-task="skills:import">
+      <span class="eyebrow">npm run skills:import</span>
+      <h3>Import ESCO skills</h3>
+      <p>Imports a standardized skills ontology into your database.</p>
+      <div class="task-actions">
+        <button class="btn btn--primary" type="button" data-run="skills:import"><i class="fa-solid fa-play btn-icon-spacing"></i>Run</button>
+        <button class="btn" type="button" data-copy="npm run skills:import"><i class="fa-regular fa-copy btn-icon-spacing"></i>Copy</button>
+      </div>
+    </article>
+
+    <article class="card task" data-task="profile:check">
+      <span class="eyebrow">npm run profile:check</span>
+      <h3>Check profile</h3>
+      <p>Validates the structure and content of your profile JSON.</p>
+      <div class="task-actions">
+        <button class="btn btn--primary" type="button" data-run="profile:check"><i class="fa-solid fa-play btn-icon-spacing"></i>Run</button>
+        <button class="btn" type="button" data-copy="npm run profile:check"><i class="fa-regular fa-copy btn-icon-spacing"></i>Copy</button>
+      </div>
+    </article>
+
+    <!-- AI Commands -->
+    <article class="card task" data-task="/scrape">
+      <span class="eyebrow">AI Command</span>
+      <h3>/scrape</h3>
+      <p>Searches all configured job portals and gathers matching postings.</p>
+      <div class="task-actions">
+        <button class="btn btn--primary" type="button" data-run="/scrape"><i class="fa-solid fa-play btn-icon-spacing"></i>Run</button>
+        <button class="btn" type="button" data-copy="/scrape"><i class="fa-regular fa-copy btn-icon-spacing"></i>Copy</button>
+      </div>
+    </article>
+
+    <article class="card task" data-task="/apply">
+      <span class="eyebrow">AI Command</span>
+      <h3>/apply &lt;url&gt;</h3>
+      <p>Checks eligibility, scores fit, drafts Anschreiben, and records row.</p>
+      <div class="task-actions">
+        <button class="btn btn--primary" type="button" data-run="/apply "><i class="fa-solid fa-play btn-icon-spacing"></i>Run</button>
+        <button class="btn" type="button" data-copy="/apply "><i class="fa-regular fa-copy btn-icon-spacing"></i>Copy</button>
+      </div>
+    </article>
+
+    <article class="card task" data-task="/rank">
+      <span class="eyebrow">AI Command</span>
+      <h3>/rank</h3>
+      <p>Finds what deserves attention today - overdue follow-ups, best unsent.</p>
+      <div class="task-actions">
+        <button class="btn btn--primary" type="button" data-run="/rank"><i class="fa-solid fa-play btn-icon-spacing"></i>Run</button>
+        <button class="btn" type="button" data-copy="/rank"><i class="fa-regular fa-copy btn-icon-spacing"></i>Copy</button>
+      </div>
+    </article>
+
+    <article class="card task" data-task="/outcome">
+      <span class="eyebrow">AI Command</span>
+      <h3>/outcome</h3>
+      <p>Records the result and draws the lesson from it.</p>
+      <div class="task-actions">
+        <button class="btn btn--primary" type="button" data-run="/outcome "><i class="fa-solid fa-play btn-icon-spacing"></i>Run</button>
+        <button class="btn" type="button" data-copy="/outcome "><i class="fa-regular fa-copy btn-icon-spacing"></i>Copy</button>
+      </div>
+    </article>
+
+    <article class="card task" data-task="/interview">
+      <span class="eyebrow">AI Command</span>
+      <h3>/interview</h3>
+      <p>Builds a prep pack from the archived posting and what you submitted.</p>
+      <div class="task-actions">
+        <button class="btn btn--primary" type="button" data-run="/interview "><i class="fa-solid fa-play btn-icon-spacing"></i>Run</button>
+        <button class="btn" type="button" data-copy="/interview "><i class="fa-regular fa-copy btn-icon-spacing"></i>Copy</button>
+      </div>
+    </article>
+
+    <article class="card task" data-task="/upskill">
+      <span class="eyebrow">AI Command</span>
+      <h3>/upskill</h3>
+      <p>Analyzes the gap between what adverts ask for and your profile.</p>
+      <div class="task-actions">
+        <button class="btn btn--primary" type="button" data-run="/upskill"><i class="fa-solid fa-play btn-icon-spacing"></i>Run</button>
+        <button class="btn" type="button" data-copy="/upskill"><i class="fa-regular fa-copy btn-icon-spacing"></i>Copy</button>
+      </div>
+    </article>
+
+    <article class="card task" data-task="/setup">
+      <span class="eyebrow">AI Command</span>
+      <h3>/setup</h3>
+      <p>Initializes environment, compiles templates, validates profile.</p>
+      <div class="task-actions">
+        <button class="btn btn--primary" type="button" data-run="/setup"><i class="fa-solid fa-play btn-icon-spacing"></i>Run</button>
+        <button class="btn" type="button" data-copy="/setup"><i class="fa-regular fa-copy btn-icon-spacing"></i>Copy</button>
+      </div>
+    </article>
+
+    <article class="card task" data-task="/add-portal">
+      <span class="eyebrow">AI Command</span>
+      <h3>/add-portal</h3>
+      <p>Creates a new scraper configuration to add a new job board.</p>
+      <div class="task-actions">
+        <button class="btn btn--primary" type="button" data-run="/add-portal "><i class="fa-solid fa-play btn-icon-spacing"></i>Run</button>
+        <button class="btn" type="button" data-copy="/add-portal "><i class="fa-regular fa-copy btn-icon-spacing"></i>Copy</button>
+      </div>
+    </article>
+
+    <article class="card task" data-task="/expand">
+      <span class="eyebrow">AI Command</span>
+      <h3>/expand</h3>
+      <p>Fills in details or expands on bullet points in Cover Letter or CV.</p>
+      <div class="task-actions">
+        <button class="btn btn--primary" type="button" data-run="/expand "><i class="fa-solid fa-play btn-icon-spacing"></i>Run</button>
+        <button class="btn" type="button" data-copy="/expand "><i class="fa-regular fa-copy btn-icon-spacing"></i>Copy</button>
+      </div>
+    </article>
+
+    <article class="card task" data-task="/html-report">
+      <span class="eyebrow">AI Command</span>
+      <h3>/html-report</h3>
+      <p>Generates an interactive HTML dashboard of your application progress.</p>
+      <div class="task-actions">
+        <button class="btn btn--primary" type="button" data-run="/html-report"><i class="fa-solid fa-play btn-icon-spacing"></i>Run</button>
+        <button class="btn" type="button" data-copy="/html-report"><i class="fa-regular fa-copy btn-icon-spacing"></i>Copy</button>
+      </div>
+    </article>
+
+    <article class="card task" data-task="/add-template">
+      <span class="eyebrow">AI Command</span>
+      <h3>/add-template</h3>
+      <p>Adds a new template for CVs or cover letters.</p>
+      <div class="task-actions">
+        <button class="btn btn--primary" type="button" data-run="/add-template "><i class="fa-solid fa-play btn-icon-spacing"></i>Run</button>
+        <button class="btn" type="button" data-copy="/add-template "><i class="fa-regular fa-copy btn-icon-spacing"></i>Copy</button>
+      </div>
+    </article>
+
+    <article class="card task" data-task="/gmail-sync">
+      <span class="eyebrow">AI Command</span>
+      <h3>/gmail-sync</h3>
+      <p>Synchronizes data with your Gmail.</p>
+      <div class="task-actions">
+        <button class="btn btn--primary" type="button" data-run="/gmail-sync"><i class="fa-solid fa-play btn-icon-spacing"></i>Run</button>
+        <button class="btn" type="button" data-copy="/gmail-sync"><i class="fa-regular fa-copy btn-icon-spacing"></i>Copy</button>
+      </div>
+    </article>
+
+    <article class="card task" data-task="/notion-sync">
+      <span class="eyebrow">AI Command</span>
+      <h3>/notion-sync</h3>
+      <p>Synchronizes data with your Notion workspace.</p>
+      <div class="task-actions">
+        <button class="btn btn--primary" type="button" data-run="/notion-sync"><i class="fa-solid fa-play btn-icon-spacing"></i>Run</button>
+        <button class="btn" type="button" data-copy="/notion-sync"><i class="fa-regular fa-copy btn-icon-spacing"></i>Copy</button>
+      </div>
+    </article>
+
+    <article class="card task" data-task="/reset">
+      <span class="eyebrow">AI Command</span>
+      <h3>/reset</h3>
+      <p>Resets the assistant's state or local configuration.</p>
+      <div class="task-actions">
+        <button class="btn btn--primary" type="button" data-run="/reset"><i class="fa-solid fa-play btn-icon-spacing"></i>Run</button>
+        <button class="btn" type="button" data-copy="/reset"><i class="fa-regular fa-copy btn-icon-spacing"></i>Copy</button>
+      </div>
+    </article>
+  </div>
+
+  <div class="log-wrap" id="log-wrap" hidden>
+    <div class="log-head">
+      <span class="eyebrow" id="log-title">Output</span>
+      <button class="btn" type="button" id="log-close"><i class="fa-solid fa-xmark btn-icon-spacing"></i>Close</button>
+    </div>
+    <pre class="log" id="log" tabindex="0" aria-live="polite" aria-atomic="false"></pre>
+  </div>
+  </div>
+</details>
+</section>
+
+<section class="workspace-utility workspace-panel" id="flow-insights" aria-labelledby="analytics-h">
+<details class="workspace-tools" id="insights" open>
+  <summary><span>Application insights</span><small>What your tracker says about where to go next</small></summary>
+  <div class="utility-content">
+  <h2 id="analytics-h">Your insights</h2>
+  <p class="lede">Drawn from your own tracker, your profile skills and the GJU rules. Nothing leaves your computer.</p>
+  <p id="insights-empty" class="notice-empty">Your first application unlocks these charts. Add one in the workbook above, and this page starts showing you where to focus.</p>
+  <div class="grid-2 chart-grid" id="insights-grid" hidden>
+    <div class="card chart-card chart-card--wide" id="card-gates" hidden>
+      <h3>Each posting against the GJU minimums</h3>
+      <p class="muted">Percent above (green) or below (red) the line: 20 weeks, and the monthly pay needed for a visa extension.</p>
+      <div id="chart-gates" class="chart-container"></div>
+    </div>
+    <div class="card chart-card" id="card-quadrant" hidden>
+      <h3>Where to spend your effort</h3>
+      <p class="muted">Match score across, pay up. Top right is the place to apply first.</p>
+      <div id="chart-quadrant" class="chart-container"></div>
+    </div>
+    <div class="card chart-card" id="card-skills" hidden>
+      <h3>Skills postings ask for</h3>
+      <p class="muted"><span class="key key--have"></span> You have it &nbsp; <span class="key key--gap"></span> A gap to close with <code>/upskill</code></p>
+      <div id="chart-skills" class="chart-container"></div>
+    </div>
+    <div class="card chart-card" id="card-dates" hidden>
+      <h3>Coming up</h3>
+      <p class="muted"><span class="key" style="background:#F87171"></span> Deadline &nbsp; <span class="key" style="background:#38BDF8"></span> Follow-up &nbsp; <span class="key" style="background:#34D399"></span> Interview. The next two weeks; overdue ones sit at day 0.</p>
+      <div id="chart-dates" class="chart-container"></div>
+    </div>
+    <div class="card chart-card" id="card-sources" hidden>
+      <h3>Which sources get replies</h3>
+      <p class="muted">Where each source's postings ended up. <span id="legend-sources"></span></p>
+      <div id="chart-sources" class="chart-container"></div>
+    </div>
+    <div class="card chart-card" id="card-tally" hidden>
+      <h3>Effort, counted</h3>
+      <p class="muted">One mark for each thing you did. Every one counts.</p>
+      <div id="chart-tally" class="chart-container"></div>
+    </div>
+    <div class="card chart-card chart-card--wide" id="card-calendar" hidden>
+      <h3>The days you sent applications</h3>
+      <div id="chart-calendar" class="chart-container chart-container--short"></div>
+    </div>
+  </div>
+  </div>
+</details>
+</section>
+</div>
 
 {# The checker and the table are driven by the same rules the workbook uses.
    Passing them as JSON keeps the numbers in one place. #}
+<script src="{{ '/assets/thinking-orbs.js' | url }}"></script>
+<script src="{{ '/assets/ai-status.js' | url }}"></script>
 <script src="/assets/opencharts/lib/chart.umd.min.js"></script>
 <script src="/assets/opencharts/lib/d3.min.js"></script>
-<script type="module">
-  import { render } from '/assets/opencharts/js/opencharts.js';
-  window.renderChart = render;
-</script>
+<script type="application/json" id="profile-skills">{{ profile.skills | dump | safe }}</script>
 
 <script type="application/json" id="gju-rules">{{ gju | dump | safe }}</script>
 <script type="application/json" id="tracker-schema">{{ tracker | dump | safe }}</script>

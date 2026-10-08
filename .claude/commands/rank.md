@@ -1,6 +1,6 @@
 # /rank — what to do next, in order
 
-Reads `data/tracker.csv` and tells you which rows deserve attention today.
+Reads `data/applications.csv` and tells you which rows deserve attention today.
 Adapted from `/rank` in ai-job-search (MIT).
 
 The workbook already sorts by Fit %. This does the thing a spreadsheet cannot: weigh
@@ -8,13 +8,13 @@ score against **what is about to go stale**.
 
 ## Read
 
-`data/tracker.csv` — the one tracker, shared with the job-search framework. Every
+`data/applications.csv` — the one tracker, shared with the job-search framework. Every
 row with a Company. For each:
 Fit %, Status, Sent, Follow up due, Answer, Interview, Weeks, Country, Paid?, and
 the Check column.
 
 Fit % and Check are computed by the workbook, so read them from
-`internship-tracker.xlsx` (run `npm run tracker` first if the CSV is newer). Status
+`job_search_tracker.xlsx` (run `npm run tracker` first if the CSV is newer). Status
 values come from `data/tracker-schema.json`, the only status vocabulary in the repo.
 
 ## Order the output by urgency, not by score

@@ -9,9 +9,10 @@
  * what `/apply`, `/rank`, `/interview` and `/upskill` actually read. Edit the
  * JSON (or `/editor/`), re-run this, and both projects agree.
  *
- * The parts the site JSON does not model — phone, employment status, working
+ * The parts the site JSON does not model — employment status, working
  * constraints, publications, awards, references — live in
- * `data/profile-extras.json`. Projects and languages are not among them:
+ * `data/profile-extras.json`. The phone number lives in the gitignored
+ * `data/profile-private.json`, because this output is committed. Projects and languages are not among them:
  * projects are a first-class entity in `data/projects.json`, and languages live
  * in `data/profile.json`. Both are edited in /editor/ and published like every
  * other fact.
@@ -66,7 +67,8 @@ function identity(profile, extras) {
     "## Identity",
     `- **Name:** ${orNotSet(profile.name === "Unnamed Profile" ? "" : profile.name, "data/profile.json")}`,
     `- **Location:** ${orNotSet(profile.location, "data/profile.json")}`,
-    `- **Phone:** ${orNotSet(extras.phone, "data/profile-extras.json")}`,
+    // This file is committed, so the phone number stays in the gitignored data/profile-private.json.
+    "- **Phone:** _private — read it from data/profile-private.json (gitignored, never committed or published)_",
     `- **Email:** ${orNotSet(profile.email, "data/profile.json")}`,
     `- **LinkedIn:** ${link("linkedin") || "_not set — add it to data/profile.json links_"}`,
     `- **GitHub:** ${link("github") || "_not set — add it to data/profile.json links_"}`,

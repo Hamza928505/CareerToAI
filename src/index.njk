@@ -5,38 +5,86 @@ schemaType: person
 ogType: profile
 ---
 
+{% set bioBlocks = profile.bio | textBlocks %}
+{% set headlineParts = profile.headline | headlineParts %}
 <article class="profile">
-  <header>
-    <h1>{{ profile.name }}</h1>
-    {% if profile.headline %}<p class="headline">{{ profile.headline }}</p>{% endif %}
-    {% if profile.location or profile.pronouns %}
-    <p class="muted">
-      {{ profile.location }}{% if profile.location and profile.pronouns %} -+ {% endif %}{{ profile.pronouns }}
-    </p>
-    {% endif %}
+  <header class="profile-hero">
+    <div class="profile-hero-main">
+      {% if headlineParts[0] %}<p class="profile-context">{{ headlineParts[0] }}</p>{% endif %}
+      <h1>{{ profile.name }}</h1>
+      {% if headlineParts[1] %}<p class="profile-role">{{ headlineParts[1] }}</p>{% endif %}
+      {% if bioBlocks[0] %}<p class="profile-intro">{{ bioBlocks[0] }}</p>{% endif %}
+      <div class="profile-actions">
+        <a class="btn btn-primary" href="#contact-heading">Contact me</a>
+        {% if projects.length %}<a class="text-action" href="#projects-heading">View work <span aria-hidden="true">↗</span></a>{% endif %}
+      </div>
+    </div>
+    <aside class="profile-proof" aria-label="At a glance">
+      <p class="profile-proof-title">At a glance</p>
+      <p class="profile-proof-value">{{ profile.experienceCount }}<span> production roles</span></p>
+      {% if experience.length %}<p class="profile-proof-caption">{{ experience[0].organization }} · {{ experience[0].title }}</p>{% endif %}
+      <dl>
+        {% if profile.education.length %}<div><dt>Education</dt><dd>{{ profile.education[0].school }}</dd></div>{% endif %}
+        {% if profile.location %}<div><dt>Based in</dt><dd>{{ profile.location }}</dd></div>{% endif %}
+      </dl>
+    </aside>
   </header>
 
-  {% if profile.bio %}
-  <section aria-labelledby="about-heading">
-    <h2 id="about-heading"><i class="fa-solid fa-address-card" style="margin-right: 0.4rem;"></i>About</h2>
-    <p>{{ profile.bio }}</p>
+  {% if projects.length %}
+  <section class="profile-section profile-projects" aria-labelledby="projects-heading">
+    <div class="section-heading"><h2 id="projects-heading">Selected work</h2><p>{{ projects.length }} projects</p></div>
+    <ul class="project-list">
+      {%- for project in projects %}
+      <li>
+        <article class="project" id="project-{{ project.id }}">
+          <div class="project-index" aria-hidden="true">{{ loop.index }}</div>
+          <div class="project-content">
+            <h3>{{ project.name }}</h3>
+            {% if project.role %}<p class="project-role">{{ project.role }}</p>{% endif %}
+            {% if project.skills.length %}<p class="project-stack">{% for skill in project.skills %}{% if loop.index <= 4 %}{{ skill }}{% if not loop.last and loop.index < 4 %} · {% endif %}{% endif %}{% endfor %}</p>{% endif %}
+          </div>
+          <div class="project-links">
+            {% if project.url %}<a href="{{ project.url }}" rel="external">Live project <span aria-hidden="true">↗</span></a>{% endif %}
+            {% if project.sourceUrl %}<a href="{{ project.sourceUrl }}" rel="external">Source <span aria-hidden="true">↗</span></a>{% endif %}
+          </div>
+        </article>
+      </li>
+      {%- endfor %}
+    </ul>
+  </section>
+  {% endif %}
+
+  {% if bioBlocks.length > 1 %}
+  <section class="profile-section profile-about" aria-labelledby="about-heading">
+    <h2 id="about-heading">About</h2>
+    <div class="profile-prose">
+      {%- for block in bioBlocks %}{% if not loop.first and loop.index <= 4 %}<p>{{ block }}</p>{% endif %}{% endfor %}
+      {%- if bioBlocks.length > 4 %}
+      <details class="entry-more">
+        <summary>Read the rest</summary>
+        {%- for block in bioBlocks %}{% if loop.index > 4 %}<p>{{ block }}</p>{% endif %}{% endfor %}
+      </details>
+      {%- endif %}
+    </div>
   </section>
   {% endif %}
 
   {% if experience.length %}
   <section aria-labelledby="experience-heading">
-    <h2 id="experience-heading"><i class="fa-solid fa-briefcase" style="margin-right: 0.4rem;"></i>Experience</h2>
+    <h2 id="experience-heading"><i class="fa-solid fa-briefcase heading-icon"></i>Experience</h2>
     <ul class="entry-list">
       {%- for role in experience %}
       <li>
         <article class="entry">
           <h3>{{ role.title }}</h3>
           <p class="entry-meta">
-            {{ role.organization }}{% if role.employmentType %} -+ {{ role.employmentType }}{% endif %}
+            {{ role.organization }}{% if role.employmentType %} · {{ role.employmentType }}{% endif %}
           </p>
           <p class="entry-meta">
-            {% if role.started %}<time datetime="{{ role.started.iso }}">{{ role.dateRange }}</time>{% endif %}{% if role.location %} -+ {{ role.location }}{% endif %}
+            {% if role.started %}<time datetime="{{ role.started.iso }}">{{ role.dateRange }}</time>{% endif %}{% if role.location %} · {{ role.location }}{% endif %}
           </p>
+          <details class="entry-more"{% if loop.first %} open{% endif %}>
+          <summary>What I did and the skills</summary>
           {% if role.description %}<p>{{ role.description }}</p>{% endif %}
           {% if role.skills.length %}
           <ul class="skills">
@@ -51,6 +99,7 @@ ogType: profile
                  loading="lazy" decoding="async">
           </figure>
           {% endif %}
+          </details>
         </article>
       </li>
       {%- endfor %}
@@ -70,7 +119,7 @@ ogType: profile
           <p class="entry-meta">{{ entry.degree }}{% if entry.degree and entry.fieldOfStudy %}, {% endif %}{{ entry.fieldOfStudy }}</p>
           {% endif %}
           <p class="entry-meta">
-            {% if entry.industry %}{{ entry.industry }}{% endif %}{% if entry.industry and entry.dateRange %} -+ {% endif %}{% if entry.started %}<time datetime="{{ entry.started.iso }}">{{ entry.dateRange }}</time>{% endif %}
+            {% if entry.industry %}{{ entry.industry }}{% endif %}{% if entry.industry and entry.dateRange %} · {% endif %}{% if entry.started %}<time datetime="{{ entry.started.iso }}">{{ entry.dateRange }}</time>{% endif %}
           </p>
           {% if entry.description %}<p>{{ entry.description }}</p>{% endif %}
         </article>
@@ -85,16 +134,24 @@ ogType: profile
     {% if certificates.length %}
     <ul class="entry-list">
       {%- for cert in certificates %}
+      {%- if loop.index == 7 %}
+    </ul>
+    <details class="entry-more">
+      <summary>Show the other {{ certificates.length - 6 }} certifications</summary>
+    <ul class="entry-list">
+      {%- endif %}
       <li>
         <article class="entry" id="credential-{{ cert.id }}">
           <h3>{{ cert.title }}</h3>
           <p class="entry-meta">{{ cert.issuer }}</p>
           <p class="entry-meta">
-            {% if cert.issued %}Issued <time datetime="{{ cert.issued.iso }}">{{ cert.dateIssued | humanDate }}</time>{% endif %}{% if cert.expires %} -+ {{ "Expired" if cert.isExpired else "Expires" }} <time datetime="{{ cert.expires.iso }}">{{ cert.dateExpires | humanDate }}</time>{% else %}{% if cert.issued %} -+ No expiry{% endif %}{% endif %}{% if cert.credentialId %} -+ ID {{ cert.credentialId }}{% endif %}
+            {% if cert.issued %}Issued <time datetime="{{ cert.issued.iso }}">{{ cert.dateIssued | humanDate }}</time>{% endif %}{% if cert.expires %} · {{ "Expired" if cert.isExpired else "Expires" }} <time datetime="{{ cert.expires.iso }}">{{ cert.dateExpires | humanDate }}</time>{% else %}{% if cert.issued %} · No expiry{% endif %}{% endif %}{% if cert.credentialId %} · ID {{ cert.credentialId }}{% endif %}
           </p>
           {% if cert.credentialUrl %}
           <p class="entry-meta"><a href="{{ cert.credentialUrl }}" rel="external nofollow">Verify this credential</a></p>
           {% endif %}
+          <details class="entry-more">
+          <summary>Description, skills and certificate</summary>
           {% if cert.description %}<p>{{ cert.description }}</p>{% endif %}
           {% if cert.skills.length %}
           <ul class="skills">
@@ -114,24 +171,28 @@ ogType: profile
           <p><a href="{{ cert.certificateFile | url }}">Open the certificate document</a></p>
           {% endif %}
           {% if cert.extractedText %}
-          {# <details> keeps the transcription in the markup G�� crawlers and AI
+          {# <details> keeps the transcription in the markup — crawlers and AI
              readers get it whether or not it is expanded on screen. #}
           <details class="extracted-toggle">
             <summary>Text read from the certificate</summary>
             <blockquote class="extracted"><p>{{ cert.extractedText }}</p></blockquote>
           </details>
           {% endif %}
+          </details>
         </article>
       </li>
       {%- endfor %}
     </ul>
+    {%- if certificates.length > 6 %}
+    </details>
+    {%- endif %}
     {% else %}
     <p class="muted">No certifications published yet.</p>
     {% endif %}
   </section>
 
   <section aria-labelledby="skills-heading">
-    <h2 id="skills-heading"><i class="fa-solid fa-wand-magic-sparkles" style="margin-right: 0.4rem;"></i>Skills</h2>
+    <h2 id="skills-heading"><i class="fa-solid fa-wand-magic-sparkles heading-icon"></i>Skills</h2>
     <p class="muted">
       {{ profile.skills.length }} skill{{ "" if profile.skills.length == 1 else "s" }}, aggregated from
       {{ profile.experienceCount }} role{{ "" if profile.experienceCount == 1 else "s" }},
@@ -139,14 +200,50 @@ ogType: profile
       and the profile's own list. A number in brackets is how many entries evidence that skill.
     </p>
     <ul class="skills">
-      {%- for skill in profile.skills %}
+      {%- for skill in profile.skills %}{% if loop.index <= 30 %}
       <li>{{ skill.name }}{% if skill.count %} <span class="count">({{ skill.count }})</span>{% endif %}</li>
-      {%- endfor %}
+      {%- endif %}{%- endfor %}
     </ul>
+    {% if profile.skills.length > 30 %}
+    <details class="entry-more">
+      <summary>Show all {{ profile.skills.length }} skills</summary>
+      <ul class="skills">
+        {%- for skill in profile.skills %}{% if loop.index > 30 %}
+        <li>{{ skill.name }}{% if skill.count %} <span class="count">({{ skill.count }})</span>{% endif %}</li>
+        {%- endif %}{%- endfor %}
+      </ul>
+    </details>
+    {% endif %}
+    {% if profile.skills.length %}
+    <figure>
+      <h3>Most evidenced skills</h3>
+      <div id="skills-radar" aria-describedby="skills-radar-caption"></div>
+      <figcaption id="skills-radar-caption">Each value counts experience, project, and certificate entries that document the skill. It shows evidence coverage, not a proficiency rating.</figcaption>
+    </figure>
+    <script type="application/json" id="profile-skills-data">{{ profile.skills | jsonld | safe }}</script>
+    <script type="module">
+      import { render, newSpec, getChart } from "{{ '/assets/opencharts/js/opencharts.js' | url }}";
+      const skills = JSON.parse(document.getElementById("profile-skills-data").textContent)
+        .filter(({ count }) => count > 0)
+        .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
+        .slice(0, 8);
+      const base = newSpec(getChart("bar-horizontal")).opts;
+      render(document.getElementById("skills-radar"), {
+        chart: "bar-horizontal",
+        spec: {
+          labels: skills.map(({ name }) => name),
+          values: skills.map(({ count }) => count),
+          colors: ["#F59E0B"],
+          opts: { ...base, prefix: "", suffix: "", separator: false, label: "Entries as evidence" },
+        },
+        height: Math.max(220, skills.length * 38 + 50),
+      });
+    </script>
+    {% endif %}
   </section>
 
   <section aria-labelledby="contact-heading">
-    <h2 id="contact-heading"><i class="fa-solid fa-address-book" style="margin-right: 0.4rem;"></i>Contact and links</h2>
+    <h2 id="contact-heading"><i class="fa-solid fa-address-book heading-icon"></i>Contact and links</h2>
     <dl class="facts">
       {% if profile.jobTitle %}<dt>Current role</dt><dd>{{ profile.jobTitle }}</dd>{% endif %}
       {% if profile.worksFor %}<dt>Organization</dt><dd>{{ profile.worksFor }}</dd>{% endif %}
@@ -165,7 +262,7 @@ ogType: profile
   </section>
 
   <section aria-labelledby="machine-heading">
-    <h2 id="machine-heading"><i class="fa-solid fa-robot" style="margin-right: 0.4rem;"></i>For AI assistants and crawlers</h2>
+    <h2 id="machine-heading"><i class="fa-solid fa-robot heading-icon"></i>For AI assistants and crawlers</h2>
     <p>
       This whole profile is one page of static HTML, rendered at build time. No JavaScript
       is required to read any of it, and no crawler is blocked. If you are an automated

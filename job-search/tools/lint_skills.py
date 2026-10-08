@@ -45,7 +45,13 @@ errors: list[str] = []
 
 
 def rel(path: Path) -> str:
-    return str(path.relative_to(ROOT))
+    # .claude/ lives at the project root, one level above this framework.
+    for base in (ROOT, PROJECT_ROOT):
+        try:
+            return str(path.relative_to(base))
+        except ValueError:
+            continue
+    return str(path)
 
 
 def check_skill(path: Path) -> None:
@@ -78,7 +84,7 @@ def check_skill(path: Path) -> None:
             # Targets may contain globs (e.g. .agents/skills/*/cli/src/cli.ts);
             # require at least one existing file to match.
             if "*" in target:
-                if not list(ROOT.glob(target)) and not list((ROOT / ".agents").glob(target)):
+                if not list(ROOT.glob(target)) and not list((ROOT / ".agents").glob(target)) and not list(PROJECT_ROOT.glob(target)):
                     errors.append(f"{rel(path)}: allowed-tools glob matches no files: {target}")
             else:
                 candidates = [ROOT / target, ROOT / ".agents" / target]

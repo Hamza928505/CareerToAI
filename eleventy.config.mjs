@@ -8,7 +8,10 @@ const site = resolveSite();
 
 export default function (eleventyConfig) {
   // Certificate images and the stylesheet ship as-is.
-  eleventyConfig.addPassthroughCopy({ "src/assets": "assets" });
+  // Student-data holds the student's CV, cover letter and contact details: never part of the built site.
+  eleventyConfig.addPassthroughCopy({ "src/assets": "assets" }, {
+    filter: (file) => !file.split(/[\\/]/).includes("Student-data"),
+  });
   eleventyConfig.addPassthroughCopy({ "src/certs": "certs" });
   eleventyConfig.addPassthroughCopy({ "src/media": "media" });
   // SweetAlert2 is self-hosted rather than loaded from a CDN: the site makes no
@@ -17,6 +20,7 @@ export default function (eleventyConfig) {
   eleventyConfig.addPassthroughCopy({
     "node_modules/sweetalert2/dist/sweetalert2.esm.all.min.js": "assets/sweetalert2.esm.min.js",
   });
+  eleventyConfig.addPassthroughCopy({ "node_modules/xlsx/xlsx.mjs": "assets/xlsx.mjs" });
   // Publish the raw data too — an AI agent that would rather parse JSON than
   // HTML can fetch /data/certificates.json directly.
   eleventyConfig.addPassthroughCopy({ "data/certificates.json": "data/certificates.json" });
@@ -52,6 +56,11 @@ export default function (eleventyConfig) {
 
   /** "2024-03-15" -> "15 March 2024"; also handles "2024-03" and "2024". */
   eleventyConfig.addFilter("humanDate", (value) => formatDate(value));
+
+  eleventyConfig.addFilter("textBlocks", (value) =>
+    String(value || "").split(/\n\s*\n/).map((block) => block.trim()).filter(Boolean)
+  );
+  eleventyConfig.addFilter("headlineParts", (value) => String(value || "").split(" | "));
 
   /**
    * Serialize for a <script type="application/ld+json"> block. Escaping "<"

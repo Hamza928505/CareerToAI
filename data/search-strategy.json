@@ -1,0 +1,16 @@
+{
+  "roles": [
+    "Software Engineering",
+    "Backend",
+    "Full-Stack .NET",
+    "Frontend"
+  ],
+  "cities": [
+    "Remote",
+    "Deggendorf",
+    "Plattling"
+  ],
+  "types": [
+    "Werkstudent"
+  ]
+}

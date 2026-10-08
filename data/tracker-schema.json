@@ -1,77 +1,564 @@
 {
   "$comment": "Canonical shape of the application tracker.",
   "csv": "data/applications.csv",
-  "workbook": "applications.xlsx",
-  "sheet": "Search",
+  "workbook": "job_search_tracker.xlsx",
+  "sheet": "Applications",
   "columns": [
-    { "key": "id", "header": "ID", "width": 10, "required": true },
-    { "key": "apply", "header": "APPLY?", "width": 10, "enum": "applyDecisions" },
-    { "key": "reason", "header": "Reason", "width": 20 },
-    { "key": "date_found", "header": "Date found", "width": 12, "format": "date" },
-    { "key": "source", "header": "Source site", "width": 15 },
-    { "key": "job_url", "header": "Job URL", "width": 25 },
-    { "key": "position", "header": "Position", "width": 25 },
-    { "key": "posting_lang", "header": "Language of posting", "width": 15 },
-    { "key": "doc_lang", "header": "Document language (DE/EN)", "width": 15 },
-    { "key": "company", "header": "Company name", "width": 25, "required": true },
-    { "key": "industry", "header": "Industry", "width": 15 },
-    { "key": "company_size", "header": "Company size", "width": 15 },
-    { "key": "website", "header": "Website", "width": 25 },
-    { "key": "careers_url", "header": "Careers page URL", "width": 25 },
-    { "key": "rating", "header": "Company rating", "width": 15 },
-    { "key": "address", "header": "Full address", "width": 30 },
-    { "key": "city", "header": "City", "width": 15 },
-    { "key": "maps_link", "header": "Google Maps link", "width": 25 },
-    { "key": "work_model", "header": "Work model", "width": 15 },
-    { "key": "contact_person", "header": "Contact person", "width": 20 },
-    { "key": "contact_email", "header": "Contact email", "width": 25 },
-    { "key": "phone", "header": "Phone", "width": 15 },
-    { "key": "app_method", "header": "Application method", "width": 20 },
-    { "key": "app_url", "header": "Application email or portal URL", "width": 30 },
-    { "key": "duration", "header": "Duration", "width": 10 },
-    { "key": "start_date", "header": "Start date", "width": 12 },
-    { "key": "deadline", "header": "Deadline", "width": 12, "format": "date" },
-    { "key": "full_part", "header": "Full/part time", "width": 15 },
-    { "key": "internship_type", "header": "Internship type", "width": 20 },
-    { "key": "paid", "header": "Paid?", "width": 10 },
-    { "key": "salary", "header": "Salary amount", "width": 15 },
-    { "key": "benefits", "header": "Other benefits", "width": 25 },
-    { "key": "req_german", "header": "Required German level", "width": 15 },
-    { "key": "req_english", "header": "Required English level", "width": 15 },
-    { "key": "req_skills", "header": "Required skills", "width": 30 },
-    { "key": "missing_reqs", "header": "Missing requirements", "width": 30 },
-    { "key": "visa_req", "header": "Work permit / visa mentioned?", "width": 20 },
-    { "key": "match_score", "header": "Match score (0-100)", "width": 15 },
-    { "key": "why_match", "header": "Why it matches", "width": 30 },
-    { "key": "cv_file", "header": "Tailored CV file", "width": 25 },
-    { "key": "cl_file", "header": "Tailored cover letter file", "width": 25 },
-    { "key": "status", "header": "Application status", "width": 20, "enum": "statuses" },
-    { "key": "date_applied", "header": "Date applied", "width": 12, "format": "date" },
-    { "key": "follow_up", "header": "Follow-up date", "width": 12, "format": "date" },
-    { "key": "response_date", "header": "Response date", "width": 12, "format": "date" },
-    { "key": "interview_date", "header": "Interview date", "width": 12, "format": "date" },
-    { "key": "interviewer", "header": "Interviewer / contact name", "width": 20 },
-    { "key": "response_summary", "header": "Response summary", "width": 30 },
-    { "key": "data_source", "header": "Data source", "width": 20 },
-    { "key": "notes", "header": "Notes", "width": 40 }
+    {
+      "key": "company",
+      "header": "Company",
+      "width": 25,
+      "legacyHeaders": [
+        "Company name"
+      ]
+    },
+    {
+      "key": "position",
+      "header": "Position",
+      "width": 28
+    },
+    {
+      "key": "website",
+      "header": "Website",
+      "width": 27
+    },
+    {
+      "key": "job_url",
+      "header": "Link to posting",
+      "width": 35,
+      "legacyHeaders": [
+        "Job URL"
+      ]
+    },
+    {
+      "key": "date_found",
+      "header": "Date found",
+      "width": 15,
+      "format": "date"
+    },
+    {
+      "key": "source",
+      "header": "Source",
+      "width": 18,
+      "legacyHeaders": [
+        "Source site"
+      ],
+      "enum": "sourceChoices"
+    },
+    {
+      "key": "work_model",
+      "header": "Location / Work mode",
+      "width": 23,
+      "legacyHeaders": [
+        "Work model"
+      ],
+      "enum": "workModels"
+    },
+    {
+      "key": "address",
+      "header": "Address",
+      "width": 35,
+      "legacyHeaders": [
+        "Full address"
+      ]
+    },
+    {
+      "key": "maps_link",
+      "header": "Google Maps",
+      "width": 18,
+      "legacyHeaders": [
+        "Google Maps link"
+      ],
+      "computed": true
+    },
+    {
+      "key": "commute",
+      "header": "Commute / travel time",
+      "width": 22
+    },
+    {
+      "key": "contact_person",
+      "header": "Contact person",
+      "width": 22
+    },
+    {
+      "key": "contact_email",
+      "header": "Contact e-mail",
+      "width": 28,
+      "legacyHeaders": [
+        "Contact email"
+      ]
+    },
+    {
+      "key": "referral",
+      "header": "Referral / Advocate",
+      "width": 23
+    },
+    {
+      "key": "interest",
+      "header": "What interests me in the offer",
+      "width": 34
+    },
+    {
+      "key": "role_fit",
+      "header": "Role fit score",
+      "width": 17,
+      "enum": "fitScores"
+    },
+    {
+      "key": "priority",
+      "header": "Priority",
+      "width": 15,
+      "enum": "priorities"
+    },
+    {
+      "key": "tailored",
+      "header": "Tailored application?",
+      "width": 20,
+      "enum": "yesNo"
+    },
+    {
+      "key": "documents_used",
+      "header": "Documents used",
+      "width": 30
+    },
+    {
+      "key": "portfolio_link",
+      "header": "Portfolio / work sample link",
+      "width": 33
+    },
+    {
+      "key": "deadline",
+      "header": "Deadline",
+      "width": 15,
+      "format": "date"
+    },
+    {
+      "key": "date_applied",
+      "header": "Date sent",
+      "width": 15,
+      "legacyHeaders": [
+        "Date applied"
+      ],
+      "format": "date"
+    },
+    {
+      "key": "follow_up",
+      "header": "Follow-up date",
+      "width": 19,
+      "computed": true
+    },
+    {
+      "key": "last_contact_date",
+      "header": "Last contact date",
+      "width": 20,
+      "format": "date"
+    },
+    {
+      "key": "status",
+      "header": "Status",
+      "width": 22,
+      "legacyHeaders": [
+        "Application status"
+      ],
+      "enum": "statuses"
+    },
+    {
+      "key": "answer",
+      "header": "Answer",
+      "width": 18,
+      "enum": "answers"
+    },
+    {
+      "key": "interview_date",
+      "header": "Interview date",
+      "width": 18,
+      "format": "date"
+    },
+    {
+      "key": "interview_type",
+      "header": "Interview type",
+      "width": 23,
+      "enum": "interviewTypes"
+    },
+    {
+      "key": "salary",
+      "header": "Salary / Stipend",
+      "width": 19,
+      "legacyHeaders": [
+        "Salary amount"
+      ]
+    },
+    {
+      "key": "next_action",
+      "header": "Next action",
+      "width": 30
+    },
+    {
+      "key": "next_action_date",
+      "header": "Next action date",
+      "width": 19,
+      "format": "date"
+    },
+    {
+      "key": "reason_lost",
+      "header": "Reason lost",
+      "width": 22,
+      "enum": "lossReasons"
+    },
+    {
+      "key": "notes",
+      "header": "Notes",
+      "width": 40
+    },
+    {
+      "key": "duplicate_check",
+      "header": "Duplicate check",
+      "width": 18,
+      "computed": true
+    },
+    {
+      "key": "id",
+      "header": "ID",
+      "width": 10,
+      "required": true
+    },
+    {
+      "key": "apply",
+      "header": "APPLY?",
+      "width": 10,
+      "enum": "applyDecisions"
+    },
+    {
+      "key": "applicant",
+      "header": "Who applies",
+      "width": 16,
+      "enum": "applicants",
+      "default": "Me"
+    },
+    {
+      "key": "reason",
+      "header": "Reason",
+      "width": 20
+    },
+    {
+      "key": "posting_lang",
+      "header": "Language of posting",
+      "width": 15
+    },
+    {
+      "key": "doc_lang",
+      "header": "Document language (DE/EN)",
+      "width": 15,
+      "enum": "documentLanguages"
+    },
+    {
+      "key": "industry",
+      "header": "Industry",
+      "width": 15
+    },
+    {
+      "key": "company_size",
+      "header": "Company size",
+      "width": 15
+    },
+    {
+      "key": "careers_url",
+      "header": "Careers page URL",
+      "width": 25
+    },
+    {
+      "key": "rating",
+      "header": "Company rating",
+      "width": 15
+    },
+    {
+      "key": "city",
+      "header": "City",
+      "width": 15
+    },
+    {
+      "key": "phone",
+      "header": "Phone",
+      "width": 15
+    },
+    {
+      "key": "app_method",
+      "header": "Application method",
+      "width": 20,
+      "enum": "applicationMethods"
+    },
+    {
+      "key": "app_url",
+      "header": "Application email or portal URL",
+      "width": 30
+    },
+    {
+      "key": "duration",
+      "header": "Duration",
+      "width": 10
+    },
+    {
+      "key": "start_date",
+      "header": "Start date",
+      "width": 12
+    },
+    {
+      "key": "full_part",
+      "header": "Full/part time",
+      "width": 15,
+      "enum": "workingHours"
+    },
+    {
+      "key": "internship_type",
+      "header": "Internship type",
+      "width": 20,
+      "enum": "internshipTypes"
+    },
+    {
+      "key": "paid",
+      "header": "Paid?",
+      "width": 10,
+      "enum": "yesNoUnknown"
+    },
+    {
+      "key": "benefits",
+      "header": "Other benefits",
+      "width": 25
+    },
+    {
+      "key": "req_german",
+      "header": "Required German level",
+      "width": 15
+    },
+    {
+      "key": "req_english",
+      "header": "Required English level",
+      "width": 15
+    },
+    {
+      "key": "req_skills",
+      "header": "Required skills",
+      "width": 30
+    },
+    {
+      "key": "missing_reqs",
+      "header": "Missing requirements",
+      "width": 30
+    },
+    {
+      "key": "visa_req",
+      "header": "Work permit / visa mentioned?",
+      "width": 20,
+      "enum": "yesNoUnknown"
+    },
+    {
+      "key": "match_score",
+      "header": "Match score (0-100)",
+      "width": 15
+    },
+    {
+      "key": "why_match",
+      "header": "Why it matches",
+      "width": 30
+    },
+    {
+      "key": "cv_file",
+      "header": "Tailored CV file",
+      "width": 25
+    },
+    {
+      "key": "cl_file",
+      "header": "Tailored cover letter file",
+      "width": 25
+    },
+    {
+      "key": "response_date",
+      "header": "Response date",
+      "width": 12,
+      "format": "date"
+    },
+    {
+      "key": "interviewer",
+      "header": "Interviewer / contact name",
+      "width": 20
+    },
+    {
+      "key": "response_summary",
+      "header": "Response summary",
+      "width": 30
+    },
+    {
+      "key": "data_source",
+      "header": "Data source",
+      "width": 20
+    },
+    {
+      "key": "source_site",
+      "header": "Source site detail",
+      "width": 24
+    },
+    {
+      "key": "legacy_status",
+      "header": "Previous status",
+      "width": 22
+    },
+    {
+      "key": "assistant_state",
+      "header": "Assistant state",
+      "width": 22,
+      "enum": "assistantStates"
+    },
+    {
+      "key": "opportunity_type",
+      "header": "Opportunity type",
+      "width": 19,
+      "enum": "opportunityTypes"
+    },
+    {
+      "key": "date_posted",
+      "header": "Date posted",
+      "width": 15,
+      "format": "date"
+    },
+    {
+      "key": "job_id",
+      "header": "Job ID",
+      "width": 22
+    }
+  ],
+  "opportunityTypes": [
+    "Praktikum",
+    "Internship",
+    "Werkstudent",
+    "Junior role",
+    "Bachelor thesis"
+  ],
+  "applicants": [
+    "Me",
+    "Assistant"
+  ],
+  "documentLanguages": [
+    "DE",
+    "EN"
+  ],
+  "workModels": [
+    "On-site",
+    "Hybrid",
+    "Remote"
+  ],
+  "applicationMethods": [
+    "Portal",
+    "Email",
+    "External form",
+    "Easy Apply",
+    "Other"
+  ],
+  "workingHours": [
+    "Full time",
+    "Part time",
+    "Flexible"
+  ],
+  "internshipTypes": [
+    "Mandatory",
+    "Voluntary",
+    "Either"
+  ],
+  "yesNoUnknown": [
+    "Yes",
+    "No",
+    "Unknown"
   ],
   "applyDecisions": [
-    { "value": "Yes", "open": true },
-    { "value": "No", "open": false },
-    { "value": "Maybe", "open": true }
+    {
+      "value": "Yes",
+      "open": true
+    },
+    {
+      "value": "No",
+      "open": false
+    },
+    {
+      "value": "Maybe",
+      "open": true
+    }
   ],
   "statuses": [
-    { "value": "Not applied", "open": true, "meaning": "Decided to apply, but haven't yet." },
-    { "value": "Applied", "open": true, "meaning": "Sent." },
-    { "value": "Failed", "open": false, "meaning": "Submission failed." },
-    { "value": "Blocked", "open": false, "meaning": "Blocked by captcha/login." },
-    { "value": "Needs input", "open": true, "meaning": "Requires human intervention." },
-    { "value": "Confirmation received", "open": true, "meaning": "Received auto-reply." },
-    { "value": "Interview scheduled", "open": true, "meaning": "Invited for interview." },
-    { "value": "Interview done", "open": true, "meaning": "Interview completed." },
-    { "value": "Offer", "open": true, "meaning": "Received offer." },
-    { "value": "Rejected", "open": false, "meaning": "Application rejected." },
-    { "value": "No response", "open": false, "meaning": "Ghosted." },
-    { "value": "Withdrawn", "open": false, "meaning": "Pulled out." }
+    {
+      "value": "To apply",
+      "open": true
+    },
+    {
+      "value": "Applied",
+      "open": true
+    },
+    {
+      "value": "Follow-up sent",
+      "open": true
+    },
+    {
+      "value": "Interview scheduled",
+      "open": true
+    },
+    {
+      "value": "Offer",
+      "open": true
+    },
+    {
+      "value": "Rejected",
+      "open": false
+    },
+    {
+      "value": "Ghosted",
+      "open": false
+    }
+  ],
+  "sourceChoices": [
+    "LinkedIn",
+    "Company site",
+    "Referral",
+    "Job fair",
+    "Other"
+  ],
+  "fitScores": [
+    "1",
+    "2",
+    "3",
+    "4",
+    "5"
+  ],
+  "priorities": [
+    "High",
+    "Medium",
+    "Low"
+  ],
+  "yesNo": [
+    "Yes",
+    "No"
+  ],
+  "answers": [
+    "No answer",
+    "Positive",
+    "Negative"
+  ],
+  "interviewTypes": [
+    "Phone screen",
+    "Technical",
+    "Case study",
+    "Hiring manager",
+    "Final round"
+  ],
+  "lossReasons": [
+    "No answer",
+    "Skills gap",
+    "Salary mismatch",
+    "Position closed",
+    "Location",
+    "I declined",
+    "Other"
+  ],
+  "assistantStates": [
+    "Needs input",
+    "Blocked"
   ]
 }

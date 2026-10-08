@@ -5,7 +5,7 @@ description: >
   (LinkedIn, local job boards, and any skills added with /add-portal). Deduplicates
   across runs. Triggers on: job scrape, find jobs, search jobs, new jobs, job search,
   scrape jobs, /scrape
-allowed-tools: Read, Write, Edit, Glob, Grep, Bash(bun --version), Bash(bun run job-search/.agents/skills/*/cli/src/cli.ts *), WebFetch, WebSearch, Agent, AskUserQuestion
+allowed-tools: Read, Write, Edit, Glob, Grep, Bash(bun --version), Bash(bun run job-search/.agents/skills/*/cli/src/cli.ts *), MCP fetch, MCP search tools, Agent, AskUserQuestion
 ---
 
 <!-- PROJECT SPINE — the three files this repo agrees on:
@@ -13,7 +13,7 @@ allowed-tools: Read, Write, Edit, Glob, Grep, Bash(bun --version), Bash(bun run 
                 GENERATED from data/*.json by `npm run profile`. Never hand-edit it;
                 edit the JSON (or use /editor/) and re-run. A fact that is not in
                 data/ does not go in a CV, a letter or an interview answer.
-     · tracker  data/tracker.csv — one row per application. internship-tracker.xlsx
+     · tracker  data/applications.csv — one row per application. job_search_tracker.xlsx
                 is rendered from it by `npm run tracker`, which is safe to re-run.
      · statuses data/tracker-schema.json → statuses. The only status vocabulary.
      Code the framework ships — tools/, tests/, templates/, .agents/ portal CLIs,
@@ -26,7 +26,7 @@ allowed-tools: Read, Write, Edit, Glob, Grep, Bash(bun --version), Bash(bun run 
 ## How It Works
 
 This skill searches job portals using the **installed portal-search CLIs** in
-`job-search/.agents/skills/` (plus WebSearch as a fallback), using queries from your profile.
+`job-search/.agents/skills/` (plus MCP search tools as a fallback), using queries from your profile.
 It deduplicates against previously seen jobs and the application tracker, and
 presents new matches with a quick fit assessment.
 
@@ -50,14 +50,15 @@ Optional arguments:
 ### Step 0: Load State
 
 1. Read `job-search/job_scraper/seen_jobs.json` (create if missing - start with `{"seen": {}}`)
-2. Read `data/tracker.csv` to extract already-applied companies+roles
-3. Read `search-queries.md` (this directory) for the search strategy
+2. Read `data/applications.csv` to extract already-applied companies+roles
+3. Read `data/search-strategy.json` (if it exists) to dynamically retrieve the user's targeted **roles, cities, and types**.
+4. Read `search-queries.md` (this directory) for the base search strategy templates.
 
 ### Step 1: Search
 
-Read `search-queries.md` (this directory) for the search strategy. By default, run the top 3 priority query categories. If the user said "broad", run all categories. If the user specified a focus area (e.g. "data science"), prioritize queries from that category.
+Construct the actual search terms dynamically by combining the roles, cities, and types defined in `data/search-strategy.json`. If that file doesn't exist, fall back to the default categories in `search-queries.md`.
 
-**Use the installed CLI tools as the primary search mechanism.** Fall back to `WebSearch` only for portals that do not have a CLI skill, or if `bun` is unavailable on the system.
+**Use the installed CLI tools as the primary search mechanism.** Fall back to `MCP search tools` only for portals that do not have a CLI skill, or if `bun` is unavailable on the system.
 
 #### 1a. Check bun availability
 
@@ -65,7 +66,7 @@ Read `search-queries.md` (this directory) for the search strategy. By default, r
 bun --version
 ```
 
-If this fails (bun not installed), skip to **1c (WebSearch fallback)** for all portals and note the fallback in the Step 5 output.
+If this fails (bun not installed), skip to **1c (MCP search tools fallback)** for all portals and note the fallback in the Step 5 output.
 
 #### 1b. Run CLI tools (primary — run these in parallel where possible)
 
@@ -85,16 +86,19 @@ Run all portal CLI calls in parallel where possible using the Agent tool. Collec
 
 If a CLI tool exits with a non-zero code, log the error message and continue — do not abort the whole search.
 
-#### 1c. WebSearch fallback
+#### 1c. MCP MCP search tools fallback
 
-Use `WebSearch` for:
+Use the targeted MCP search tools for:
 - Portals listed in `search-queries.md` that do **not** have a corresponding directory under `job-search/.agents/skills/`
 - Any portal whose CLI fails at runtime
 - When bun is unavailable (Step 1a failed)
 
-Use the site-specific query strings from `search-queries.md` directly as WebSearch queries for these portals.
+Use the site-specific query strings from `search-queries.md` directly as queries for these portals, routing them to the correct tool:
+- **`tinyfish` (TinyFish MCP):** Use for browser-heavy job and housing sites (e.g. stepstone.de, arbeitsagentur.de, meinpraktikum.de).
+- **`exa` (Exa MCP):** Use for indexed job discovery and broad career pages.
+- **`tavily` (Tavily MCP):** Use as a general fallback web search when the above are not suitable.
 
-Tag each fallback result as WebSearch-sourced, keeping the portal tag when the fallback stands in for an installed portal whose CLI failed. Step 4 persists this as the entry's `source`, and Step 5 reports which portals ran on the fallback this run.
+Tag each fallback result as sourced from the specific MCP tool (e.g. `source: tinyfish`), keeping the portal tag when the fallback stands in for an installed portal whose CLI failed. Step 4 persists this as the entry's `source`, and Step 5 reports which portals ran on the fallback this run.
 
 ### Step 2: Fetch & Parse
 
@@ -115,21 +119,21 @@ looks identical to a job never seen, and the recorded status is what makes a lat
 ghost report self-triaging. `isActive: true` is only the absence of that banner, not
 proof the posting is open; deadlines and dead URLs remain `/rank`'s job.
 
-**From WebSearch results:** Use `WebFetch` on the posting URL and extract the same
+**From MCP Search results:** Use **`firecrawl` (Firecrawl MCP)** to extract known pages on the posting URL and extract the same
 fields manually. If it returns HTTP 403, retry with browser headers via curl per
 `.claude/skills/job-application-assistant/09-web-research.md` before giving up — most
-bank and corporate sites reject WebFetch's user agent while serving browsers normally.
+bank and corporate sites reject Firecrawl's user agent while serving browsers normally.
 
 **Store a URL that actually resolves to the posting.** A listing-page URL with a
 `#fragment` appended (`.../jobs/ciso/#ikerian`) is not a posting: it fetches fine and
 returns unrelated job titles, which makes every later `/rank` and `/apply` run fail on
-that entry. When WebSearch only yields a listing page, search the employer's own careers
+that entry. When the search only yields a listing page, search the employer's own careers
 site for the role and store that URL instead, or drop the candidate rather than saving a
 fragment link.
 
 For every candidate:
 - Skip if the URL or company+title combo already exists in `seen_jobs.json`
-- Skip if the company+role already appears in `data/tracker.csv`
+- Skip if the company+role already appears in `data/applications.csv`
 
 ### Step 2.5: Mass-Posting Detection (within this run)
 
@@ -163,7 +167,7 @@ For each new job, do a rapid fit check (NOT the full evaluation from `04-job-eva
       "fit": "high/medium/low",
       "status": "new/skipped/ranked/expired",
       "portal": "<source portal skill, e.g. jobindex-search>",
-      "source": "cli/websearch"
+      "source": "cli/MCP search tools"
     }
   }
 }
@@ -171,7 +175,7 @@ For each new job, do a rapid fit check (NOT the full evaluation from `04-job-eva
 
 The `portal` field records which CLI skill produced the job (results are already tagged per portal in Step 1b - persist that tag here). Entries written before this field existed lack it; the health check (Step 4.75) attributes those by matching the URL's domain against each portal's base URL, so do not backfill.
 
-The `source` field records which mechanism produced the entry: `cli` for Step 1b portal-CLI output, `websearch` for the Step 1c fallback. This is what keeps a ghost-job report diagnosable after the run's summary is gone: a stored entry whose URL later resolves to nothing (or to a different job) reads very differently depending on whether it came from live CLI output or from a search index that can be weeks stale - and a presented job with no entry here at all points at fabrication, which Rule 1 forbids. Entries written before this field existed lack it; never backfill it - the mechanism was not recorded.
+The `source` field records which mechanism produced the entry: `cli` for Step 1b portal-CLI output, `MCP search tools` for the Step 1c fallback. This is what keeps a ghost-job report diagnosable after the run's summary is gone: a stored entry whose URL later resolves to nothing (or to a different job) reads very differently depending on whether it came from live CLI output or from a search index that can be weeks stale - and a presented job with no entry here at all points at fabrication, which Rule 1 forbids. Entries written before this field existed lack it; never backfill it - the mechanism was not recorded.
 
 `/rank` extends this schema additively: ranked entries also carry `rank_score` (0–100 overall score), `rank_verdict` (fit band, e.g. "strong fit"), `rank_date` (ISO date of ranking), the veto fields `location_verdict` and `language_gate` (both PASS/FAIL/FLAG) with `language_note` (the quoted requirement explaining a non-PASS), and `strengths`/`gaps` (1-3 verbatim bullets each, copied from the scoring agent's findings). The `status` field is set to `"ranked"`. Do not drop any of these fields when re-writing entries. Entries ranked before `strengths`/`gaps` existed simply lack them; readers tolerate their absence and never backfill by guessing. Entries ranked before the verdict rename may carry a legacy PASS/FAIL/FLAG string in `location` - read that as the verdict when `location_verdict` is absent; in fresh entries `location` is always a place, never a verdict.
 
@@ -227,7 +231,7 @@ portals (`enabled: false`), report them with the `skipped (disabled):` line belo
 so opting one out stays visible rather than silent; omit the line when nothing
 was skipped. When any portal's results came from the Step 1c fallback this run
 (bun unavailable, or its CLI failed at runtime), report it with the
-`fallback (websearch):` line - fallback results come from a search index that
+`fallback (MCP search tools):` line - fallback results come from a search index that
 can be stale, so the reader should know which rows carry that caveat; omit the
 line when every portal ran its CLI. When Step 4.75 found a portal degraded, broken, or inconclusive,
 add one `health:` line per suspect portal (healthy portals get no line); after
@@ -243,7 +247,7 @@ Found X new positions (Y high, Z medium, W low match).
 
 skipped (disabled): <portal-name>, <portal-name>
 
-fallback (websearch): <portal-name>, <portal-name>
+fallback (MCP search tools): <portal-name>, <portal-name>
 
 health: <portal-name> - degraded (company null on all 12 results); parsing anchors in job-search/.agents/skills/<portal-name>/url-reference.md
 health: <portal-name> - broken (0 results for the SKILL.md test query and a broader retry); parsing anchors in job-search/.agents/skills/<portal-name>/url-reference.md
@@ -282,12 +286,12 @@ If the user decides to apply to any job, the tracker row is written by **job-app
 
 ## Important Rules
 
-1. **Never fabricate job postings.** Only present jobs from actual CLI search/detail output or WebSearch/WebFetch results.
-2. **Respect deduplication.** Always check seen_jobs.json AND data/tracker.csv before presenting.
+1. **Never fabricate job postings.** Only present jobs from actual CLI search/detail output or MCP search tools/MCP fetch results.
+2. **Respect deduplication.** Always check seen_jobs.json AND data/applications.csv before presenting.
 3. **Focus on configured geographic area.** Skip jobs that require relocation or are clearly outside commute range.
 4. **Only open positions.** Skip postings with expired deadlines or those marked as closed.
-5. **Be efficient with detail fetches.** Don't run `detail` or WebFetch on every search hit — pre-filter by title/snippet, then fetch only promising matches.
-6. **Parallel searches.** Run portal CLI searches in parallel; use WebSearch only for gaps the CLIs don't cover.
+5. **Be efficient with detail fetches.** Don't run `detail` or MCP fetch on every search hit — pre-filter by title/snippet, then fetch only promising matches.
+6. **Parallel searches.** Run portal CLI searches in parallel; use MCP search tools only for gaps the CLIs don't cover.
 7. **No automated people lookups.** Referral contacts (Step 4.5) are LinkedIn search links only - never fetch or scrape LinkedIn people-search result pages programmatically.
 8. **Health checks are bounded and honest.** Step 4.75 spends at most one probe, one retry, and (in `health` mode) one detail fetch per portal - a diagnosis, not a crawl. A rate-limit is never evidence of breakage. Health verdicts come only from observed CLI output; a portal that could not be tested is reported as inconclusive, never guessed. The `enabled` toggle is the only thing the health check may edit, and only with confirmation.
 9. **Flag distribution patterns, never accuse.** The mass-posting signal (Step 2.5) describes how a listing is being distributed, not a claim that the employer is a scam. Never name a company as fraudulent or untrustworthy - present the observation and let the user decide.
@@ -299,6 +303,6 @@ If the user decides to apply to any job, the tracker row is written by **job-app
 - Portal CLIs live under `job-search/.agents/skills/*/SKILL.md` and run with the
   `job-search/`-prefixed commands allowed in `.claude/settings.json`.
 - Dedupe state stays at `job-search/job_scraper/seen_jobs.json`.
-- A row promoted out of a scrape lands in `data/tracker.csv` with `Where I found it`
+- A row promoted out of a scrape lands in `data/applications.csv` with `Where I found it`
   set to the portal skill name and a status from `data/tracker-schema.json` (a fresh
   hit is `Researching`).

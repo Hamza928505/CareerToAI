@@ -14,8 +14,10 @@
         "import-data": "node scripts/import-data.mjs",
         "make-samples": "node scripts/make-sample-images.mjs",
         "tracker": "node scripts/make-internship-tracker.mjs",
+        "tracker:migrate": "node scripts/migrate-application-tracker.mjs",
         "skills:import": "node scripts/import-esco-skills.mjs",
         "skills:harvest": "node scripts/harvest-tracker-skills.mjs",
+        "search:import": "node scripts/import-search-options.mjs",
         "profile": "node scripts/build-profile-md.mjs",
         "profile:check": "node scripts/build-profile-md.mjs --check"
     },
@@ -24,6 +26,7 @@
         "@anthropic-ai/sdk": "^0.123.0",
         "esbuild": "^0.28.2",
         "exceljs": "^4.4.0",
+        "jszip": "^3.10.2",
         "sharp": "^0.35.5",
         "sweetalert2": "^11.26.25",
         "zod": "^4.5.4"
@@ -35,6 +38,7 @@
         "uuid": "^11.1.1"
     },
     "dependencies": {
+        "@modelcontextprotocol/sdk": "^1.32.0",
         "xlsx": "^0.18.5"
     }
 }

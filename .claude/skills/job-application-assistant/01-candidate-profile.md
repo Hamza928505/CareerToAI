@@ -12,7 +12,7 @@ generated: true
 ## Identity
 - **Name:** Hamza Salameh
 - **Location:** Amman, Jordan
-- **Phone:** _not set — add it to data/profile-extras.json_
+- **Phone:** _private — read it from data/profile-private.json (gitignored, never committed or published)_
 - **Email:** H.Salameh03@gju.edu.jo
 - **LinkedIn:** https://www.linkedin.com/in/hamza-salameh-287a53258/
 - **GitHub:** https://github.com/Hamza928505

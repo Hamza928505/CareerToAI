@@ -3,7 +3,7 @@
 Scores a posting **only after** `01-eligibility.md` returns PASS or NEEDS APPROVAL.
 
 The five dimensions and their weights are deliberately identical to the Fit %
-formula in `internship-tracker.xlsx`, so the spreadsheet and this workflow can
+formula in `job_search_tracker.xlsx`, so the spreadsheet and this workflow can
 never disagree about the same posting. If you change one, change the other:
 the formula is built in `scripts/make-internship-tracker.mjs` (`SCORE`).
 

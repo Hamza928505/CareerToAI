@@ -7,7 +7,7 @@ framework_version: 1.0.2
                 GENERATED from data/*.json by `npm run profile`. Never hand-edit it;
                 edit the JSON (or use /editor/) and re-run. A fact that is not in
                 data/ does not go in a CV, a letter or an interview answer.
-     · tracker  data/tracker.csv — one row per application. internship-tracker.xlsx
+     · tracker  data/applications.csv — one row per application. job_search_tracker.xlsx
                 is rendered from it by `npm run tracker`, which is safe to re-run.
      · statuses data/tracker-schema.json → statuses. The only status vocabulary.
      Code the framework ships — tools/, tests/, templates/, .agents/ portal CLIs,
