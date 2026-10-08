@@ -92,7 +92,7 @@ An application that is drafted but not recorded does not exist. Do all three:
    `applications/<company>_<role>/posting.txt`, with the URL and the date fetched
    at the top.
 
-2. **Add a row to the tracker.** `data/tracker.csv` — the one tracker, shared with
+2. **Add a row to the tracker.** `data/applications.csv` — the one tracker, shared with
    the job-search framework and shaped by `data/tracker-schema.json`. Match on
    company name first — update the existing row rather than adding a duplicate.
    Fill: Company, Website, Contact person, Contact e-mail, Role / Bereich, Where I
@@ -105,10 +105,10 @@ An application that is drafted but not recorded does not exist. Do all three:
 
 3. **Harvest the skills, then rebuild the workbook.** Run `npm run skills:harvest`
    so the advert's requirements join the editor's suggestions, then
-   `npm run tracker` to re-render `internship-tracker.xlsx` from the CSV with every
+   `npm run tracker` to re-render `job_search_tracker.xlsx` from the CSV with every
    Fit % recomputed.
 
-> `npm run tracker` is safe to re-run: the rows live in `data/tracker.csv`, and the
+> `npm run tracker` is safe to re-run: the rows live in `data/applications.csv`, and the
 > workbook is a rendering of them. It is the CSV you must never hand-wreck.
 
 ---

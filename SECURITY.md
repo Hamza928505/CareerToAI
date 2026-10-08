@@ -30,9 +30,10 @@ Instruction-level defenses raise the bar; they are not a sandbox. If you run thi
 The site half is deliberately public: `data/profile.json`, `data/experience.json`,
 `data/projects.json` and `data/certificates.json` are served as raw JSON and
 restated in `/llms.txt`, so **anything written into them is published**. The
-tracker is the opposite — `data/tracker.csv` holds employers' contact names,
-e-mails and phone numbers and is gitignored, with `data/tracker.example.csv`
-carrying only the header. Check which of the two a fact belongs in before
+tracker is the opposite — `data/applications.csv` (and `job_search_tracker.xlsx`,
+rendered from it) holds employers' contact names, e-mails and phone numbers and is
+gitignored, with `data/applications.example.csv` carrying only the header. Your own
+phone number is kept in the gitignored `data/profile-private.json`. Check which of the two a fact belongs in before
 writing it.
 
 ## Scope notes

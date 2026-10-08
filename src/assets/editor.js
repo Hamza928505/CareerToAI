@@ -704,7 +704,7 @@ async function pickFromAdvert(skills) {
   let via = "the catalogue";
 
   if (ai) {
-    busy("Reading the advert…");
+    aiBusy("Reading the advert…", "weaving");
     try {
       const response = await fetch(`${apiBase()}__editor/skills`, {
         method: "POST",
@@ -864,8 +864,8 @@ function renderSkills(container, skills, owner) {
     chips,
     el("div", { className: "skills-entry" }, [
       input,
-      pickerButton('<i class="fa-solid fa-list-check" style="margin-right: 0.3rem;"></i>Add skills', pickFromLibrary),
-      pickerButton('<i class="fa-solid fa-file-contract" style="margin-right: 0.3rem;"></i>From a job ad', pickFromAdvert),
+      pickerButton('<i class="fa-solid fa-list-check btn-icon-spacing"></i>Add skills', pickFromLibrary),
+      pickerButton('<i class="fa-solid fa-file-contract btn-icon-spacing"></i>From a job ad', pickFromAdvert),
     ]),
     options
   );
@@ -914,7 +914,7 @@ async function renderImage(container, listName, item, config) {
 
   const remove = el("button", {
     type: "button",
-    className: "btn btn-small", innerHTML: '<i class="fa-solid fa-image" style="margin-right: 0.3rem;"></i>Remove image',
+    className: "btn btn-small", innerHTML: '<i class="fa-solid fa-image btn-icon-spacing"></i>Remove image',
     onclick: async () => {
       await deleteImage(item.imageKey).catch(() => {});
       item.imageKey = "";
@@ -932,7 +932,7 @@ async function renderImage(container, listName, item, config) {
       el("button", {
         type: "button",
         className: "btn btn-small",
-        innerHTML: '<i class="fa-solid fa-wand-magic-sparkles" style="margin-right: 0.3rem;"></i>Extract with AI',
+        innerHTML: '<i class="fa-solid fa-wand-magic-sparkles btn-icon-spacing"></i>Extract with AI',
         onclick: (event) => extractWithAI(event.currentTarget, item, record),
       })
     );
@@ -1034,7 +1034,7 @@ function syncRowsToggle(listName) {
   const items = config.target();
   button.hidden = items.length < 2;
   const anyOpen = items.some((item) => !collapsedRows.has(item._key));
-  button.innerHTML = anyOpen ? '<i class="fa-solid fa-compress" style="margin-right: 0.3rem;"></i>Collapse all' : '<i class="fa-solid fa-expand" style="margin-right: 0.3rem;"></i>Expand all';
+  button.innerHTML = anyOpen ? '<i class="fa-solid fa-compress btn-icon-spacing"></i>Collapse all' : '<i class="fa-solid fa-expand btn-icon-spacing"></i>Expand all';
   button.setAttribute("aria-label", `${anyOpen ? "Collapse" : "Expand"} all ${config.plural}`);
 }
 
@@ -1113,7 +1113,7 @@ function renderList(listName) {
 
     const remove = el("button", {
       type: "button",
-      className: "btn btn-small btn-danger", innerHTML: '<i class="fa-solid fa-trash-can" style="margin-right: 0.3rem;"></i>Remove',
+      className: "btn btn-small btn-danger", innerHTML: '<i class="fa-solid fa-trash-can btn-icon-spacing"></i>Remove',
       onclick: async () => {
         if (item.imageKey) await deleteImage(item.imageKey).catch(() => {});
         collapsedRows.delete(item._key);
@@ -1276,7 +1276,7 @@ function syncToggleAllLabel() {
   const button = root.querySelector("[data-action='toggle-all']");
   if (!button) return;
   const anyOpen = sectionToggles().some((t) => t.getAttribute("aria-expanded") === "true");
-  button.innerHTML = anyOpen ? '<i class="fa-solid fa-compress" style="margin-right: 0.3rem;"></i>Collapse all' : '<i class="fa-solid fa-expand" style="margin-right: 0.3rem;"></i>Expand all';
+  button.innerHTML = anyOpen ? '<i class="fa-solid fa-compress btn-icon-spacing"></i>Collapse all' : '<i class="fa-solid fa-expand btn-icon-spacing"></i>Expand all';
 }
 
 function initSections() {
@@ -1423,6 +1423,21 @@ const busy = (title) =>
     allowOutsideClick: false,
     allowEscapeKey: false,
     didOpen: () => Swal.showLoading(),
+  });
+
+// An AI task shows its thinking orb where a plain task shows the spinner (see ai-status.js).
+const aiBusy = (title, state) =>
+  Swal.fire({
+    ...dialog,
+    title,
+    html: '<div class="ai-orb-slot" style="display:flex;justify-content:center;padding:.5rem 0"></div>',
+    allowOutsideClick: false,
+    allowEscapeKey: false,
+    showConfirmButton: false,
+    didOpen: (popup) => {
+      if (window.AiStatus) popup.querySelector(".ai-orb-slot").append(window.AiStatus.orb(state, 64));
+      else Swal.showLoading();
+    },
   });
 
 // ---------------------------------------------------------------------------
@@ -1850,8 +1865,8 @@ async function saveToServer(button) {
 async function extractWithAI(button, item, record) {
   const original = button.innerHTML;
   button.disabled = true;
-  button.innerHTML = '<i class="fa-solid fa-spinner fa-spin" style="margin-right: 0.3rem;"></i>Reading...';
-  busy("Reading the certificate with Claude…");
+  button.innerHTML = '<i class="fa-solid fa-spinner fa-spin btn-icon-spacing"></i>Reading...';
+  aiBusy("Reading the certificate with Claude…", "solving");
   try {
     const response = await fetch(`${apiBase()}__editor/extract`, {
       method: "POST",
@@ -2090,7 +2105,7 @@ async function loadStudentData() {
           const baseName = doc.replace(/\.(pdf|docx)$/, "");
           const displayEl = document.querySelector(`[data-doc-display="${baseName}"]`);
           if (displayEl) {
-            displayEl.innerHTML = `<i class="fa-solid fa-circle-check" style="color: var(--ok);"></i> Currently saved on disk: <strong>${doc}</strong>`;
+            displayEl.innerHTML = `<i class="fa-solid fa-circle-check icon-ok"></i> Currently saved on disk: <strong>${doc}</strong>`;
             displayEl.style.display = "inline-flex";
             displayEl.style.alignItems = "center";
             displayEl.style.gap = "0.4rem";

@@ -5,13 +5,13 @@
                 GENERATED from data/*.json by `npm run profile`. Never hand-edit it;
                 edit the JSON (or use /editor/) and re-run. A fact that is not in
                 data/ does not go in a CV, a letter or an interview answer.
-     · tracker  data/tracker.csv — one row per application. internship-tracker.xlsx
+     · tracker  data/applications.csv — one row per application. job_search_tracker.xlsx
                 is rendered from it by `npm run tracker`, which is safe to re-run.
      · statuses data/tracker-schema.json → statuses. The only status vocabulary.
      Code the framework ships — tools/, tests/, templates/, .agents/ portal CLIs,
      documents/ — lives under job-search/. See CLAUDE.md. -->
 
-Generate a self-contained HTML dashboard from `data/tracker.csv` and the application archives under `job-search/documents/applications/`. The output is a single `.html` file — no server, no dependencies — that can be opened directly in a browser.
+Generate a self-contained HTML dashboard from `data/applications.csv` and the application archives under `job-search/documents/applications/`. The output is a single `.html` file — no server, no dependencies — that can be opened directly in a browser.
 
 ## Step 0: Parse Arguments
 
@@ -27,7 +27,7 @@ Create `reports/` if it does not exist.
 
 Read in parallel:
 
-1. **`data/tracker.csv`** — the primary source. Parse every row into a record with fields:
+1. **`data/applications.csv`** — the primary source. Parse every row into a record with fields:
    `date`, `company`, `sector`, `role`, `role_type`, `channel`, `status`, `contact_person`, `fit_rating`, `notes`, `cv_file`, `cover_letter_file`, `source`, `deadline`
 
    Rows written before `deadline` existed have thirteen fields and no fourteenth value. Treat the missing field as empty - never drop the row, and never infer a deadline from its `date`.
@@ -160,6 +160,6 @@ Then present:
 
 ## In this project
 
-- Read `data/tracker.csv` and the archives under `job-search/documents/applications/`.
+- Read `data/applications.csv` and the archives under `job-search/documents/applications/`.
 - Group and colour by the statuses in `data/tracker-schema.json`; `open: true` is what
   counts as still in play.

@@ -21,13 +21,13 @@ or points at them.
 | Spine file | Owns | Generated from it |
 |---|---|---|
 | `data/profile.json`, `data/experience.json`, `data/projects.json`, `data/certificates.json`, `data/profile-extras.json` | Who you are | the site's pages, and `.claude/skills/job-application-assistant/01-candidate-profile.md` via `npm run profile` |
-| `data/tracker.csv` | Every application, one row each | `internship-tracker.xlsx` via `npm run tracker` |
+| `data/applications.csv` | Every application, one row each | `job_search_tracker.xlsx` via `npm run tracker` |
 | `data/tracker-schema.json` | The tracker's columns, and the **only** status vocabulary | the workbook's columns and validation, and what every command reads/writes |
 
 Rules that follow from that:
 
 - **Never hand-edit a generated file.** `01-candidate-profile.md` and
-  `internship-tracker.xlsx` are outputs. Edit the JSON or the CSV and re-run the
+  `job_search_tracker.xlsx` are outputs. Edit the JSON or the CSV and re-run the
   script; a hand edit is gone at the next build.
 - **A fact that is not in `data/` does not exist.** Not on the CV, not in a cover
   letter, not in an interview answer. If a fact surfaces mid-conversation, write it
@@ -39,9 +39,17 @@ Rules that follow from that:
   re-sorts nothing on load. Reordering an array is a real edit to the profile, so
   never rearrange one incidentally. `byDateDesc` is there when date order is
   wanted explicitly, and `/editor/` reorders by dragging.
+- **The student's files stay out of git too.** `src/assets/Student-data/student.json`, the two
+  base `.docx` files and everything in `Student-data/tailored/` (the per-application CV and
+  cover letter) hold contact details, so they are gitignored and never published. The workspace
+  reads them locally to suggest a search, score jobs and tailor documents; the AI provider is
+  chosen in `.env` (`LLM_PROVIDER`, see `.env.example`). The phone number lives in
+  `data/profile-private.json`, also gitignored: never put it in `profile-extras.json`,
+  because that file and the generated candidate profile are committed.
 - **The tracker stays out of git.** It holds employers' contact names, e-mails and
-  phone numbers, and this repo publishes a public site. `data/tracker.csv` is
-  gitignored; `data/tracker.example.csv` carries the header so the schema is still
+  phone numbers, and this repo publishes a public site. `data/applications.csv`
+  and `job_search_tracker.xlsx` are gitignored; `data/applications.example.csv`
+  carries the header so the schema is still
   reviewable in a diff.
 
 ## One of everything
@@ -83,7 +91,7 @@ root tree.
 | `npm run editor` | Serves `/editor/` and `/workspace/` locally — the only mode where they can write files or run tasks |
 | `npm run profile` | Regenerate the framework's candidate profile from `data/*.json` |
 | `npm run profile:check` | Fail if that file is stale (what CI should run) |
-| `npm run tracker` | Re-render `internship-tracker.xlsx` from `data/tracker.csv` |
+| `npm run tracker` | Re-render `job_search_tracker.xlsx` from `data/applications.csv` |
 | `npm run skills:harvest` | Pull advert requirements out of the tracker into `data/skill-pool.json` |
 | `npm run build` / `npm run serve` | Build or serve the site |
 
@@ -93,7 +101,7 @@ rendering of them.
 ## The workspace page
 
 `/workspace/` is the student-facing front end. Under `npm run editor` it reads
-`data/tracker.csv` live, runs the four deterministic npm tasks above through
+`data/applications.csv` live, runs the four deterministic npm tasks above through
 `POST /__editor/run` (a fixed task map — the browser names a key, never a
 command), and appends tracker rows through `POST /__editor/tracker`. On the
 published site it is static and says so: nothing runs, the tracker is empty, and

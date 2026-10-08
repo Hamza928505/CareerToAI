@@ -1,7 +1,7 @@
 /**
  * Harvest the skills out of the internship tracker into data/skill-pool.json.
  *
- *   npm run skills:harvest                     # from data/tracker.csv
+ *   npm run skills:harvest                     # from data/applications.csv
  *   npm run skills:harvest -- some-other.xlsx   # from a workbook elsewhere
  *
  * The "Skills they ask for" column fills up with real requirements from real
@@ -68,7 +68,7 @@ function readExisting() {
 }
 
 /**
- * The tracker rows, straight from data/tracker.csv. That file is the source of
+ * The tracker rows, straight from data/applications.csv. That file is the source of
  * truth, so harvesting no longer needs the workbook to have been built first;
  * an explicit .xlsx path still works for a workbook from somewhere else.
  */
@@ -97,7 +97,7 @@ async function main() {
   const file = path.resolve(explicit);
   if (!fs.existsSync(file)) {
     console.error(`No workbook at ${path.relative(ROOT, file).replace(/\\/g, "/")}.`);
-    console.error("Omit the argument to harvest from data/tracker.csv, or pass a real path.");
+    console.error("Omit the argument to harvest from data/applications.csv, or pass a real path.");
     process.exitCode = 1;
     return;
   }

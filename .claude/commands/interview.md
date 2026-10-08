@@ -5,7 +5,7 @@
                 GENERATED from data/*.json by `npm run profile`. Never hand-edit it;
                 edit the JSON (or use /editor/) and re-run. A fact that is not in
                 data/ does not go in a CV, a letter or an interview answer.
-     · tracker  data/tracker.csv — one row per application. internship-tracker.xlsx
+     · tracker  data/applications.csv — one row per application. job_search_tracker.xlsx
                 is rendered from it by `npm run tracker`, which is safe to re-run.
      · statuses data/tracker-schema.json → statuses. The only status vocabulary.
      Code the framework ships — tools/, tests/, templates/, .agents/ portal CLIs,
@@ -23,7 +23,7 @@ Follow these steps **in order**.
 
 `$ARGUMENTS` may contain a company name (optionally with a role), e.g. `/interview acme`.
 
-- **With an argument:** match against `data/tracker.csv` rows (case-insensitive on company, then role). One match → proceed. Several → list and ask. None → this application isn't tracked; suggest `/outcome <company>` to register it first, or accept the posting and role details directly if the user wants to prep anyway.
+- **With an argument:** match against `data/applications.csv` rows (case-insensitive on company, then role). One match → proceed. Several → list and ask. None → this application isn't tracked; suggest `/outcome <company>` to register it first, or accept the posting and role details directly if the user wants to prep anyway.
 - **Without an argument:** list tracker rows whose status suggests a live process — an open status per the **Tracker status vocabulary** in `/outcome` (`interview`, `offer`, or recently `applied`; `drafted` is open but nothing was sent, so it never qualifies) — and ask which one. If the tracker is empty, ask for the company, role, and posting.
 
 v1 preps for a **specific application**. Generic no-target practice is out of scope - if asked, prep against a real tracked application instead.
@@ -125,7 +125,7 @@ If Step 3 drafted new STAR answers the user approved for keeps, remind them thos
 
 ## In this project
 
-- Load the row from `data/tracker.csv` and its archive under
+- Load the row from `data/applications.csv` and its archive under
   `job-search/documents/applications/`.
 - STAR material comes from `01-candidate-profile.md` and `data/experience.json`. If an
   example is not recorded there, say so and ask — do not invent one.

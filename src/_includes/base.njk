@@ -54,9 +54,11 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous">
 <link rel="stylesheet" href="{{ '/assets/style.css' | url }}">
 {% if pageStyles %}<link rel="stylesheet" href="{{ pageStyles | url }}">{% endif %}
+<link rel="stylesheet" href="{{ '/assets/redesign.css' | url }}">
 
 </head>
 <body>
@@ -67,26 +69,14 @@
 
 <header class="site-header">
   <div class="bar">
-    <a class="wordmark" href="{{ '/' | url }}">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18" aria-hidden="true">
-        <path d="M4 19V7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12"/><path d="M4 19h16"/><path d="M9 5V3h6v2"/><path d="M9 12h6"/>
-      </svg>
-      CareerToAI<span class="dot">.</span>
-    </a>
+    <a class="wordmark" href="{{ '/' | url }}" aria-label="CareerToAI home">CareerTo<span>AI</span></a>
     <nav aria-label="Primary">
       <ul>
-        <li><a href="{{ '/' | url }}"{% if page.url == '/' %} aria-current="page"{% endif %}>
-          <i class="fa-solid fa-user" style="margin-right: 0.3rem;"></i>
-          Profile</a></li>
+        <li><a href="{{ '/' | url }}"{% if page.url == '/' or page.url == '/editor/' %} aria-current="page"{% endif %}>Profile</a></li>
           <li><a href="{{ '/guide/' | url }}"{% if page.url == '/guide/' %} aria-current="page"{% endif %}>
-            <i class="fa-solid fa-book" style="margin-right: 0.3rem;"></i>
-            GY Guide</a></li>
+            German Year Guide</a></li>
         <li><a href="{{ '/workspace/' | url }}"{% if page.url == '/workspace/' %} aria-current="page"{% endif %}>
-            <i class="fa-solid fa-desktop" style="margin-right: 0.3rem;"></i>
             Workspace</a></li>
-        <li><a href="{{ '/editor/' | url }}"{% if page.url == '/editor/' %} aria-current="page"{% endif %}>
-            <i class="fa-solid fa-pen-to-square" style="margin-right: 0.3rem;"></i>
-            Editor</a></li>
         <li>
           <button class="theme-toggle" type="button" id="theme-toggle"
                   aria-label="Switch to dark theme" title="Switch theme">
@@ -112,13 +102,9 @@
 </div>
 
 <footer class="site-footer">
-  <p>
-    This page is built as static HTML so that any AI assistant or crawler can read it
-    without executing JavaScript. Machine-readable alternatives:
-    <a href="{{ '/llms.txt' | url }}">/llms.txt</a> (plain text) and
-    <a href="{{ '/data/certificates.json' | url }}">/data/certificates.json</a> (raw data).
-  </p>
-  <p><small>Last built <time datetime="{{ site.buildDate }}">{{ site.buildDay }}</time>.</small></p>
+  <p><strong>{{ profile.name }}</strong><br>Built to be read by people and machines.</p>
+  <p class="footer-links"><a href="{{ '/llms.txt' | url }}">Plain text profile</a><a href="{{ '/data/profile.json' | url }}">Profile JSON</a><a href="{{ '/data/certificates.json' | url }}">Certificates JSON</a></p>
+  <p class="footer-date"><small>Updated <time datetime="{{ site.buildDate }}">{{ site.buildDay }}</time></small></p>
 </footer>
 <script>
   // Toggles between an explicit light and dark choice, remembers it, and keeps

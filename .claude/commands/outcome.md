@@ -9,7 +9,7 @@ you were rejected, because it makes the next application better.
 
 ## Step 1 — Update the row
 
-Find the row in `data/tracker.csv` by company name. If there is no row, say so and
+Find the row in `data/applications.csv` by company name. If there is no row, say so and
 stop — do not create one from a bare company name. Status values come from
 `data/tracker-schema.json`; that list is the only vocabulary, shared with
 `/rank`, `/html-report`, `/gmail-sync` and `/notion-sync`.
@@ -25,10 +25,10 @@ Set what the outcome implies:
 | Offer | Status = `Offer` |
 | Accepted | Status = `Accepted` |
 | Rejected | Status = `Rejected`, `Answer` = No |
-| Withdrawn | Status = `Withdrawn`, with the reason in Notes |
+| Withdrawn | Status = `Rejected`, Reason lost = `I declined`, with the reason in Notes |
 
-After editing, run `npm run tracker` to re-render `internship-tracker.xlsx` from
-the CSV. That is safe now: the rows live in `data/tracker.csv`.
+After editing, run `npm run tracker` to re-render `job_search_tracker.xlsx` from
+the CSV. That is safe now: the rows live in `data/applications.csv`.
 
 ## Step 2 — On a rejection, ask what it teaches
 

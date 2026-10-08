@@ -165,7 +165,7 @@ work-in-progress between devices.
 - **Check a posting** — the GJU eligibility checker. Enter duration, country, pay
   and working language and it scores against `data/gju-rules.json`, the same file
   the workbook's Fit % formula uses, and names the rule behind every flag.
-- **Your tracker** — your rows, read live from `data/tracker.csv`, plus a form to
+- **Your tracker** — your rows, read live from `data/applications.csv`, plus a form to
   add one by hand.
 
 Everything except the checker needs `npm run editor`: a static host cannot write
@@ -577,7 +577,7 @@ one profile, one tracker, one status vocabulary — described in [CLAUDE.md](CLA
 | Spine file | Owns | Generated from it |
 |---|---|---|
 | `data/profile.json`, `experience.json`, `projects.json`, `certificates.json`, `profile-extras.json` | Who you are | the site's pages, and the framework's `01-candidate-profile.md` (`npm run profile`) |
-| `data/tracker.csv` | Every application, one row each | `internship-tracker.xlsx` (`npm run tracker`) |
+| `data/applications.csv` | Every application, one row each | `job_search_tracker.xlsx` (`npm run tracker`) |
 | `data/tracker-schema.json` | Tracker columns, and the only status vocabulary | the workbook's columns and validation |
 
 So the editor at `/editor/` is where you keep your profile current, and `/apply`,
@@ -591,8 +591,10 @@ and one `.github/`. `job-search/` holds the framework's code only: `tools/`,
 CLIs under `.agents/skills/*/cli/`, which keep their own `package.json` because
 they are independent Bun packages.
 
-`data/tracker.csv` is gitignored — it holds employers' contact details and this site
-is public. `data/tracker.example.csv` carries the header.
+`data/applications.csv` and `job_search_tracker.xlsx` are gitignored — they hold
+employers' contact details and this site is public. `data/applications.example.csv`
+carries the header. Your phone number lives in the gitignored `data/profile-private.json`
+for the same reason.
 
 ```
 job-search/
@@ -618,7 +620,7 @@ Both are available; they answer different questions.
 | Rules from | `src/assets/gy-internships/` | `04-job-evaluation.md` |
 | Output | German `Anschreiben` | Tailored LaTeX CV + cover letter PDFs |
 | Profile | `.claude/skills/job-application-assistant/01-candidate-profile.md`, generated from `data/*.json` | the same file |
-| Tracker | `data/tracker.csv` | the same file |
+| Tracker | `data/applications.csv` | the same file |
 
 Both now read the same profile and write the same tracker — that is what makes them
 one project rather than two. The GJU skill outranks the general one for a German Year

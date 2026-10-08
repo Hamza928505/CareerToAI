@@ -8,6 +8,7 @@ pageDescription: >-
   internship at the German Jordanian University, assembled from the official
   GJU and Office for Industrial Links documents.
 pageStyles: /assets/home.css
+pageScript: /assets/guide.js
 ---
 
 {% set docs = "/assets/gy-internships" %}
@@ -74,7 +75,7 @@ pageStyles: /assets/home.css
 
     <!-- ------------------------------------------------------------------ -->
     <section id="overview" aria-labelledby="overview-heading">
-      <h2 id="overview-heading"><i class="fa-solid fa-circle-chevron-right" style="margin-right: 0.4rem; font-size: 0.8em; color: var(--accent);"></i>What the German Year is</h2>
+      <h2 id="overview-heading"><i class="fa-solid fa-circle-chevron-right guide-icon"></i>What the German Year is</h2>
       <p>
         To graduate from GJU you must spend one full academic year studying and training in
         Germany. The year splits in two, and the order is fixed: <strong>study semester
@@ -128,7 +129,7 @@ pageStyles: /assets/home.css
 
     <!-- ------------------------------------------------------------------ -->
     <section id="before" aria-labelledby="before-heading">
-      <h2 id="before-heading"><i class="fa-solid fa-circle-chevron-right" style="margin-right: 0.4rem; font-size: 0.8em; color: var(--accent);"></i>Before you travel</h2>
+      <h2 id="before-heading"><i class="fa-solid fa-circle-chevron-right guide-icon"></i>Before you travel</h2>
       <p>
         Failing any prerequisite lets your School and the International Office stop you from
         travelling — <em>even at the last minute</em>, and you carry the financial loss. Check
@@ -206,7 +207,32 @@ pageStyles: /assets/home.css
 
     <!-- ------------------------------------------------------------------ -->
     <section id="timeline" aria-labelledby="timeline-heading">
-      <h2 id="timeline-heading"><i class="fa-solid fa-circle-chevron-right" style="margin-right: 0.4rem; font-size: 0.8em; color: var(--accent);"></i>The year, step by step</h2>
+      <h2 id="timeline-heading"><i class="fa-solid fa-circle-chevron-right guide-icon"></i>The year, step by step</h2>
+      <figure class="guide-chart">
+        <div id="internship-span" class="chart-container" role="img"
+             aria-label="The internship needs {{ gju.rules.minWeeks }} weeks at minimum and is recognised up to {{ gju.rules.maxRecognisedMonths }} months. The report is handed in within {{ gju.rules.handInMonths }} months after it."></div>
+        <figcaption>From your first day to a finished file, in weeks. The first {{ gju.rules.minWeeks }} are the minimum; time up to {{ gju.rules.maxRecognisedMonths }} months is recognised; the report follows within {{ gju.rules.handInMonths }} months.</figcaption>
+      </figure>
+      <script type="module">
+        import { render, newSpec, getChart } from "{{ '/assets/opencharts/js/opencharts.js' | url }}";
+        const r = {{ gju.rules | dump | safe }};
+        const wk = (m) => Math.round((m * 52) / 12);
+        const end = wk(r.maxRecognisedMonths);
+        const base = newSpec(getChart("timeline")).opts;
+        render(document.getElementById("internship-span"), {
+          chart: "timeline",
+          spec: {
+            events: [
+              { label: `Minimum: ${r.minWeeks} weeks`, start: 0, end: r.minWeeks, lane: 0, color: "#F59E0B" },
+              { label: `Recognised up to ${r.maxRecognisedMonths} months`, start: r.minWeeks, end, lane: 0, color: "#38BDF8" },
+              { label: `Report within ${r.handInMonths} months`, start: end, end: end + wk(r.handInMonths), lane: 1, color: "#14B8A6" },
+            ],
+            axisLabel: "Week",
+            opts: { ...base, min: 0, max: end + wk(r.handInMonths) + 2, tickStep: 4, showLabels: true },
+          },
+          height: 180,
+        });
+      </script>
       <ol class="steps">
         <li>
           <h3>Nomination and distribution</h3>
@@ -271,7 +297,7 @@ pageStyles: /assets/home.css
 
     <!-- ------------------------------------------------------------------ -->
     <section id="search" aria-labelledby="search-heading">
-      <h2 id="search-heading"><i class="fa-solid fa-circle-chevron-right" style="margin-right: 0.4rem; font-size: 0.8em; color: var(--accent);"></i>Finding an internship</h2>
+      <h2 id="search-heading"><i class="fa-solid fa-circle-chevron-right guide-icon"></i>Finding an internship</h2>
       <p class="callout callout-tip">
         <strong>Do not wait.</strong> Start applying the week you land. And do not hold out
         for a famous name — smaller and mid-sized companies are often the better internship:
@@ -382,7 +408,7 @@ pageStyles: /assets/home.css
 
     <!-- ------------------------------------------------------------------ -->
     <section id="cv" aria-labelledby="cv-heading">
-      <h2 id="cv-heading"><i class="fa-solid fa-circle-chevron-right" style="margin-right: 0.4rem; font-size: 0.8em; color: var(--accent);"></i>The CV (<span lang="de">Lebenslauf</span>)</h2>
+      <h2 id="cv-heading"><i class="fa-solid fa-circle-chevron-right guide-icon"></i>The CV (<span lang="de">Lebenslauf</span>)</h2>
       <p>
         A German CV is a table, not a story, and it is the first impression the company gets.
         Rewrite it for each application: decide every time which facts actually matter for
@@ -464,7 +490,7 @@ pageStyles: /assets/home.css
 
     <!-- ------------------------------------------------------------------ -->
     <section id="cover-letter" aria-labelledby="cover-letter-heading">
-      <h2 id="cover-letter-heading"><i class="fa-solid fa-circle-chevron-right" style="margin-right: 0.4rem; font-size: 0.8em; color: var(--accent);"></i>The cover letter (<span lang="de">Anschreiben</span>)</h2>
+      <h2 id="cover-letter-heading"><i class="fa-solid fa-circle-chevron-right guide-icon"></i>The cover letter (<span lang="de">Anschreiben</span>)</h2>
       <p>
         This is where you argue that <em>you</em> are the right person. The reader will spend
         very little time on it, so it has to be short and interesting. One page — roughly
@@ -572,7 +598,7 @@ Sehr geehrte Frau Rösner,</pre>
 
     <!-- ------------------------------------------------------------------ -->
     <section id="sending" aria-labelledby="sending-heading">
-      <h2 id="sending-heading"><i class="fa-solid fa-circle-chevron-right" style="margin-right: 0.4rem; font-size: 0.8em; color: var(--accent);"></i>Sending the application</h2>
+      <h2 id="sending-heading"><i class="fa-solid fa-circle-chevron-right guide-icon"></i>Sending the application</h2>
 
       <h3>What goes in the PDF</h3>
       <p>
@@ -651,7 +677,7 @@ Vorname Nachname</pre>
 
     <!-- ------------------------------------------------------------------ -->
     <section id="interview" aria-labelledby="interview-heading">
-      <h2 id="interview-heading"><i class="fa-solid fa-circle-chevron-right" style="margin-right: 0.4rem; font-size: 0.8em; color: var(--accent);"></i>The interview</h2>
+      <h2 id="interview-heading"><i class="fa-solid fa-circle-chevron-right guide-icon"></i>The interview</h2>
       <p>
         An invitation already means they liked the application. The conversation usually
         runs an hour at most and follows a predictable shape.
@@ -761,7 +787,7 @@ only carefully.</p>
 
     <!-- ------------------------------------------------------------------ -->
     <section id="during" aria-labelledby="during-heading">
-      <h2 id="during-heading"><i class="fa-solid fa-circle-chevron-right" style="margin-right: 0.4rem; font-size: 0.8em; color: var(--accent);"></i>During the internship</h2>
+      <h2 id="during-heading"><i class="fa-solid fa-circle-chevron-right guide-icon"></i>During the internship</h2>
       <ul class="checklist">
         <li><strong>Get the contract.</strong> The company sends an internship contract for you to sign. Check that the placement is not shorter than 20 weeks.</li>
         <li><strong>Stay enrolled</strong> at your German host university for the second semester. Your visa and work permit depend on it.</li>
@@ -788,7 +814,7 @@ only carefully.</p>
 
     <!-- ------------------------------------------------------------------ -->
     <section id="after" aria-labelledby="after-heading">
-      <h2 id="after-heading"><i class="fa-solid fa-circle-chevron-right" style="margin-right: 0.4rem; font-size: 0.8em; color: var(--accent);"></i>Certificate and report</h2>
+      <h2 id="after-heading"><i class="fa-solid fa-circle-chevron-right guide-icon"></i>Certificate and report</h2>
       <p class="callout callout-warn">
         Both documents are due <strong>within two months of the next semester</strong>.
         Hand them in late and you are blocked from registering.
@@ -884,7 +910,7 @@ only carefully.</p>
 
     <!-- ------------------------------------------------------------------ -->
     <section id="rules" aria-labelledby="rules-heading">
-      <h2 id="rules-heading"><i class="fa-solid fa-circle-chevron-right" style="margin-right: 0.4rem; font-size: 0.8em; color: var(--accent);"></i>Rules and edge cases</h2>
+      <h2 id="rules-heading"><i class="fa-solid fa-circle-chevron-right guide-icon"></i>Rules and edge cases</h2>
 
       <h3>Where the internship may be</h3>
       <div class="table-wrap">
@@ -1007,7 +1033,7 @@ only carefully.</p>
 
     <!-- ------------------------------------------------------------------ -->
     <section id="staying" aria-labelledby="staying-heading">
-      <h2 id="staying-heading"><i class="fa-solid fa-circle-chevron-right" style="margin-right: 0.4rem; font-size: 0.8em; color: var(--accent);"></i>Staying longer than planned</h2>
+      <h2 id="staying-heading"><i class="fa-solid fa-circle-chevron-right guide-icon"></i>Staying longer than planned</h2>
       <p>
         Internships often run past the end of the semester. Which route you take depends on
         how far past.
@@ -1057,7 +1083,7 @@ only carefully.</p>
 
     <!-- ------------------------------------------------------------------ -->
     <section id="library" aria-labelledby="library-heading">
-      <h2 id="library-heading"><i class="fa-solid fa-circle-chevron-right" style="margin-right: 0.4rem; font-size: 0.8em; color: var(--accent);"></i>Document library</h2>
+      <h2 id="library-heading"><i class="fa-solid fa-circle-chevron-right guide-icon"></i>Document library</h2>
       <p class="muted">
         The sixteen source documents, exactly as issued. Everything on this page is drawn
         from them; where the two disagree, these are what count.
@@ -1198,7 +1224,7 @@ only carefully.</p>
 
     <!-- ------------------------------------------------------------------ -->
     <section id="contacts" aria-labelledby="contacts-heading">
-      <h2 id="contacts-heading"><i class="fa-solid fa-circle-chevron-right" style="margin-right: 0.4rem; font-size: 0.8em; color: var(--accent);"></i>Who to contact</h2>
+      <h2 id="contacts-heading"><i class="fa-solid fa-circle-chevron-right guide-icon"></i>Who to contact</h2>
       <dl class="facts">
         <dt>Office for Industrial Links (OIL), GJU</dt>
         <dd>
@@ -1244,7 +1270,7 @@ only carefully.</p>
 
     <!-- ------------------------------------------------------------------ -->
     <section id="machine" aria-labelledby="machine-heading">
-      <h2 id="machine-heading"><i class="fa-solid fa-circle-chevron-right" style="margin-right: 0.4rem; font-size: 0.8em; color: var(--accent);"></i>For AI assistants and crawlers</h2>
+      <h2 id="machine-heading"><i class="fa-solid fa-circle-chevron-right guide-icon"></i>For AI assistants and crawlers</h2>
       <p>
         This page is one file of static HTML, rendered at build time. Nothing here needs
         JavaScript to read, no crawler is blocked, and every section has a stable

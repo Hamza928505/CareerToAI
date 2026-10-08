@@ -49,13 +49,13 @@ all in `src/assets/gy-internships/rules-and-regulations/`.
 
 | Check | Rule | If it fails |
 |---|---|---|
-| **Duration** | 20 weeks minimum, full time. Up to 6 months recognised. | Under 20 weeks does not satisfy the requirement on its own. Do not treat "we could extend" as duration; get it in the contract. |
+| **Duration** | 20 weeks minimum, full time. Up to 6 months recognised. **Not applied to a Werkstudent role** — that is part-time hours (about 140 a month, roughly 4 hours a day), so skip this row and the weeks flag for it. | Under 20 weeks does not satisfy the requirement on its own. Do not treat "we could extend" as duration; get it in the contract. |
 | **Country** | Germany preferred; Austria, Switzerland, Luxembourg approved easily. | German company elsewhere in Europe → Dean. Non-German company elsewhere in Europe → President. German company outside Europe → Deans' Council **and** President. Anything else → generally not approved. |
 | **Employer type** | Industry, company or institution. | A university laboratory or similar needs a genuine link to the study programme **plus** explicit Exchange Coordinator and Dean approval. |
 | **Timing** | The internship semester, after the study semester. | Any other timing needs the Dean's formal approval. |
 | **Parallel study** | No GJU courses during the internship semester. | Only a resit exam for a course already taken and failed. |
 
-Flag, do not fail, when the posting is silent on duration — most adverts are.
+For a Werkstudent role do not flag duration at all. Otherwise flag, do not fail, when the posting is silent on duration — most adverts are.
 Duration is the first thing to ask the employer about, and the answer decides
 whether the rest of the process is worth anything.
 
