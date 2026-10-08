@@ -105,13 +105,22 @@ REQUIRED_IGNORE_RULES = [
     # Belt-and-braces, not the primary guard: nothing writes here.
     # /interview's prep packs land under documents/applications/**, above.
     "**/documents/interview/**",
-    # The tracker moved to data/tracker.csv when the site and the framework were
-    # merged; it holds employers' contact details and this repo publishes a
-    # public site, so it stays out of git.
+    # The tracker lives in data/applications.csv (see data/tracker-schema.json),
+    # rendered to job_search_tracker.xlsx. Both hold employers' contact details
+    # and this repo publishes a public site, so they stay out of git, as do the
+    # legacy tracker files and the student's private contact details and CVs.
+    "data/applications.csv",
+    "job_search_tracker.xlsx",
+    "applications.xlsx",
     "data/tracker.csv",
+    "data/profile-private.json",
+    "src/assets/Student-data/student.json",
+    "src/assets/Student-data/*.docx",
+    "src/assets/Student-data/tailored/",
     "**/gmail_sync/",
     "**/reports/",
-    "**/upskill/*.md",`n    "!**/upskill/SKILL.md",
+    "**/upskill/*.md",
+    "!**/upskill/SKILL.md",
     # Depth-independent twin of the rule above. The upskill *skill* resolves
     # `upskill/` relative to its own directory - the same observed behavior
     # the **/job_scraper rules exist for - so reports can land at
@@ -138,6 +147,8 @@ REQUIRED_IGNORE_RULES = [
 # failure - add an intentional one here in the same PR, exactly as with
 # ALLOWED_PERMISSIONS, so the widening is explicit and reviewable.
 ALLOWED_IGNORE_NEGATIONS = {
+    # Keeps the upskill skill's own SKILL.md tracked despite **/upskill/*.md.
+    "!**/upskill/SKILL.md",
     "!**/cv/main_example.tex",
     "!**/cover_letters/cover_example.tex",
     "!**/cover_letters/OpenFonts/fonts/**",
