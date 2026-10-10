@@ -5,7 +5,7 @@ import path from "node:path";
 import test from "node:test";
 
 import { DEFAULT_CONFIG, capsFromCredits, limitedServers, nextState, orderGroups, pickAreas, pickPlatforms, strategyFor } from "../lib/board-budget.mjs";
-import { lookbackFor, planRun, runBoard } from "../lib/board-run.mjs";
+import { lookbackFor, lookbackForFree, planRun, runBoard } from "../lib/board-run.mjs";
 import { SEARCH_PLATFORMS } from "../lib/job-search.mjs";
 
 const rules = JSON.parse(fs.readFileSync(new URL("../data/gju-rules.json", import.meta.url), "utf8"));
@@ -34,7 +34,7 @@ const scrapeTool = { name: "firecrawl_scrape" };
  * A search provider that finds two postings per site, and a scraper that proves them.
  * `pageTitle(id)` is the title the posting page itself carries; `extraResults` are more search hits per site.
  */
-function fakeServers({ publishedDaysAgo = 0, pageTitle = () => "Praktikum Softwareentwicklung (m/w/d)", extraResults = [] } = {}) {
+function fakeServers({ publishedDaysAgo = 0, pageTitle = (id) => `Praktikum Softwareentwicklung ${id} (m/w/d)`, extraResults = [] } = {}) {
   const calls = { exa: 0, firecrawl: 0 };
   const pool = {
     errors: [],
@@ -45,7 +45,7 @@ function fakeServers({ publishedDaysAgo = 0, pageTitle = () => "Praktikum Softwa
         calls.firecrawl++;
         const posting = {
           "@type": "JobPosting", title: pageTitle(new URL(args.url).searchParams.get("jobId")), url: args.url, datePosted: berlin(publishedDaysAgo),
-          hiringOrganization: { name: "Firma GmbH" }, jobLocation: { address: { addressLocality: "Berlin" } },
+          hiringOrganization: { name: `Firma ${new URL(args.url).hostname}` }, jobLocation: { address: { addressLocality: "Berlin" } }, // one company per site: the same company, title and city would be one internship
           description: "Dauer: 6 Monate. 1.000 € pro Monat. Deutsch B2. Python und SQL. Kontakt: hr@firma.de",
         };
         return { structuredContent: { metadata: { url: args.url, statusCode: 200 }, rawHtml: `<script type="application/ld+json">${JSON.stringify(posting)}</script>` } };
@@ -59,7 +59,8 @@ function fakeServers({ publishedDaysAgo = 0, pageTitle = () => "Praktikum Softwa
   return { openServers: async () => pool, calls };
 }
 
-const smallConfig = { ...DEFAULT_CONFIG, areasPerRun: 2, platformsPerRun: 3, caps: { exa: 50, tavily: 50, firecrawl: 50 }, reserve: {} };
+// The free Arbeitsagentur source is off here so these tests never reach the network; its own tests inject a fake source.
+const smallConfig = { ...DEFAULT_CONFIG, areasPerRun: 2, platformsPerRun: 3, caps: { exa: 50, tavily: 50, firecrawl: 50 }, reserve: {}, arbeitsagentur: { enabled: false } };
 const run = (dir, servers, extra = {}) => runBoard({ boardDir: dir, statePath: path.join(dir, "state.json"), rules, germanCities: new Set(["berlin"]), openServers: servers.openServers, config: smallConfig, today, ...extra });
 const read = (dir, ...parts) => JSON.parse(fs.readFileSync(path.join(dir, ...parts), "utf8"));
 
@@ -247,4 +248,127 @@ test("a hit that slips past the search but is not an internship is dropped by th
   assert.equal(summary.added, 0);
   assert.deepEqual(read(dir, "data", "postings.json"), []);
   assert.ok(read(dir, "state.json").ignored.some((url) => url.includes("jobId=Z")));
+});
+
+// ------------------------------------------------------------ the free source (Arbeitsagentur), injected so nothing reaches the network
+
+const ago = (days) => new Date(Date.parse(today) - days * 86_400_000).toISOString().slice(0, 10);
+const baUrl = (n) => `https://www.arbeitsagentur.de/jobsuche/jobdetail/${n}-A-S`;
+const baHit = (over = {}) => ({
+  title: "Praktikum Softwareentwicklung (m/w/d)", company: "Firma GmbH", location: "Berlin, Deutschland", url: baUrl(1), date_posted: today,
+  source: "Arbeitsagentur Jobbörse", data_source: "arbeitsagentur", snippet: "Softwareentwickler/in", description: "Dauer: 6 Monate. Deutsch B2. Python und SQL.", ...over,
+});
+/** A stand-in for fetchArbeitsagentur that returns `jobs` and remembers what it was asked. */
+const fromFree = (jobs, extra = {}) => {
+  const asked = [];
+  const searchFree = async (options) => { asked.push(options); return { jobs, known: [], settled: [], warnings: [], stats: { notFetched: 0, fetched: jobs.length }, ...extra }; };
+  return { searchFree, asked };
+};
+const freeConfig = { ...smallConfig, arbeitsagentur: { enabled: true } };
+
+test("the free source fills the board without credits, keeps what fits a GJU major, and dates each internship by its publication day", async () => {
+  const dir = boardDir();
+  const servers = fakeServers();
+  const { searchFree, asked } = fromFree([
+    baHit({ date_posted: ago(4) }),
+    baHit({ title: "Praktikum Friseurhandwerk (m/w/d)", url: baUrl(2), snippet: "Friseur/in", description: "Dauer: 3 Monate. Haare schneiden." }), // fits no GJU major
+    baHit({ title: "Werkstudent Softwareentwicklung (m/w/d)", url: baUrl(3) }), // not an internship
+  ]);
+  const readCredits = async () => { throw new Error("the free source must not read credits"); };
+  const summary = await run(dir, servers, { config: freeConfig, sources: ["arbeitsagentur"], searchFree, readCredits });
+
+  assert.equal(summary.added, 1);
+  assert.equal(summary.notRelevant, 1);
+  assert.equal(summary.notInternship, 1);
+  assert.equal(servers.calls.exa + servers.calls.firecrawl, 0);
+  const [posting] = read(dir, "data", "postings.json");
+  assert.equal(posting.source, "Arbeitsagentur Jobbörse");
+  assert.deepEqual(posting.weeks, { min: 26, max: 26 });
+  assert.equal(posting.firstSeen, ago(4)); // counts from the day it was published, so the charts and the date filter tell the truth
+  assert.equal(read(dir, "data", "days", `${ago(4)}.json`).length, 1);
+  assert.ok(!fs.existsSync(path.join(dir, "data", "days", `${today}.json`)));
+  assert.deepEqual(read(dir, "data", "index.json").days, [{ date: ago(4), count: 1 }]);
+
+  assert.deepEqual([asked[0].oldest, asked[0].today], [ago(DEFAULT_CONFIG.backfillDays), today]); // nothing read before: the long window
+  const state = read(dir, "state.json");
+  assert.equal(state.sources.arbeitsagentur.lastRun, today);
+  assert.deepEqual(state.areas, {}); // the credit search did not run: no area counts as searched
+  assert.ok(state.ignored.includes(baUrl(2)) && state.ignored.includes(baUrl(3))); // read and rejected: never read again
+  const { lastRun } = read(dir, "data", "index.json");
+  assert.deepEqual(lastRun.platforms, ["Arbeitsagentur Jobbörse"]);
+  assert.deepEqual(lastRun.areas, majorsFile.areas);
+});
+
+test("with no credits left the free source still runs, and the run says the credit search was skipped", async () => {
+  const dir = boardDir();
+  const servers = fakeServers();
+  const summary = await run(dir, servers, {
+    config: { ...freeConfig, reserve: { exa: 0, tavily: 100, firecrawl: 100 }, caps: { exa: 0, tavily: 5, firecrawl: 5 } },
+    readCredits: async () => [{ id: "tavily", status: "ok", remaining: 100 }, { id: "firecrawl", status: "ok", remaining: 100 }],
+    searchFree: fromFree([baHit()]).searchFree,
+  });
+  assert.equal(summary.added, 1);
+  assert.equal(summary.complete, false);
+  assert.match(summary.warnings.join(" "), /No credits/);
+  assert.equal(servers.calls.exa + servers.calls.firecrawl, 0);
+});
+
+test("the same internship found on another site is published once, and its second link is not read again", async () => {
+  const dir = boardDir();
+  await run(dir, fakeServers()); // the credit search publishes "Praktikum Softwareentwicklung A" of "Firma indeed.de" in Berlin
+  const before = read(dir, "data", "postings.json");
+  const twin = before.find((p) => p.company === "Firma indeed.de" && / A \(m\/w\/d\)$/.test(p.title));
+  assert.ok(twin, "the fixture changed");
+  const { searchFree } = fromFree([baHit({ company: twin.company, title: twin.title, url: baUrl(77) })]); // same company, title and city, a link of its own
+  const summary = await run(dir, fakeServers(), { config: freeConfig, sources: ["arbeitsagentur"], searchFree });
+  assert.equal(summary.added, 0);
+  assert.equal(summary.duplicates, 1);
+  assert.equal(read(dir, "data", "postings.json").length, before.length);
+  assert.ok(read(dir, "state.json").ignored.includes(baUrl(77)));
+});
+
+test("the free source looks back to its last complete run; a run that left something unread does not move that date on", async () => {
+  const state = (lastRun) => ({ sources: { arbeitsagentur: { lastRun } } });
+  assert.equal(lookbackForFree({ config: freeConfig, state: {}, today }), freeConfig.backfillDays); // first run: the long window
+  assert.equal(lookbackForFree({ config: freeConfig, state: state(ago(1)), today }), freeConfig.maxAgeDays); // daily: the short window
+  assert.equal(lookbackForFree({ config: freeConfig, state: state(ago(6)), today }), 7); // after a gap: back to the last run
+  assert.equal(lookbackForFree({ config: freeConfig, state: state(ago(40)), today }), freeConfig.backfillDays); // never beyond the backfill
+  assert.equal(lookbackForFree({ config: { ...freeConfig, lookbackDays: 9 }, state: state(ago(1)), today }), 9); // --since wins
+
+  const dir = boardDir();
+  const left = fromFree([baHit()], { stats: { notFetched: 3 }, warnings: ["3 more internships were not read this run"] });
+  await run(dir, fakeServers(), { config: freeConfig, sources: ["arbeitsagentur"], searchFree: left.searchFree });
+  assert.equal(read(dir, "state.json").sources?.arbeitsagentur, undefined);
+  const all = fromFree([baHit({ url: baUrl(5), title: "Praktikum Softwareentwicklung Zwei (m/w/d)" })]);
+  await run(dir, fakeServers(), { config: freeConfig, sources: ["arbeitsagentur"], searchFree: all.searchFree });
+  assert.equal(read(dir, "state.json").sources.arbeitsagentur.lastRun, today);
+});
+
+test("the sources can be chosen and switched off; a failing free source does not stop the credit search", async () => {
+  const spy = fromFree([baHit()]);
+  const onlyCredits = await run(boardDir(), fakeServers(), { config: freeConfig, sources: ["search"], searchFree: spy.searchFree });
+  assert.equal(spy.asked.length, 0);
+  assert.ok(onlyCredits.added > 0);
+
+  const off = await run(boardDir(), fakeServers(), { config: smallConfig, searchFree: spy.searchFree }); // arbeitsagentur.enabled is false
+  assert.equal(spy.asked.length, 0);
+  assert.ok(off.added > 0);
+
+  const broken = async () => { throw new Error("the Arbeitsagentur answered 403 (the service may have changed or blocked us)"); };
+  const failing = await run(boardDir(), fakeServers(), { config: freeConfig, searchFree: broken });
+  assert.ok(failing.added > 0); // the credit search ran
+  assert.equal(failing.complete, false);
+  assert.match(failing.warnings.join(" "), /Arbeitsagentur: the Arbeitsagentur answered 403/);
+  assert.equal(failing.sources.arbeitsagentur, undefined);
+});
+
+// The agency's terms of use forbid robots and automated reading of its portal (section 2a(3)), so the source is opt-in and the switch is strict.
+test("the free source is off unless the configuration says true: not by default, not when the setting leaves 'enabled' out", async () => {
+  assert.equal(DEFAULT_CONFIG.arbeitsagentur.enabled, false);
+  const spy = fromFree([baHit()]);
+  for (const arbeitsagentur of [DEFAULT_CONFIG.arbeitsagentur, undefined, { maxDetails: 5 }, { enabled: "yes" }, { enabled: 1 }]) {
+    const summary = await run(boardDir(), fakeServers(), { config: { ...smallConfig, arbeitsagentur }, searchFree: spy.searchFree });
+    assert.ok(summary.added > 0); // the credit search still runs
+  }
+  assert.equal(spy.asked.length, 0);
 });

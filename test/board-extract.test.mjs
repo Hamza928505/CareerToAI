@@ -195,6 +195,44 @@ test("the board is for internships: the title must name one, and 'International'
   ]) assert.equal(internshipKind(title), "", String(title));
 });
 
+// Titles seen on the Arbeitsagentur's list: about a seventh of its internship entries are placements for pupils, and some are a vocational practical year.
+test("placements for pupils and vocational practical years are not for university students, look-alikes still count", () => {
+  for (const title of [
+    "Berufspraktikant / Berufspraktikantin (m/w/d) im Anerkennungsjahr zur Heilerziehungspflege", "Berufspraktikum Erzieher (m/w/d)",
+    "FOS-Praktikum Talent Acquisition & Recruiting (m/w/d)", "FOS Praktikum - 2. Schulhalbjahr 2026/2027", "Fachoberschulpraktikum (m/w/d)",
+    "Schülerpraktikum Elektroniker/in - Energie- und Gebäudetechnik (m/w/d)", "Technisches Schülerpraktikum 19.07. - 23.07.2027 / 45786",
+    "Schulpraktikum 08.11.2027 - 12.11.2027", "Praktikum Schüler Verkauf (m/w/d)", "Schüler (m/w/d) im Rahmen eines Praktikums",
+    "Jahrespraktikum Recruiting & Active Sourcing – FOS & Berufskolleg (m/w/d)", "Jahrespraktikant/in (m/w/d) zur Erlangung der Fachhochschulreife",
+    "Jahrespraktikum zum Erwerb des praktischen Teils der Fachhochschulreife (m/w/d)", "FOS-Jahrespraktikum im Recruiting (m/w/d)",
+    "Schnupperpraktikum Elektrotechnik", "Berufsorientierungspraktikum (m/w/d)",
+  ]) assert.equal(internshipKind(title), "", title);
+  for (const [title, kind] of [
+    ["Praktikum Schulung und Training (m/w/d)", "Praktikum"], // Schulung is training, not school
+    ["Praktikum Infos & Support (m/w/d)", "Praktikum"], // "fos" inside a word
+    ["Praktikant/in Bildungsmanagement an Hochschulen", "Praktikum"],
+    ["Pflichtpraktikum Schulentwicklung Daten (m/w/d)", "Pflichtpraktikum"],
+  ]) assert.equal(internshipKind(title), kind, title);
+});
+
+// Found on the first real Arbeitsagentur run: with whole adverts, two matching words tagged a youth-welfare internship "Digital Marketing" and a recruiting one "Logistics".
+test("a long advert needs three different words for a major, a short snippet two, and a word with its translation counts once", () => {
+  const logistics = [{ id: "logistic-sciences", de: ["Logistik", "Einkauf", "Lager"], en: ["Logistics", "Supply Chain"] }];
+  const padding = " Wir sind ein Unternehmen mit vielen Standorten und freuen uns auf deine Bewerbung.".repeat(9); // well over 600 characters
+  assert.deepEqual(tagMajors("Praktikant Recruiting", `Du unterstützt Logistik und Einkauf.${padding}`, logistics), []); // two words in a long advert are a mention
+  assert.deepEqual(tagMajors("Praktikant Recruiting", `Logistik, Logistics, Einkauf.${padding}`, logistics), []); // Logistik and Logistics are one word
+  assert.deepEqual(tagMajors("Praktikant Recruiting", `Logistik, Einkauf und Lager.${padding}`, logistics), ["logistic-sciences"]);
+  assert.deepEqual(tagMajors("Praktikant Recruiting", "Du unterstützt Logistik und Einkauf.", logistics), ["logistic-sciences"]); // a short snippet: two are enough
+  assert.deepEqual(tagMajors("Praktikant Logistik", padding, logistics), ["logistic-sciences"]); // the title alone decides
+});
+
+test("the source's own field name counts like the title when tagging majors", () => {
+  const mini = [{ id: "logistic-sciences", name: "Logistic Sciences", de: ["Logistik"], en: [], skills: [] }];
+  const context = { majors: mini, rules, germanCities: new Set(), today: "2026-10-10", skills: { vocabulary: [], aliases: {} } };
+  const hit = { title: "Praktikum (m/w/d)", company: "Firma", location: "Berlin, Deutschland", url: "https://x.de/job/1", date_posted: "2026-10-09", description: "Du unterstützt das Team." };
+  assert.deepEqual(toBoardPosting(hit, context).majors, []);
+  assert.deepEqual(toBoardPosting({ ...hit, field: "Supply-Chain-Manager/in, Logistikfachkraft" }, context).majors, ["logistic-sciences"]);
+});
+
 test("a city is just the city", () => {
   assert.equal(cityOf("Berlin, Deutschland"), "Berlin");
   assert.equal(cityOf("Frankfurt am Main, Hessen, Germany"), "Frankfurt am Main");

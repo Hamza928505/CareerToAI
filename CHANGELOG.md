@@ -34,6 +34,18 @@ per-file diff commands.
   preview with invented, labelled sample internships). The profile editor's skill library gained seven groups
   (healthcare and nursing, pharma and laboratory work, medical technology, translation tools, digital
   marketing tools, game development and 3D, automation and energy tools).
+- **A free source for the Bundesagentur für Arbeit's job board is built but OFF by default** (`lib/board-source-ba.mjs`).
+  It reads every internship for students published since the last run, for all majors at once: the list newest first
+  until it leaves the window, then each new advert, one request at a time and slowly (at least 250 ms apart, retried
+  when the service is busy, stopped when it refuses). The agency's terms of use forbid robots and reading content out
+  of the portal through interfaces (section 2a(3)), so it must not be turned on for the public board without the
+  agency's permission: `{"arbeitsagentur": {"enabled": true}}` in `data/board-config.json`, then
+  `--sources=arbeitsagentur`; any other setting leaves it off. Alongside it, for every source: internships for pupils
+  and vocational practical years (Schulpraktikum, FOS, Berufskolleg, Anerkennungsjahr) are never listed; a long advert
+  needs three different words (a word and its translation count once) to tag a major, a short one two; the source's own
+  field name counts like the title; the same internship found on two sites is listed once; and an internship counts
+  from the day it was published, so a run that reads ten days fills ten day files and the charts and the date filter
+  tell the truth.
 
 - **`/rank` now consumes the `posted_date` #391 persists** (#390, the deferred second
   half) - Step 3 gains a staleness flag: a posting whose stored `posted_date` is more
