@@ -216,7 +216,7 @@ test("the theme button flips light and dark, remembers the choice, and SweetAler
   assert.equal(await page.evaluate(() => document.documentElement.dataset.theme), "dark");
   assert.equal(await page.getAttribute("#theme-toggle", "aria-label"), "Switch to light theme");
   assert.equal(await page.evaluate(() => localStorage.getItem("gjub-theme")), "dark");
-  assert.equal(await page.evaluate(() => getComputedStyle(document.body).backgroundColor), "rgb(10, 13, 26)");
+  assert.equal(await page.evaluate(() => getComputedStyle(document.body).backgroundColor), "rgb(7, 18, 28)");
   await page.click("#open-help");
   await waitSwal(page);
   assert.equal(await page.getAttribute(".swal2-container", "data-swal2-theme"), "dark");
@@ -352,6 +352,45 @@ test("clicking a bar or a slice filters by it", { skip }, async (t) => {
   await page.waitForFunction(() => document.querySelector("#gju-legend button").getAttribute("aria-pressed") === "true");
   await page.click("#gju-legend button >> nth=0"); // the same slice again takes the filter off
   assert.equal(await count(page), "6");
+  await context.close();
+});
+
+test("the areas chart groups the majors: a legend entry per area with its count, and a click chooses or clears the area's majors", { skip }, async (t) => {
+  if (!browser) return t.skip("Chromium is not installed");
+  const file = JSON.parse(fs.readFileSync(path.join(boardDir, "board", "majors.json"), "utf8"));
+  const areaOf = Object.fromEntries(file.majors.map((m) => [m.id, m.area]));
+  const expected = [...new Set(postings.flatMap((p) => p.majors.map((m) => areaOf[m])))]
+    .map((area) => [area, postings.filter((p) => p.majors.some((m) => areaOf[m] === area)).length]) // one posting counts once per area
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  const { page, context } = await open({ reduce: true });
+  const legend = () => page.locator("#area-legend button").evaluateAll((buttons) => buttons.map((b) => [b.querySelector(".name").textContent, Number(b.querySelector("b").textContent)]));
+  const pressed = (state) => page.waitForFunction((s) => document.querySelector("#area-legend button").getAttribute("aria-pressed") === s, state);
+  assert.deepEqual(await legend(), expected);
+  assert.equal(await page.locator("#ch-areas canvas").count(), 1);
+  assert.equal(await page.locator("#ch-weeks").count(), 0); // the duration chart is gone
+
+  const [area, n] = expected[0];
+  const chips = file.majors.filter((m) => m.area === area).length; // all the area's majors, with or without internships
+  await page.click("#area-legend button >> nth=0");
+  assert.equal(await count(page), String(n));
+  assert.equal(await page.locator("#active-row .chip").count(), chips);
+  await pressed("true");
+  assert.deepEqual(await legend(), expected); // the chart ignores the major filter, so the other areas stay
+  await page.click("#area-legend button >> nth=0"); // the same area again clears its majors
+  assert.equal(await count(page), "6");
+  assert.match(await page.textContent("#active-row"), /No filters yet/);
+  await pressed("false");
+
+  const point = await page.evaluate(() => {
+    const canvas = document.querySelector("#ch-areas canvas");
+    canvas.scrollIntoView({ block: "center" }); // a click only lands on what is inside the window
+    const centre = window.Chart.getChart(canvas).getDatasetMeta(0).data[0].getCenterPoint();
+    const box = canvas.getBoundingClientRect();
+    return { x: box.left + centre.x, y: box.top + centre.y };
+  });
+  await page.mouse.click(point.x, point.y); // the biggest segment is the first area
+  assert.equal(await count(page), String(n));
+  assert.equal(await page.locator("#active-row .chip").count(), chips);
   await context.close();
 });
 

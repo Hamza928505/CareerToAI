@@ -94,21 +94,32 @@ test("facet counts say what each choice would leave, given the other filters", {
   assert.equal(L.facetCounts(postings, L.defaultFilters(), "skills").get("SQL"), 2);
 });
 
-test("chart numbers: top lists, the GJU split, days with zeros, duration and language buckets", { skip }, () => {
-  const d = L.chartData(postings, L.defaultFilters(), { end: "2026-10-10", days: 5 });
+const areaOf = { "computer-science": "Computing", "business-intelligence-data-analytics": "Computing", "logistic-sciences": "Business", "digital-marketing": "Business", "mechatronics-engineering": "Engineering" };
+
+test("chart numbers: top lists, the GJU split, days with zeros, areas and language buckets", { skip }, () => {
+  const d = L.chartData(postings, L.defaultFilters(), { end: "2026-10-10", days: 5, areaOf });
   assert.equal(d.total, 5);
   assert.deepEqual(d.majors[0], { key: "computer-science", count: 2 });
   assert.deepEqual(d.gju, { meets: 1, check: 2, fails: 2 });
   assert.deepEqual(d.days.map((x) => x.count), [0, 1, 2, 1, 1]); // Oct 6..10
   assert.deepEqual(d.days.map((x) => x.date), ["2026-10-06", "2026-10-07", "2026-10-08", "2026-10-09", "2026-10-10"]);
-  assert.deepEqual(d.weeks.map((x) => x.count), [1, 1, 0, 3, 0]); // not stated, under 13, 13-19, 20-26, 27+
+  assert.deepEqual(d.areas, [{ key: "Business", count: 2 }, { key: "Computing", count: 2 }, { key: "Engineering", count: 1 }]); // ties by name
   assert.deepEqual(d.german.map((x) => [x.key, x.count]), [["none", 1], ["A1", 0], ["A2", 1], ["B1", 0], ["B2", 1], ["C1", 1], ["C2", 0], ["unknown", 1]]);
   // A chart that can be clicked ignores its own filter: with one major chosen its bars still list the others.
-  const picked = L.chartData(postings, { ...L.defaultFilters(), majors: ["logistic-sciences"] });
+  const picked = L.chartData(postings, { ...L.defaultFilters(), majors: ["logistic-sciences"] }, { areaOf });
   assert.equal(picked.total, 1);
   assert.ok(picked.majors.length >= 4);
   assert.equal(picked.gju.check, 1);
+  assert.deepEqual(picked.areas.map((a) => a.key), ["Business", "Computing", "Engineering"]); // the areas chart ignores the major filter too ...
+  assert.deepEqual(L.chartData(postings, { ...L.defaultFilters(), majors: ["logistic-sciences"], countries: ["Austria"] }, { areaOf }).areas, [{ key: "Engineering", count: 1 }]); // ... but not the others
   assert.deepEqual(L.chartData(postings, { ...L.defaultFilters(), gju: "meets" }).gju, { meets: 1, check: 2, fails: 2 });
+});
+
+test("areas: a posting counts once in each area its majors belong to, and a major without an area is left out", { skip }, () => {
+  const both = [make({ id: "x", majors: ["computer-science", "business-intelligence-data-analytics", "logistic-sciences"] }), make({ id: "y", majors: ["unknown-major"] }), make({ id: "z", majors: [] })];
+  assert.deepEqual([...L.areaCounts(both, areaOf)], [["Computing", 1], ["Business", 1]]); // two Computing majors still one posting
+  assert.deepEqual([...L.areaCounts(both, {})], []);
+  assert.deepEqual(L.chartData(both, L.defaultFilters()).areas, []); // no area map given: nothing to show
 });
 
 const RULES = { minWeeks: 20, minMonthlySalary: 861, approvedCountries: ["Germany", "Austria", "Switzerland", "Luxembourg"] };
