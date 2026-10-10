@@ -34,6 +34,12 @@ per-file diff commands.
   preview with invented, labelled sample internships). The profile editor's skill library gained seven groups
   (healthcare and nursing, pharma and laboratory work, medical technology, translation tools, digital
   marketing tools, game development and 3D, automation and energy tools).
+- **The German Year guide moved to the GJU Internship Board** (`guide.html` in the board repo, with the sixteen
+  PDFs copied to its `docs/`). Its numbers (minimum weeks, recognised months, report deadline) are read from the
+  board's `data/rules.json`, which the runner now writes with `maxRecognisedMonths` and `handInMonths` from
+  `data/gju-rules.json`. Here `/guide/` is only a notice with the new address, the nav entry points there, and
+  `src/assets/gy-internships/` stays (the eligibility skill reads it). The board page and the guide now use the
+  colours of gju.edu.jo (blue `#1F8BCC`, footer blue `#1F6BAD`, navy `#1C4260`, amber `#FFB844`) with gradient charts.
 - **A free source for the Bundesagentur für Arbeit's job board is built but OFF by default** (`lib/board-source-ba.mjs`).
   It reads every internship for students published since the last run, for all majors at once: the list newest first
   until it leaves the window, then each new advert, one request at a time and slowly (at least 250 ms apart, retried

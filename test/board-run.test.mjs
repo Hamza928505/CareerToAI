@@ -235,7 +235,7 @@ test("the page gets the library's skill groups, without soft skills or language 
   assert.ok(!names.includes("Teamwork") && !names.includes("German"));
   assert.equal(new Set(names.map((n) => n.toLowerCase())).size, names.length); // a skill sits in one group only
   // The page explains the GJU rules from these numbers, not from its own copy.
-  assert.deepEqual(read(dir, "data", "rules.json"), { minWeeks: 20, minMonthlySalary: 861, approvedCountries: ["Germany", "Austria", "Switzerland", "Luxembourg"] });
+  assert.deepEqual(read(dir, "data", "rules.json"), { minWeeks: 20, minMonthlySalary: 861, maxRecognisedMonths: 6, handInMonths: 2, approvedCountries: ["Germany", "Austria", "Switzerland", "Luxembourg"] });
 });
 
 test("a hit that slips past the search but is not an internship is dropped by the board itself", async () => {

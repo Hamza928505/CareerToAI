@@ -27,12 +27,12 @@ const postings = [
   make({ id: "e", title: "Praktikum Zürich Marketing", company: "Züri AG", city: "Zürich", country: "Switzerland", majors: ["digital-marketing"], skills: [], weeks: { min: 13, max: 26 }, pay: { min: 700, max: 1000, basis: "monthly" }, germanLevel: "A2", gju: GJU.check, firstSeen: "2026-10-07", url: "https://zuri.ch/e" }),
   make({ id: "f", title: "<img src=x onerror=window.pwned=1> Praktikum", company: "Evil Corp", majors: [], skills: [], url: "javascript:window.pwned=1", gju: GJU.check, firstSeen: "2026-10-07" }),
 ];
-const RULES = { minWeeks: 20, minMonthlySalary: 861, approvedCountries: ["Germany", "Austria", "Switzerland", "Luxembourg"] };
+const RULES = { minWeeks: 20, minMonthlySalary: 861, maxRecognisedMonths: 6, handInMonths: 2, approvedCountries: ["Germany", "Austria", "Switzerland", "Luxembourg"] };
 const SKILLS = { groups: [{ group: "Software engineering", skills: ["Python"] }, { group: "Databases and data", skills: ["SQL", "Power BI"] }, { group: "Industrial engineering and logistics", skills: ["SAP ERP"] }] };
 
 function buildSite(list) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "board-site-"));
-  fs.cpSync(boardDir, root, { recursive: true, filter: (src) => !/[\\/]\.git([\\/]|$)/.test(src) && !/[\\/]data([\\/]|$)/.test(src) });
+  fs.cpSync(boardDir, root, { recursive: true, filter: (src) => !/[\\/]\.git([\\/]|$)/.test(src) && !/[\\/](data|docs)([\\/]|$)/.test(src) }); // the data is replaced below; the guide's PDFs are not needed to test the pages
   fs.mkdirSync(path.join(root, "data", "days"), { recursive: true });
   const write = (file, value) => fs.writeFileSync(path.join(root, file), JSON.stringify(value));
   const byDay = new Map();
@@ -216,7 +216,7 @@ test("the theme button flips light and dark, remembers the choice, and SweetAler
   assert.equal(await page.evaluate(() => document.documentElement.dataset.theme), "dark");
   assert.equal(await page.getAttribute("#theme-toggle", "aria-label"), "Switch to light theme");
   assert.equal(await page.evaluate(() => localStorage.getItem("gjub-theme")), "dark");
-  assert.equal(await page.evaluate(() => getComputedStyle(document.body).backgroundColor), "rgb(7, 18, 28)");
+  assert.equal(await page.evaluate(() => getComputedStyle(document.body).backgroundColor), "rgb(9, 22, 34)");
   await page.click("#open-help");
   await waitSwal(page);
   assert.equal(await page.getAttribute(".swal2-container", "data-swal2-theme"), "dark");
@@ -392,6 +392,48 @@ test("the areas chart groups the majors: a legend entry per area with its count,
   assert.equal(await count(page), String(n));
   assert.equal(await page.locator("#active-row .chip").count(), chips);
   await context.close();
+});
+
+test("the guide page: sections fold, the numbers come from rules.json, the timeline is drawn, every document link exists, nothing is asked of other sites", { skip }, async (t) => {
+  if (!browser) return t.skip("Chromium is not installed");
+  const root = buildSite(postings);
+  fs.writeFileSync(path.join(root, "data", "rules.json"), JSON.stringify({ ...RULES, minWeeks: 23, maxRecognisedMonths: 5, handInMonths: 3 })); // numbers the page was not written with
+  const own = await serve(root);
+  const context = await browser.newContext({ viewport: { width: 1280, height: 900 }, reducedMotion: "reduce" });
+  const page = await context.newPage();
+  const errors = [];
+  const requests = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
+  page.on("request", (r) => requests.push(r.url()));
+  try {
+    await page.goto(`${own.url}guide.html`);
+    await page.waitForSelector(".guide-fold");
+    const folds = await page.locator(".guide-fold").count();
+    assert.ok(folds >= 10, `${folds} sections`);
+    assert.equal(await page.locator(".guide-fold[open]").count(), 1); // the first one starts open
+    await page.click("text=Open all");
+    assert.equal(await page.locator(".guide-fold[open]").count(), folds);
+    await page.click("text=Close all");
+    assert.equal(await page.locator(".guide-fold[open]").count(), 0);
+    await page.click('.toc a[href="#library"]'); // a link into a closed section opens it
+    assert.equal(await page.evaluate(() => { const el = document.getElementById("library"); return (el.closest(".guide-fold") || el.querySelector(".guide-fold")).open; }), true);
+
+    assert.deepEqual(await page.locator('[data-rule="minWeeks"]').allTextContents(), Array(await page.locator('[data-rule="minWeeks"]').count()).fill("23"));
+    assert.match(await page.getAttribute("#internship-span", "aria-label"), /23 weeks at minimum.*5 months.*within 3 months/);
+    await page.waitForFunction(() => document.querySelectorAll("#internship-span canvas").length === 1, null, { timeout: 15000 });
+
+    const links = await page.$$eval('main a[href^="docs/"]', (anchors) => [...new Set(anchors.map((a) => a.getAttribute("href")))]);
+    assert.ok(links.length >= 16, `${links.length} document links`);
+    for (const link of links) assert.ok(fs.existsSync(path.join(boardDir, decodeURIComponent(link))), `missing ${link}`);
+
+    assert.equal(await page.getAttribute('.nav a[aria-current="page"]', "href"), "guide.html");
+    await page.goto(own.url);
+    await page.waitForSelector("#list tr[data-id], #list .card-item");
+    assert.equal(await page.locator('.nav a[href="guide.html"]').count(), 1); // the board links to the guide
+    assert.deepEqual(requests.filter((url) => !url.startsWith(own.url)), []);
+    assert.deepEqual(errors, []);
+  } finally { await context.close(); own.close(); fs.rmSync(root, { recursive: true, force: true }); }
 });
 
 test("on a phone: cards by default, the filters fold away, a dropdown is a sheet at the top, nothing scrolls sideways", { skip }, async (t) => {
