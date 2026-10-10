@@ -179,3 +179,8 @@ job-search/.superpowers/
 src/assets/Student-data/student.json
 src/assets/Student-data/*.docx
 src/assets/Student-data/tailored/
+
+# Public-board runner: rotation state and credit log are local only
+data/board-state.json
+data/board-run-log.jsonl
+data/board-task.log

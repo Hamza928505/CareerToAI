@@ -19,7 +19,10 @@
         "skills:harvest": "node scripts/harvest-tracker-skills.mjs",
         "search:import": "node scripts/import-search-options.mjs",
         "profile": "node scripts/build-profile-md.mjs",
-        "profile:check": "node scripts/build-profile-md.mjs --check"
+        "profile:check": "node scripts/build-profile-md.mjs --check",
+        "board:search": "node scripts/board-search.mjs",
+        "board:demo": "node scripts/board-demo.mjs",
+        "board:vendor": "node scripts/build-board-vendor.mjs"
     },
     "devDependencies": {
         "@11ty/eleventy": "^3.0.0",
@@ -27,6 +30,7 @@
         "esbuild": "^0.28.2",
         "exceljs": "^4.4.0",
         "jszip": "^3.10.2",
+        "playwright": "^1.64.0",
         "sharp": "^0.35.5",
         "sweetalert2": "^11.26.25",
         "zod": "^4.5.4"

@@ -210,3 +210,13 @@ test("success prose, missing evidence, false confirmation and execution errors n
   const blocked = connection({ firecrawl: [browser] }, async () => ({ content: [{ type: "text", text: JSON.stringify({ status: "Blocked", evidence: "Account login is required" }) }] }));
   assert.equal((await runBrowserApplication({ job_url: "https://employer.example/job" }, {}, blocked)).status, "Blocked");
 });
+
+test("strategy.typeInTitle makes the title, not the snippet, name the wanted type; the default is unchanged", () => {
+  const item = { title: "Software Developer (m/w/d)", snippet: "Wir bieten auch ein Praktikum an", location: "Berlin", url: "https://stepstone.de/job/1" };
+  const base = { roles: ["Software"], cities: ["Berlin"], types: ["Praktikum"] };
+  assert.equal(matchesSearchStrategy(item, base), true); // the workspace's behaviour: the snippet is evidence too
+  assert.equal(matchesSearchStrategy(item, { ...base, typeInTitle: true }), false);
+  assert.equal(matchesSearchStrategy({ ...item, title: "Praktikum Software Development" }, { ...base, typeInTitle: true }), true);
+  assert.equal(matchesSearchStrategy({ ...item, title: "Praktikum Software Development", location: "Hamburg" }, { ...base, typeInTitle: true }), false); // other rules still apply
+  assert.equal(matchesSearchStrategy({ ...item, title: "Praktikum Software Development", location: "Hamburg" }, { ...base, typeInTitle: true, anyCity: true }), true);
+});

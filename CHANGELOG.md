@@ -15,6 +15,26 @@ per-file diff commands.
 
 ### Added
 
+- **Public GJU internship board runner** (`npm run board:search`, `-- --dry-run` to see the plan,
+  `-- --publish` to commit and push, `-- --since=2026-10-01` to accept postings from that date on; the flags
+  also work from Windows PowerShell 5.1, which swallows the `--` and leaves npm to pass them on as
+  `npm_config_*`). Searches a rotating slice of GJU areas and job sites inside a
+  daily credit budget (`lib/board-budget.mjs`, caps and reserves, balances read with `checkCredits`),
+  reads duration, pay, German/English level and country with fixed rules (`lib/board-extract.mjs`),
+  checks them against `data/gju-rules.json`, and writes derived facts only (no advert text, no contact
+  details) into a separate board repo (`BOARD_REPO_DIR`, default `../GJUBoard`). `searchPlatforms` gained
+  opt-in `platforms`, `maxVerify`, `isKnown`, `maxAgeDays` and `strategy.anyCity`; the defaults are
+  unchanged. `scripts/schedule-board.ps1` registers the daily Windows task (not registered by default).
+  The board is for **internships only** (Praktikum, Pflichtpraktikum, Internship): the search checks the
+  title before spending a verification credit, and pages rejected after verification are remembered so they
+  are never paid for twice. The board page was redesigned: a searchable dropdown for every list field,
+  charts with OpenCharts that follow the filters, SweetAlert2 windows for validation and details, light and
+  dark themes, table and card views, animation that respects reduced motion, Font Awesome icons, all served
+  from the board repo (`npm run board:vendor` builds `vendor/`; `npm run board:demo -- --out <folder>` builds a
+  preview with invented, labelled sample internships). The profile editor's skill library gained seven groups
+  (healthcare and nursing, pharma and laboratory work, medical technology, translation tools, digital
+  marketing tools, game development and 3D, automation and energy tools).
+
 - **`/rank` now consumes the `posted_date` #391 persists** (#390, the deferred second
   half) - Step 3 gains a staleness flag: a posting whose stored `posted_date` is more
   than 30 days old at rank time carries a visible ⚠ marker with its age spelled out

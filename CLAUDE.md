@@ -108,6 +108,15 @@ published site it is static and says so: nothing runs, the tracker is empty, and
 only the GJU eligibility checker works, because that is arithmetic in the
 browser against `data/gju-rules.json`.
 
+The public GJU board is a separate project. Its page and data live in the sibling repo `../GJUBoard`
+(static site, no keys, internships only), whose remote is the **public** GitHub repo
+`Hamza928505/GJUInternshipBoard` (branch `main`; GitHub Pages stays off, the host is still to be chosen), so
+`npm run board:search -- --publish` pushes the day's data to a public place. The only part in this repo is the private runner, `scripts/board-search.mjs`
+with `lib/board-*.mjs`: it uses the keys and MCP config here, never reads the student's tracker or
+profile, and writes derived facts only. Its rotation state and credit log are the git-ignored
+`data/board-state.json` and `data/board-run-log.jsonl`. `npm run board:demo` builds a preview of the
+page with invented sample internships; `npm run board:vendor` rebuilds the page's vendored libraries.
+
 `data/gju-rules.json` is a fourth shared file in the same spirit as the spine:
 the 20-week minimum, the country table and the 861 EUR/month threshold are
 written once there, and both the workbook formulas and the checker read them.

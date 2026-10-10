@@ -51,7 +51,7 @@ export const SKILL_LIBRARY = [
     group: "Databases and data",
     skills: [
       "SQL", "MySQL", "Microsoft SQL Server", "PostgreSQL", "SQLite", "Oracle Database",
-      "MongoDB", "Database Design", "Stored Procedures", "Data Modelling", "ETL",
+      "MongoDB", "Database Design", "Stored Procedures", "Data Modelling", "Data Warehouse", "ETL",
       "Microsoft Excel", "Advanced Excel", "Pivot Tables", "Power BI", "Tableau",
       "Data Analysis", "Data Visualization", "Statistics", "SPSS", "MATLAB", "R", "Reporting",
     ],
@@ -62,7 +62,7 @@ export const SKILL_LIBRARY = [
       "AutoCAD", "SolidWorks", "CATIA", "Siemens NX", "Autodesk Inventor", "Fusion 360",
       "Technical Drawing", "Geometric Dimensioning and Tolerancing (GD&T)",
       "Finite Element Analysis (FEA)", "Computational Fluid Dynamics (CFD)", "ANSYS",
-      "Machine Design", "Materials Science", "Thermodynamics", "Fluid Mechanics",
+      "CAD", "Machine Design", "Materials Science", "Thermodynamics", "Fluid Mechanics",
       "Heat Transfer", "Manufacturing Processes", "CNC Machining", "CAD/CAM",
       "Sheet Metal Design", "Welding", "3D Printing", "Additive Manufacturing",
       "Mechatronics", "Robotics", "Pneumatics", "Hydraulics", "HVAC",
@@ -136,7 +136,7 @@ export const SKILL_LIBRARY = [
       "International Financial Reporting Standards (IFRS)", "Auditing", "Taxation",
       "DATEV", "SAP FI/CO", "Financial Analysis", "Financial Modelling", "Budgeting",
       "Controlling", "Banking Operations", "Investment Analysis", "Risk Management",
-      "Business Administration", "Business Development", "Business Analysis",
+      "German GAAP (HGB)", "Business Administration", "Business Development", "Business Analysis",
       "Project Management", "Marketing", "Digital Marketing", "Social Media Marketing",
       "Market Research", "Sales", "Customer Relationship Management (CRM)",
       "Customer Service", "Human Resources", "Recruitment", "E-Commerce",
@@ -149,7 +149,7 @@ export const SKILL_LIBRARY = [
       "Chromatography", "Spectroscopy", "Microscopy", "Calibration", "Metrology",
       "Material Testing", "Non-Destructive Testing", "Testing and Inspection",
       "Standard Operating Procedures", "Good Laboratory Practice", "Documentation",
-      "Biomedical Instrumentation", "Medical Device Standards",
+      "Biomedical Instrumentation", "Medical Technology", "Medical Device Standards",
     ],
   },
   {
@@ -159,8 +159,67 @@ export const SKILL_LIBRARY = [
       "Translation", "Interpreting", "Localisation", "Proofreading", "Subtitling",
       "SDL Trados", "memoQ", "Terminology Management",
       "Technical Writing", "Technical Documentation", "Business Correspondence",
-      "Report Writing", "Public Speaking", "Presentation Skills",
+      "Report Writing", "Public Relations", "Corporate Communication", "Editorial Work", "Public Speaking", "Presentation Skills",
       "Intercultural Communication", "Editing",
+    ],
+  },
+  {
+    group: "Healthcare and nursing",
+    skills: [
+      "Patient Care", "Nursing Care", "Basic Life Support (BLS)", "Vital Signs Monitoring",
+      "Medication Administration", "Wound Care", "Infection Control", "Hygiene Standards",
+      "Patient Documentation", "Clinical Procedures", "Emergency Care", "Geriatric Care",
+      "Paediatric Care", "Patient Education", "Medical Terminology", "Electronic Health Records",
+      "Healthcare Management",
+    ],
+  },
+  {
+    group: "Pharma and laboratory work",
+    skills: [
+      "Good Manufacturing Practice (GMP)", "HPLC", "Gas Chromatography", "Analytical Chemistry",
+      "Method Validation", "Process Validation", "Quality Control Testing", "Pharmaceutical Manufacturing",
+      "Regulatory Affairs", "Pharmacovigilance", "Formulation Development", "Cleanroom",
+      "Laboratory Information Management System (LIMS)", "Stability Testing", "Aseptic Technique",
+      "Cell Culture", "PCR",
+    ],
+  },
+  {
+    group: "Medical technology",
+    skills: [
+      "Medical Device Regulation (MDR)", "ISO 13485", "ISO 14971", "IEC 62304", "Clinical Evaluation",
+      "Biocompatibility", "Medical Imaging", "Biosignal Processing", "Biomechanics",
+      "Prosthetics and Orthotics", "Sterilisation", "Usability Engineering", "CE Marking",
+      "Quality Management Systems",
+    ],
+  },
+  {
+    group: "Translation tools",
+    skills: [
+      "CAT Tools", "Translation Memory", "Machine Translation Post-Editing", "Glossary Management",
+      "Transcreation", "Multilingual Content", "Language Quality Assurance",
+    ],
+  },
+  {
+    group: "Digital marketing tools",
+    skills: [
+      "Search Engine Optimisation (SEO)", "Search Engine Advertising (SEA)", "Google Analytics", "Google Ads",
+      "Meta Ads", "Content Marketing", "Email Marketing", "Marketing Automation", "HubSpot", "Mailchimp",
+      "Canva", "Copywriting", "Community Management", "Influencer Marketing", "A/B Testing",
+      "Web Analytics", "WordPress", "Google Tag Manager",
+    ],
+  },
+  {
+    group: "Game development and 3D",
+    skills: [
+      "Unity", "Unreal Engine", "Blender", "3D Modelling", "Game Design", "Level Design",
+      "Shader Programming", "Maya", "Substance Painter", "Animation", "UX Prototyping",
+    ],
+  },
+  {
+    group: "Automation and energy tools",
+    skills: [
+      "Siemens TIA Portal", "PVsyst", "ROS (Robot Operating System)", "Internet of Things (IoT)",
+      "Energy Monitoring", "Hydraulic Engineering",
     ],
   },
   {
