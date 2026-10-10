@@ -15,6 +15,44 @@ per-file diff commands.
 
 ### Added
 
+- **Public GJU internship board runner** (`npm run board:search`, `-- --dry-run` to see the plan,
+  `-- --publish` to commit and push, `-- --since=2026-10-01` to accept postings from that date on; the flags
+  also work from Windows PowerShell 5.1, which swallows the `--` and leaves npm to pass them on as
+  `npm_config_*`). Searches a rotating slice of GJU areas and job sites inside a
+  daily credit budget (`lib/board-budget.mjs`, caps and reserves, balances read with `checkCredits`),
+  reads duration, pay, German/English level and country with fixed rules (`lib/board-extract.mjs`),
+  checks them against `data/gju-rules.json`, and writes derived facts only (no advert text, no contact
+  details) into a separate board repo (`BOARD_REPO_DIR`, default `../GJUBoard`). `searchPlatforms` gained
+  opt-in `platforms`, `maxVerify`, `isKnown`, `maxAgeDays` and `strategy.anyCity`; the defaults are
+  unchanged. `scripts/schedule-board.ps1` registers the daily Windows task (not registered by default).
+  The board is for **internships only** (Praktikum, Pflichtpraktikum, Internship): the search checks the
+  title before spending a verification credit, and pages rejected after verification are remembered so they
+  are never paid for twice. The board page was redesigned: a searchable dropdown for every list field,
+  charts with OpenCharts that follow the filters, SweetAlert2 windows for validation and details, light and
+  dark themes, table and card views, animation that respects reduced motion, Font Awesome icons, all served
+  from the board repo (`npm run board:vendor` builds `vendor/`; `npm run board:demo -- --out <folder>` builds a
+  preview with invented, labelled sample internships). The profile editor's skill library gained seven groups
+  (healthcare and nursing, pharma and laboratory work, medical technology, translation tools, digital
+  marketing tools, game development and 3D, automation and energy tools).
+- **The German Year guide moved to the GJU Internship Board** (`guide.html` in the board repo, with the sixteen
+  PDFs copied to its `docs/`). Its numbers (minimum weeks, recognised months, report deadline) are read from the
+  board's `data/rules.json`, which the runner now writes with `maxRecognisedMonths` and `handInMonths` from
+  `data/gju-rules.json`. Here `/guide/` is only a notice with the new address, the nav entry points there, and
+  `src/assets/gy-internships/` stays (the eligibility skill reads it). The board page and the guide now use the
+  colours of gju.edu.jo (blue `#1F8BCC`, footer blue `#1F6BAD`, navy `#1C4260`, amber `#FFB844`) with gradient charts.
+- **A free source for the Bundesagentur für Arbeit's job board is built but OFF by default** (`lib/board-source-ba.mjs`).
+  It reads every internship for students published since the last run, for all majors at once: the list newest first
+  until it leaves the window, then each new advert, one request at a time and slowly (at least 250 ms apart, retried
+  when the service is busy, stopped when it refuses). The agency's terms of use forbid robots and reading content out
+  of the portal through interfaces (section 2a(3)), so it must not be turned on for the public board without the
+  agency's permission: `{"arbeitsagentur": {"enabled": true}}` in `data/board-config.json`, then
+  `--sources=arbeitsagentur`; any other setting leaves it off. Alongside it, for every source: internships for pupils
+  and vocational practical years (Schulpraktikum, FOS, Berufskolleg, Anerkennungsjahr) are never listed; a long advert
+  needs three different words (a word and its translation count once) to tag a major, a short one two; the source's own
+  field name counts like the title; the same internship found on two sites is listed once; and an internship counts
+  from the day it was published, so a run that reads ten days fills ten day files and the charts and the date filter
+  tell the truth.
+
 - **`/rank` now consumes the `posted_date` #391 persists** (#390, the deferred second
   half) - Step 3 gains a staleness flag: a posting whose stored `posted_date` is more
   than 30 days old at rank time carries a visible ⚠ marker with its age spelled out
