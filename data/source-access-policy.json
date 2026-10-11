@@ -12,7 +12,8 @@
       "redirected",
       "obsolete",
       "defunct"
-    ]
+    ],
+    "publicLeads": "true only where the terms read had no clause on reproducing or reusing listings: the board may then show a search-engine lead as a link-only row (title and link, labelled not checked). Never for a site whose terms forbid it."
   },
   "sources": [
     {
@@ -27,7 +28,9 @@
       "sourcePolicyUrl": "https://www.linkedin.com/legal/user-agreement",
       "technicalRestrictions": "Logged-out job pages are rate-limited; login walls.",
       "dateChecked": "2026-10-11",
-      "recommendedAccessMethod": "Search-engine discovery only (Parallel/Exa result links), then open and apply by hand. Do not fetch, scrape or extract pages automatically, and do not republish listings."
+      "recommendedAccessMethod": "Search-engine discovery only (Parallel/Exa result links), then open and apply by hand. Do not fetch, scrape or extract pages automatically, and do not republish listings.",
+      "publicLeads": false,
+      "publicLeadsReason": "Automated reading or reproduction is prohibited (see evidence)."
     },
     {
       "domain": "indeed.de",
@@ -41,7 +44,9 @@
       "sourcePolicyUrl": "https://de.indeed.com/legal",
       "technicalRestrictions": "403 to an identified non-browser request; robots.txt disallows /job/ and the advanced search for all agents.",
       "dateChecked": "2026-10-11",
-      "recommendedAccessMethod": "Search-engine discovery only (Parallel/Exa result links), then open and apply by hand. Do not fetch, scrape or extract pages automatically, and do not republish listings."
+      "recommendedAccessMethod": "Search-engine discovery only (Parallel/Exa result links), then open and apply by hand. Do not fetch, scrape or extract pages automatically, and do not republish listings.",
+      "publicLeads": false,
+      "publicLeadsReason": "Automated reading or reproduction is prohibited (see evidence)."
     },
     {
       "domain": "jobmensa.de",
@@ -55,7 +60,9 @@
       "sourcePolicyUrl": "https://www.jobmensa.de/agb",
       "technicalRestrictions": "robots.txt has a single rule for all agents; nothing job-related blocked.",
       "dateChecked": "2026-10-11",
-      "recommendedAccessMethod": "Discover posting URLs with Parallel/Exa search results and open them yourself. No automated fetching or extraction until the terms clearly allow it or the operator agrees in writing. Never republish."
+      "recommendedAccessMethod": "Discover posting URLs with Parallel/Exa search results and open them yourself. No automated fetching or extraction until the terms clearly allow it or the operator agrees in writing. Never republish.",
+      "publicLeads": false,
+      "publicLeadsReason": "Terms bind providers against automated queries for publication in other media."
     },
     {
       "domain": "monster.de",
@@ -69,7 +76,9 @@
       "sourcePolicyUrl": "https://www.monster.com/inside/terms-of-use",
       "technicalRestrictions": "403 to an identified non-browser request; robots.txt blocks several search paths.",
       "dateChecked": "2026-10-11",
-      "recommendedAccessMethod": "Discover posting URLs with Parallel/Exa search results and open them yourself. No automated fetching or extraction until the terms clearly allow it or the operator agrees in writing. Never republish."
+      "recommendedAccessMethod": "Discover posting URLs with Parallel/Exa search results and open them yourself. No automated fetching or extraction until the terms clearly allow it or the operator agrees in writing. Never republish.",
+      "publicLeads": false,
+      "publicLeadsReason": "Terms limit content to personal use."
     },
     {
       "domain": "stepstone.de",
@@ -83,7 +92,9 @@
       "sourcePolicyUrl": "https://www.stepstone.de/ueber-stepstone/general-terms-of-use-from-april-27th-2022/",
       "technicalRestrictions": "The terms page returned 403 to direct fetching (read through Exa); robots.txt disallows the search and apply paths.",
       "dateChecked": "2026-10-11",
-      "recommendedAccessMethod": "Search-engine discovery only (Parallel/Exa result links), then open and apply by hand. Do not fetch, scrape or extract pages automatically, and do not republish listings."
+      "recommendedAccessMethod": "Search-engine discovery only (Parallel/Exa result links), then open and apply by hand. Do not fetch, scrape or extract pages automatically, and do not republish listings.",
+      "publicLeads": false,
+      "publicLeadsReason": "Automated reading or reproduction is prohibited (see evidence)."
     },
     {
       "domain": "arbeitsagentur.de",
@@ -97,7 +108,9 @@
       "sourcePolicyUrl": "https://www.arbeitsagentur.de/nutzungsbedingungen",
       "technicalRestrictions": "None observed on the homepage. The project's own BA source (lib/board-source-ba.mjs) stays off for this reason.",
       "dateChecked": "2026-10-11",
-      "recommendedAccessMethod": "Use the Jobbörse website by hand. Any automated use needs the agency's written permission first."
+      "recommendedAccessMethod": "Use the Jobbörse website by hand. Any automated use needs the agency's written permission first.",
+      "publicLeads": false,
+      "publicLeadsReason": "Automated reading or reproduction is prohibited (see evidence)."
     },
     {
       "domain": "stellenanzeigen.de",
@@ -111,7 +124,8 @@
       "sourcePolicyUrl": "https://www.stellenanzeigen.de/ueber-uns/agb/",
       "technicalRestrictions": "robots.txt blocks some bots (yandex, semrushbot …) and the job print and preview paths.",
       "dateChecked": "2026-10-11",
-      "recommendedAccessMethod": "Discover posting URLs with Parallel/Exa search results and open them yourself. No automated fetching or extraction until the terms clearly allow it or the operator agrees in writing. Never republish."
+      "recommendedAccessMethod": "Discover posting URLs with Parallel/Exa search results and open them yourself. No automated fetching or extraction until the terms clearly allow it or the operator agrees in writing. Never republish.",
+      "publicLeads": true
     },
     {
       "domain": "academics.de",
@@ -125,7 +139,9 @@
       "sourcePolicyUrl": "https://www.academics.de/info/nutzungsbedingungen",
       "technicalRestrictions": "robots.txt blocks Bytespider.",
       "dateChecked": "2026-10-11",
-      "recommendedAccessMethod": "Search-engine discovery only (Parallel/Exa result links), then open and apply by hand. Do not fetch, scrape or extract pages automatically, and do not republish listings."
+      "recommendedAccessMethod": "Search-engine discovery only (Parallel/Exa result links), then open and apply by hand. Do not fetch, scrape or extract pages automatically, and do not republish listings.",
+      "publicLeads": false,
+      "publicLeadsReason": "Automated reading or reproduction is prohibited (see evidence)."
     },
     {
       "domain": "kimeta.de",
@@ -139,7 +155,9 @@
       "sourcePolicyUrl": "https://www.kimeta.de/Content/Downloads/AGB_kimeta.pdf",
       "technicalRestrictions": "robots.txt disallows every unnamed crawler, including /search, /api and /display-job.",
       "dateChecked": "2026-10-11",
-      "recommendedAccessMethod": "Search-engine discovery only (Parallel/Exa result links), then open and apply by hand. Do not fetch, scrape or extract pages automatically, and do not republish listings."
+      "recommendedAccessMethod": "Search-engine discovery only (Parallel/Exa result links), then open and apply by hand. Do not fetch, scrape or extract pages automatically, and do not republish listings.",
+      "publicLeads": false,
+      "publicLeadsReason": "Automated reading or reproduction is prohibited (see evidence)."
     },
     {
       "domain": "jobworld.de",
@@ -153,7 +171,8 @@
       "sourcePolicyUrl": "https://www.jobworld.de/impressum",
       "technicalRestrictions": "robots.txt blocks named crawlers (amazonbot, dotbot, yandex …).",
       "dateChecked": "2026-10-11",
-      "recommendedAccessMethod": "Discover posting URLs with Parallel/Exa search results and open them yourself. No automated fetching or extraction until the terms clearly allow it or the operator agrees in writing. Never republish."
+      "recommendedAccessMethod": "Discover posting URLs with Parallel/Exa search results and open them yourself. No automated fetching or extraction until the terms clearly allow it or the operator agrees in writing. Never republish.",
+      "publicLeads": true
     },
     {
       "domain": "meinestadt.de",
@@ -167,7 +186,9 @@
       "sourcePolicyUrl": "https://www.meinestadt.de/agb-allgemeine-nutzungsbedingungen",
       "technicalRestrictions": "403 to an identified non-browser request.",
       "dateChecked": "2026-10-11",
-      "recommendedAccessMethod": "Search-engine discovery only (Parallel/Exa result links), then open and apply by hand. Do not fetch, scrape or extract pages automatically, and do not republish listings."
+      "recommendedAccessMethod": "Search-engine discovery only (Parallel/Exa result links), then open and apply by hand. Do not fetch, scrape or extract pages automatically, and do not republish listings.",
+      "publicLeads": false,
+      "publicLeadsReason": "Automated reading or reproduction is prohibited (see evidence)."
     },
     {
       "domain": "meinpraktikum.de",
@@ -181,7 +202,9 @@
       "sourcePolicyUrl": "https://www.meinpraktikum.de/statisch/nutzungsbedingungen",
       "technicalRestrictions": "None observed.",
       "dateChecked": "2026-10-11",
-      "recommendedAccessMethod": "Discover posting URLs with Parallel/Exa search results and open them yourself. No automated fetching or extraction until the terms clearly allow it or the operator agrees in writing. Never republish."
+      "recommendedAccessMethod": "Discover posting URLs with Parallel/Exa search results and open them yourself. No automated fetching or extraction until the terms clearly allow it or the operator agrees in writing. Never republish.",
+      "publicLeads": false,
+      "publicLeadsReason": "Terms: services only for non-commercial use; the board shows ads."
     },
     {
       "domain": "praktikumsstellen.de",
@@ -195,7 +218,9 @@
       "sourcePolicyUrl": "https://www.praktikumsstellen.de/",
       "technicalRestrictions": "403 to non-browser requests, including robots.txt.",
       "dateChecked": "2026-10-11",
-      "recommendedAccessMethod": "Discover posting URLs with Parallel/Exa search results and open them yourself. No automated fetching or extraction until the terms clearly allow it or the operator agrees in writing. Never republish."
+      "recommendedAccessMethod": "Discover posting URLs with Parallel/Exa search results and open them yourself. No automated fetching or extraction until the terms clearly allow it or the operator agrees in writing. Never republish.",
+      "publicLeads": false,
+      "publicLeadsReason": "Terms could not be read (403)."
     },
     {
       "domain": "praktika.de",
@@ -209,7 +234,9 @@
       "sourcePolicyUrl": "https://www.praktika.de/nutzungsbedingungen",
       "technicalRestrictions": "None observed.",
       "dateChecked": "2026-10-11",
-      "recommendedAccessMethod": "Discover posting URLs with Parallel/Exa search results and open them yourself. No automated fetching or extraction until the terms clearly allow it or the operator agrees in writing. Never republish."
+      "recommendedAccessMethod": "Discover posting URLs with Parallel/Exa search results and open them yourself. No automated fetching or extraction until the terms clearly allow it or the operator agrees in writing. Never republish.",
+      "publicLeads": false,
+      "publicLeadsReason": "Terms: any reproduction needs written permission."
     },
     {
       "domain": "praktikum.info",
@@ -223,7 +250,8 @@
       "sourcePolicyUrl": "https://www.praktikum.info/nutzungsbedingungen",
       "technicalRestrictions": "None observed over IPv4.",
       "dateChecked": "2026-10-11",
-      "recommendedAccessMethod": "Discover posting URLs with Parallel/Exa search results and open them yourself. No automated fetching or extraction until the terms clearly allow it or the operator agrees in writing. Never republish."
+      "recommendedAccessMethod": "Discover posting URLs with Parallel/Exa search results and open them yourself. No automated fetching or extraction until the terms clearly allow it or the operator agrees in writing. Never republish.",
+      "publicLeads": true
     },
     {
       "domain": "praktikum.de",
@@ -237,7 +265,9 @@
       "sourcePolicyUrl": "https://www.praktikum.de/agb/",
       "technicalRestrictions": "None observed.",
       "dateChecked": "2026-10-11",
-      "recommendedAccessMethod": "Search-engine discovery only (Parallel/Exa result links), then open and apply by hand. Do not fetch, scrape or extract pages automatically, and do not republish listings."
+      "recommendedAccessMethod": "Search-engine discovery only (Parallel/Exa result links), then open and apply by hand. Do not fetch, scrape or extract pages automatically, and do not republish listings.",
+      "publicLeads": false,
+      "publicLeadsReason": "Automated reading or reproduction is prohibited (see evidence)."
     },
     {
       "domain": "connecticum.de",
@@ -251,7 +281,8 @@
       "sourcePolicyUrl": "https://www.connecticum.de/agb",
       "technicalRestrictions": "robots.txt disallows /joboffer.php (the job pages) for all agents.",
       "dateChecked": "2026-10-11",
-      "recommendedAccessMethod": "Discover posting URLs with Parallel/Exa search results and open them yourself. No automated fetching or extraction until the terms clearly allow it or the operator agrees in writing. Never republish."
+      "recommendedAccessMethod": "Discover posting URLs with Parallel/Exa search results and open them yourself. No automated fetching or extraction until the terms clearly allow it or the operator agrees in writing. Never republish.",
+      "publicLeads": true
     },
     {
       "domain": "jobware.de",
@@ -265,7 +296,8 @@
       "sourcePolicyUrl": "https://www.jobware.de/pdf/agb-jobware-gmbh.pdf",
       "technicalRestrictions": "robots.txt disallows /api/ and /jobmail/.",
       "dateChecked": "2026-10-11",
-      "recommendedAccessMethod": "Discover posting URLs with Parallel/Exa search results and open them yourself. No automated fetching or extraction until the terms clearly allow it or the operator agrees in writing. Never republish."
+      "recommendedAccessMethod": "Discover posting URLs with Parallel/Exa search results and open them yourself. No automated fetching or extraction until the terms clearly allow it or the operator agrees in writing. Never republish.",
+      "publicLeads": true
     },
     {
       "domain": "unicum.de",
@@ -279,7 +311,8 @@
       "sourcePolicyUrl": "https://www.unicum.de/nutzungsbedingungen-unicum",
       "technicalRestrictions": "robots.txt disallows /search/.",
       "dateChecked": "2026-10-11",
-      "recommendedAccessMethod": "Discover posting URLs with Parallel/Exa search results and open them yourself. No automated fetching or extraction until the terms clearly allow it or the operator agrees in writing. Never republish."
+      "recommendedAccessMethod": "Discover posting URLs with Parallel/Exa search results and open them yourself. No automated fetching or extraction until the terms clearly allow it or the operator agrees in writing. Never republish.",
+      "publicLeads": true
     },
     {
       "domain": "bonding.de",
@@ -293,7 +326,8 @@
       "sourcePolicyUrl": "https://www.bonding.de/agb",
       "technicalRestrictions": "None observed.",
       "dateChecked": "2026-10-11",
-      "recommendedAccessMethod": "Discover posting URLs with Parallel/Exa search results and open them yourself. No automated fetching or extraction until the terms clearly allow it or the operator agrees in writing. Never republish."
+      "recommendedAccessMethod": "Discover posting URLs with Parallel/Exa search results and open them yourself. No automated fetching or extraction until the terms clearly allow it or the operator agrees in writing. Never republish.",
+      "publicLeads": true
     },
     {
       "domain": "absolventa.de",
@@ -307,7 +341,8 @@
       "sourcePolicyUrl": "https://www.absolventa.de/nutzungsbedingungen",
       "technicalRestrictions": "None observed.",
       "dateChecked": "2026-10-11",
-      "recommendedAccessMethod": "Discover posting URLs with Parallel/Exa search results and open them yourself. No automated fetching or extraction until the terms clearly allow it or the operator agrees in writing. Never republish."
+      "recommendedAccessMethod": "Discover posting URLs with Parallel/Exa search results and open them yourself. No automated fetching or extraction until the terms clearly allow it or the operator agrees in writing. Never republish.",
+      "publicLeads": true
     },
     {
       "domain": "jobscout24.de",
@@ -321,7 +356,9 @@
       "sourcePolicyUrl": null,
       "technicalRestrictions": "No DNS record.",
       "dateChecked": "2026-10-11",
-      "recommendedAccessMethod": "Remove from the German source list."
+      "recommendedAccessMethod": "Remove from the German source list.",
+      "publicLeads": false,
+      "publicLeadsReason": "No evidence that republishing is allowed."
     },
     {
       "domain": "joboter.de",
@@ -335,7 +372,8 @@
       "sourcePolicyUrl": "https://www.joboter.de/imprint.php",
       "technicalRestrictions": "None observed.",
       "dateChecked": "2026-10-11",
-      "recommendedAccessMethod": "Discover posting URLs with Parallel/Exa search results and open them yourself. No automated fetching or extraction until the terms clearly allow it or the operator agrees in writing. Never republish."
+      "recommendedAccessMethod": "Discover posting URLs with Parallel/Exa search results and open them yourself. No automated fetching or extraction until the terms clearly allow it or the operator agrees in writing. Never republish.",
+      "publicLeads": true
     },
     {
       "domain": "neuvoo.de",
@@ -349,7 +387,9 @@
       "sourcePolicyUrl": "https://de.talent.com/terms-of-service",
       "technicalRestrictions": "robots.txt disallows /search-jobs/* and the search API.",
       "dateChecked": "2026-10-11",
-      "recommendedAccessMethod": "Search-engine discovery only (Parallel/Exa result links), then open and apply by hand. Do not fetch, scrape or extract pages automatically, and do not republish listings."
+      "recommendedAccessMethod": "Search-engine discovery only (Parallel/Exa result links), then open and apply by hand. Do not fetch, scrape or extract pages automatically, and do not republish listings.",
+      "publicLeads": false,
+      "publicLeadsReason": "Automated reading or reproduction is prohibited (see evidence)."
     },
     {
       "domain": "letitshine.de",
@@ -363,7 +403,9 @@
       "sourcePolicyUrl": null,
       "technicalRestrictions": "No DNS record.",
       "dateChecked": "2026-10-11",
-      "recommendedAccessMethod": "Remove from the source list."
+      "recommendedAccessMethod": "Remove from the source list.",
+      "publicLeads": false,
+      "publicLeadsReason": "No evidence that republishing is allowed."
     },
     {
       "domain": "backinjob.de",
@@ -391,7 +433,9 @@
       "sourcePolicyUrl": null,
       "technicalRestrictions": "Invalid TLS certificate.",
       "dateChecked": "2026-10-11",
-      "recommendedAccessMethod": "Drop: stale since 2020."
+      "recommendedAccessMethod": "Drop: stale since 2020.",
+      "publicLeads": false,
+      "publicLeadsReason": "No evidence that republishing is allowed."
     },
     {
       "domain": "kultweet.de",
@@ -405,7 +449,8 @@
       "sourcePolicyUrl": "https://www.kultweet.de/agb.php",
       "technicalRestrictions": "None observed.",
       "dateChecked": "2026-10-11",
-      "recommendedAccessMethod": "Discover posting URLs with Parallel/Exa search results and open them yourself. No automated fetching or extraction until the terms clearly allow it or the operator agrees in writing. Never republish."
+      "recommendedAccessMethod": "Discover posting URLs with Parallel/Exa search results and open them yourself. No automated fetching or extraction until the terms clearly allow it or the operator agrees in writing. Never republish.",
+      "publicLeads": true
     },
     {
       "domain": "arbeitnow.com",

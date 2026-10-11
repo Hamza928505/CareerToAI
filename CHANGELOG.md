@@ -112,6 +112,12 @@ per-file diff commands.
   public mode so personal-use sources such as Arbeitnow are never requested, and keeps only structured records, never
   search-engine leads. Each posting keeps its source name ("via Himalayas") and its link back; the board footer credits the sources.
   Postings still go through the board's own rules (internship kind, a fitting GJU major, derived facts only).
+  Search-engine leads (a title and link from a search engine, the page never read) are published only from sites whose
+  policy entry says `publicLeads` (their terms had no clause on reproducing listings: Absolventa, bonding, Connecticum, stellenanzeigen.de,
+  Jobware, UNICUM, Praktikum.info, KULTweet, Jobworld, Joboter), only as link-only rows (title and link, no snippet, no company), labelled
+  "(search lead, not checked)", and never from a back-end host such as uno-production.absolventa.de. The page says so in its notice.
+  Every other site's leads (LinkedIn, StepStone, Indeed, Arbeitsagentur, academics, kimeta, meinestadt, praktikum.de, Talent.com,
+  praktika.de, MeinPraktikum, Jobmensa, Monster) stay off the public board.
 - **The workspace search now runs on the JobSearchEngine.** `lib/engine-search.mjs` runs the sibling Python repo
   `../JobSearchEngine` (`main.py search --stdin-json --json`, no shell) with the saved strategy, one request per city or
   the remote search, and turns its jobs into tracker rows. Results from free job APIs and published feeds come in

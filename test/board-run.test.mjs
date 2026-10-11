@@ -421,8 +421,11 @@ const fakeEngineDir = () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "engine-"));
   fs.mkdirSync(path.join(dir, "config"), { recursive: true });
   fs.writeFileSync(path.join(dir, "config", "sources.json"), JSON.stringify({ sources: [
-    { id: "himalayas", display: "public-with-attribution", access: { methods: ["api"] } }, { id: "arbeitnow", display: "personal", access: { methods: ["api"] } },
-    { id: "stepstone", display: "link-only", access: { methods: ["discovery"] } }] }));
+    { id: "himalayas", type: "api", display: "public-with-attribution", access: { methods: ["api"] } }, { id: "arbeitnow", type: "api", display: "personal", access: { methods: ["api"] } },
+    { id: "stepstone", type: "site", domains: ["stepstone.de"], display: "link-only", access: { methods: ["discovery"] } },
+    { id: "absolventa", type: "site", domains: ["absolventa.de"], display: "link-only", access: { methods: ["discovery"] } },
+    { id: "linkedin", type: "site", domains: ["linkedin.com"], display: "link-only", access: { methods: ["discovery"] } },
+    { id: "nopolicy", type: "site", domains: ["no-policy-entry.example"], display: "link-only", access: { methods: ["discovery"] } }] }));
   const py = process.platform === "win32" ? path.join(dir, ".venv", "Scripts", "python.exe") : path.join(dir, ".venv", "bin", "python");
   fs.mkdirSync(path.dirname(py), { recursive: true });
   fs.writeFileSync(py, "");
@@ -434,6 +437,8 @@ test("the engine source asks only public-display sources, in public mode, and ke
   const dir = fakeEngineDir();
   try {
     assert.deepEqual(publicSourceIds(dir), ["himalayas"]); // not the personal-use API, not a discovery site
+    const { leadSourceIds } = await import("../lib/board-source-engine.mjs");
+    assert.deepEqual(leadSourceIds(dir), ["absolventa"]); // stepstone and linkedin are forbidden, a site with no policy entry is no
     const lead = engineJob({ original_url: "https://www.stepstone.de/stellenangebote--x-1-inline.html", verification_status: "unverified", sources: [{ source_id: "stepstone", display: "link-only" }] });
     const personal = engineJob({ original_url: "https://www.arbeitnow.com/jobs/x", sources: [{ source_id: "arbeitnow", display: "personal" }] });
     const mixed = engineJob({ original_url: "https://himalayas.app/x/2", sources: [{ source_id: "himalayas", display: "public-with-attribution" }, { source_id: "arbeitnow", display: "personal" }] });
@@ -442,7 +447,7 @@ test("the engine source asks only public-display sources, in public mode, and ke
     assert.deepEqual(result.jobs.map((j) => j.source), ["Himalayas"]);
     assert.equal(result.jobs[0].verified, undefined);
     assert.equal(asked.length, 2); // "Praktikum" and "Internship"
-    assert.deepEqual(asked[0].request.sources, ["himalayas"]);
+    assert.deepEqual(asked[0].request.sources, ["himalayas", "absolventa"]); // public-display APIs, then the discovery sites the policy allows
     assert.equal(asked[0].request.posted_within_days, 10);
     assert.equal(asked[0].options.env.JOBSEARCH_DEPLOYMENT, "public");
     assert.equal([lead, personal, mixed].filter(publishable).length, 0);
@@ -515,4 +520,43 @@ test("the preview script never writes into the board repo and its output folder 
   assert.match(script, /must not be built inside the board repo/);
   assert.doesNotMatch(script, /execFile|child_process|--publish|"push"|git push/); // it runs no git command and has no publish step
   assert.match(fs.readFileSync(new URL("../.gitignore", import.meta.url), "utf8"), /^\/\.board-preview\/$/m);
+});
+
+test("a lead is published only from a site the policy allows, and only as a link-only row", async () => {
+  const { fetchFromEngine, leadHit, publishableLead } = await import("../lib/board-source-engine.mjs");
+  const dir = fakeEngineDir();
+  try {
+    const lead = (id, name, url) => engineJob({ original_url: url, title: "Praktikum Softwareentwicklung (m/w/d)", company: "Quoted by the search engine", posted_date: "", verification_status: "unverified",
+      collection_method: "discovery", snippet: "A sentence the search engine quoted from the page.", sources: [{ source_id: id, name, collection_method: "discovery", display: "link-only", attribution: "Found with Parallel" }] });
+    const allowed = lead("absolventa", "Absolventa", "https://www.absolventa.de/stellenangebote/1-b-praktikum-softwareentwicklung");
+    const forbidden = lead("stepstone", "StepStone", "https://www.stepstone.de/stellenangebote--Praktikum-Softwareentwicklung-1-inline.html");
+    const linkedin = lead("linkedin", "LinkedIn", "https://de.linkedin.com/jobs/view/praktikum-softwareentwicklung-1");
+    const unknown = lead("nopolicy", "Nowhere", "https://no-policy-entry.example/job/1");
+    const result = await fetchFromEngine({ oldest: "2026-10-01", today: "2026-10-11", dir, run: engineFrom([allowed, forbidden, linkedin, unknown]).run });
+    assert.deepEqual(result.jobs.map((j) => j.source), ["Absolventa (search lead, not checked)"]);
+    const [row] = result.jobs;
+    assert.equal(row.snippet, "");                          // nothing the search engine quoted from the page
+    assert.equal(row.company, "");
+    assert.equal(row.url, allowed.original_url);            // the link is the point
+    assert.equal(row.publishLead, true);
+    assert.equal(publishableLead(allowed, new Set(["absolventa"])), true);
+    assert.equal(publishableLead(forbidden, new Set(["absolventa"])), false);
+    assert.equal(publishableLead({ ...allowed, verification_status: "from_source", collection_method: "api" }, new Set(["absolventa"])), false); // an API record is not a lead
+    assert.equal(leadHit(allowed).verified, false);
+    const { internalHost } = await import("../lib/board-source-engine.mjs");
+    assert.equal(internalHost("https://uno-production.absolventa.de/stellenangebote/1-b-x"), true);
+    assert.equal(internalHost("https://www.absolventa.de/stellenangebote/1-b-x"), false);
+    assert.equal(publishableLead(lead("absolventa", "Absolventa", "https://uno-production.absolventa.de/stellenangebote/1-b-x"), new Set(["absolventa"])), false);
+  } finally { fs.rmSync(dir, { recursive: true, force: true }); }
+});
+
+test("a published lead reaches the board with its label, and the page says some rows are leads", async () => {
+  const dir = boardDir();
+  const lead = { url: "https://www.absolventa.de/stellenangebote/9-b-praktikum-softwareentwicklung", title: "Praktikum Softwareentwicklung (m/w/d)", company: "", location: "", date_posted: "",
+    snippet: "", source: "Absolventa (search lead, not checked)", verified: false, publishLead: true };
+  const unmarked = { ...lead, url: "https://www.absolventa.de/stellenangebote/10-b-praktikum-softwareentwicklung", publishLead: undefined };
+  await run(dir, fakeServers(), { sources: ["engine"], searchEngine: async () => ({ jobs: [lead, unmarked], known: [], settled: [], warnings: [] }) });
+  const postings = read(dir, "data", "postings.json");
+  assert.deepEqual(postings.map((p) => p.source), ["Absolventa (search lead, not checked)"]); // the lead without the publishLead mark is still refused
+  assert.match(read(dir, "data", "index.json").notice, /search-engine leads.*not read/);
 });

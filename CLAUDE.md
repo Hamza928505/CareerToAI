@@ -125,7 +125,7 @@ profile, and writes derived facts only. It searches one area and eight sites a d
 only sites that `data/source-access-policy.json` marks `permitted` (`lib/source-policy.mjs`): today none is, so
 that search is paused. The workspace search no longer searches job sites itself: it asks the JobSearchEngine
 (`../JobSearchEngine`, `lib/engine-search.mjs`), whose results from free APIs and feeds are used as they are and whose
-search-engine leads for restricted sites become unverified rows, nothing opened. `npm run board:preview` builds a local, never-published copy of the board page filled from every way (leads and personal-use sources included); the public board takes only sources whose terms allow public display (`board:search -- --sources=engine`). Never mark a site `permitted` without quoted evidence from its terms. A
+search-engine leads for restricted sites become unverified rows, nothing opened. `npm run board:preview` builds a local, never-published copy of the board page filled from every way (leads and personal-use sources included); the public board takes only sources whose terms allow public display (`board:search -- --sources=engine`). It also shows link-only search leads, but only from sites whose policy entry has `publicLeads: true`; never add that flag without reading the site's terms. Never mark a site `permitted` without quoted evidence from its terms. A
 second, free source for the Bundesagentur für Arbeit's job board is built (`lib/board-source-ba.mjs`) but **off by
 default and not to be switched on for the public board**: the agency's terms of use forbid robots and reading content
 out of the portal through interfaces (section 2a(3)), so it needs the agency's permission first
