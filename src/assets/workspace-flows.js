@@ -14,7 +14,7 @@ export async function initWorkspaceFlows({ local, api, Swal, dialog, readStrateg
     application: ['company', 'position', 'apply', 'applicant', 'tailored', 'documents_used', 'app_method', 'app_url', 'date_applied', 'follow_up', 'status', 'answer', 'interview_date', 'next_action', 'notes'],
   };
   const longFields = new Set(['position', 'notes', 'reason', 'req_skills', 'missing_reqs', 'why_match', 'benefits', 'response_summary']);
-  const mutationIds = ['btn-add-row', 'btn-save-tracker', 'btn-reload-tracker', 'btn-apply-selected'];
+  const mutationIds = ['btn-add-row', 'btn-save-tracker', 'btn-reload-tracker', 'btn-apply-selected', 'btn-assign-applicant'];
   const filterIds = ['tracker-filter', 'tracker-opportunity-filter', 'tracker-city-filter', 'tracker-score-filter', 'tracker-status-filter', 'tracker-date-field', 'tracker-date-from', 'tracker-date-to', 'tracker-date-status-filter', 'tracker-decision-filter', 'tracker-applicant-filter', 'tracker-work-mode-filter', 'tracker-source-filter', 'tracker-link-filter', 'tracker-field-filter', 'tracker-value-filter'];
 
   function postingId(value) {
@@ -404,19 +404,63 @@ export async function initWorkspaceFlows({ local, api, Swal, dialog, readStrateg
     const count = suggestion.roles.length;
     $('search-run-status').textContent = count ? `Added ${count} role${count === 1 ? '' : 's'} to "Roles to look for". Review them, then save your strategy.` : 'No suggested role matched the list here. Pick your roles by hand.';
   }));
+  $('btn-assign-applicant').addEventListener('click', () => run('apply-status', async () => {
+    await save();
+    // Only what the tracker is showing right now, and only the student's own picks: the server checks this again.
+    const ids = matchingRows().filter((row) => (row.applicant || 'Me') === 'Me' && row.apply === 'Yes' && row.status === 'To apply').map((row) => row.id);
+    if (!ids.length) { $('apply-status').textContent = 'Filter the tracker to jobs with Applicant = Me, Apply? = Yes and status To apply first.'; return; }
+    const loader = AiStatus.overlay({ state: 'working', label: `Reading ${ids.length} application${ids.length === 1 ? '' : 's'}…` });
+    let result;
+    try { result = await request('assign-applicant', { ids }); await reload(); } finally { loader.close(); }
+    $('apply-status').textContent = `${result.assigned.length} job${result.assigned.length === 1 ? '' : 's'} given to the Assistant, ${result.kept.length} kept with you. Nothing was sent.`;
+    const body = document.createElement('div');
+    for (const [heading, items] of [['Given to the Assistant', result.assigned], ['Kept with you', result.kept]]) {
+      if (!items.length) continue;
+      const title = document.createElement('p'); title.textContent = heading; title.style.fontWeight = '600'; body.append(title);
+      const list = document.createElement('ul');
+      items.forEach((item) => { const li = document.createElement('li'); li.textContent = `${item.company || 'Company'} — ${item.position}: ${item.reason}`; list.append(li); });
+      body.append(list);
+    }
+    await Swal.fire({ ...dialog, title: 'Who applies', html: body, confirmButtonText: 'Close' });
+  }));
   $('btn-apply-selected').addEventListener('click', () => run('apply-status', async () => {
     await save();
     const preview = await request('apply-preview');
     if (!preview.count) { $('apply-status').textContent = 'Assign a job to Assistant and choose Yes with status To apply first.'; return; }
     const body = document.createElement('div');
     const intro = document.createElement('p'); intro.textContent = `Review these ${preview.count} applications before starting. The assistant will use your saved candidate details. Jobs assigned to Me stay with you.`; body.append(intro);
+    const fillLabel = document.createElement('label'); fillLabel.style.display = 'block'; fillLabel.style.margin = '8px 0';
+    const fillOnly = document.createElement('input'); fillOnly.type = 'checkbox'; fillOnly.id = 'apply-fill-only'; fillOnly.checked = true;
+    fillLabel.append(fillOnly, ' Fill and upload only: open each web form in a browser window with your details and documents filled in, but do not submit, and do not send emails. You review and click Submit yourself.');
+    body.append(fillLabel);
     const list = document.createElement('ul');
-    (preview.rows || [preview.first]).forEach((row) => { const item = document.createElement('li'); item.textContent = `${row.company || 'Company to review'} — ${row.position} (${row.url || 'application URL missing'})`; list.append(item); }); body.append(list);
+    const emailEdits = new Map();
+    const ROUTES = { email: 'sent by email', upload: 'filled in a browser here, documents uploaded', remote: 'filled by the remote browser (documents cannot be uploaded)', missing: 'no application link' };
+    (preview.rows || [preview.first]).forEach((row) => {
+      const item = document.createElement('li');
+      item.textContent = `${row.company || 'Company to review'} — ${row.position} (${row.url || 'application URL missing'}) · ${ROUTES[row.route] || row.route}${row.attachments?.length ? ` · attaches ${row.attachments.join(', ')}` : ''}`;
+      if (row.email) {
+        const to = document.createElement('p'); to.textContent = `To: ${row.email.to || 'no address — add the employer e-mail to the row'} · ${row.email.ai ? 'AI-written draft, check the facts before sending' : 'standard template'}`;
+        const subject = document.createElement('input'); subject.type = 'text'; subject.value = row.email.subject; subject.setAttribute('aria-label', `Subject for ${row.company || 'this job'}`); subject.style.width = '100%';
+        const text = document.createElement('textarea'); text.value = row.email.body; text.rows = 7; text.setAttribute('aria-label', `Email text for ${row.company || 'this job'}`); text.style.width = '100%';
+        emailEdits.set(row.id, { subject, text });
+        item.append(to, subject, text);
+      }
+      list.append(item);
+    });
+    body.append(list);
     const answer = await Swal.fire({ ...dialog, title: 'Confirm assistant applications', html: body, showCancelButton: true, confirmButtonText: 'Start applications' });
     if (!answer.isConfirmed) return;
     const loader = AiStatus.overlay({ state: 'working', label: 'Processing your assistant queue. Each result will be saved to the workbook…' });
     let result;
-    try { result = await request('apply', { confirmation: preview.confirmation }); await reload(); } finally { loader.close(); }
+    try {
+      const edits = Object.fromEntries([...emailEdits].map(([id, f]) => [id, { subject: f.subject.value, body: f.text.value }]));
+      result = await request('apply', { confirmation: preview.confirmation, edits, fillOnly: fillOnly.checked }); await reload();
+    } finally { loader.close(); }
+    if (fillOnly.checked) {
+      $('apply-status').textContent = `${result.filled} form${result.filled === 1 ? '' : 's'} filled in an open browser window, nothing submitted. Review each one and click Submit yourself, then set the row to Applied.${result.notRun ? ` ${result.notRun} email or remote-browser job${result.notRun === 1 ? ' was' : 's were'} not run.` : ''}${result.blocked || result.needsInput > result.filled ? ' Some jobs stopped before filling; read their row notes.' : ''}`;
+      return;
+    }
     $('apply-status').textContent = `Submitted: ${result.submitted}. Needs input: ${result.needsInput}. Blocked: ${result.blocked}.${result.skipped ? ` ${result.skipped} changed after confirmation and need a fresh review.` : ''} Review row notes for the next steps.`;
   }));
   window.addEventListener('beforeunload', (event) => { if (dirty || busy) { event.preventDefault(); event.returnValue = ''; } });
@@ -430,15 +474,18 @@ export async function initWorkspaceFlows({ local, api, Swal, dialog, readStrateg
     refreshAi();
     window.addEventListener('settings-saved', refreshAi);
     request('application-capabilities').then((capabilities) => {
-      $('apply-tools').textContent = capabilities.browser?.available
-        ? `Web forms are connected through ${capabilities.browser.server}. If a required document cannot be uploaded, the row will ask for your input.`
-        : 'Browser submission is unavailable. Check your application tool connection; you can still open job links and apply yourself.';
+      const how = [
+        'Tailored jobs are filled in a browser on this computer and your CV and cover letter are uploaded.',
+        capabilities.email?.available ? 'Jobs with an employer e-mail are sent with both documents attached.' : 'Jobs with an employer e-mail need email sending set up (npm run gmail:auth, or SMTP under API keys & email).',
+        capabilities.browser?.available ? `Jobs without tailored documents go through ${capabilities.browser.server}; a required upload will ask for your input.` : '',
+      ].filter(Boolean);
+      $('apply-tools').textContent = how.join(' ');
     }).catch(() => { $('apply-tools').textContent = 'The application connection could not be checked. The assistant will stop if the browser tool is unavailable.'; });
     await Promise.allSettled([
       run('tracker-status', reload),
       request('application-settings').then((settings) => {
-        $('apply-contact').textContent = settings.candidateEmail ? `Web forms use your saved contact email: ${settings.candidateEmail}. Sending email applications requires a connected email account.` : 'Add your contact email in the profile editor before submitting web forms. Sending email applications also requires a connected email account.';
-      }).catch(() => { $('apply-contact').textContent = 'Check your contact email in the profile editor. Email sending is not connected.'; }),
+        $('apply-contact').textContent = settings.candidateEmail ? `Web forms use your saved contact email: ${settings.candidateEmail}. Email applications are sent from your connected mail account.` : 'Add your contact email in the profile editor before applying.';
+      }).catch(() => { $('apply-contact').textContent = 'Check your contact email in the profile editor.'; }),
     ]);
   } else {
     status.textContent = 'Run npm run editor to load and edit your local Excel workbook.';

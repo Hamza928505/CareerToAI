@@ -108,6 +108,14 @@ published site it is static and says so: nothing runs, the tracker is empty, and
 only the GJU eligibility checker works, because that is arithmetic in the
 browser against `data/gju-rules.json`.
 
+Applying (`POST /__editor/apply`) picks a route per row (`applicationRoute`): an employer
+e-mail address is sent with the tailored CV and cover letter attached
+(`lib/send-email.mjs`: the Gmail API with a send-only token, set up once by `npm run gmail:auth`,
+else SMTP; credentials in the gitignored `.env`); a web form with tailored files is
+filled in a local Chromium that uploads them from disk (`lib/local-browser.mjs`); a web form
+without them falls back to the remote Firecrawl/TinyFish tool, which cannot upload local files.
+All three run only after the preview is confirmed and never retry on their own.
+
 The public GJU board is a separate project. Its page and data live in the sibling repo `../GJUBoard`
 (static site, no keys, internships only), whose remote is the **public** GitHub repo
 `Hamza928505/GJUInternshipBoard` (branch `main`; GitHub Pages stays off, the host is still to be chosen), so

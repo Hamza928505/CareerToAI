@@ -100,6 +100,8 @@ eleventyExcludeFromCollections: true
       <p class="muted">Keys are saved to <code>.env</code> on this computer. They are never shown again, and never sent to your browser or to GitHub. Type a new key to replace one, or remove it.</p>
       <h3 class="svc-sub">Search services</h3>
       <div id="settings-search" class="settings-rows"></div>
+      <h3 class="svc-sub">Email sending (applications by email)</h3>
+      <div id="settings-email" class="settings-rows"></div>
       <h3 class="svc-sub">Other API keys</h3>
       <div id="settings-custom" class="settings-rows"></div>
       <div class="settings-add">
@@ -385,6 +387,8 @@ eleventyExcludeFromCollections: true
       <h3>Assistant's queue</h3>
       <p id="apply-summary" role="status" aria-live="polite">Loading selected applications...</p>
       <p class="apply-criteria">Jobs assigned to <strong>Assistant</strong>, with <strong>Apply? = Yes</strong> and <strong>To apply</strong>, appear here.</p>
+      <button class="btn" id="btn-assign-applicant" type="button"><i class="fa-solid fa-user-check" aria-hidden="true"></i> Let the assistant take what it can</button>
+      <p class="apply-criteria">Reads the jobs shown in the tracker that are yours (<strong>Me</strong>, <strong>Apply? = Yes</strong>, <strong>To apply</strong>) and changes <strong>Applicant</strong> to Assistant where it can apply. Nothing is sent.</p>
       <button class="btn btn--primary" id="btn-apply-selected" type="button"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i> Review & apply</button>
       <p id="apply-status" role="status" aria-live="polite">Your first application is previewed before submission.</p>
     </div>

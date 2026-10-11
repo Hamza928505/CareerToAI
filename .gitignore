@@ -23,6 +23,9 @@ data/tracker.csv
 # the committed candidate profile must not carry.
 data/profile-private.json
 
+# The last AI skills analysis: derived from the profile, regenerated on demand.
+data/skills-analysis.json
+
 # Skill sources built by npm run skills:import / skills:harvest.
 # Local authoring aids: the editor works without them.
 data/skill-taxonomy.json
@@ -184,3 +187,12 @@ src/assets/Student-data/tailored/
 data/board-state.json
 data/board-run-log.jsonl
 data/board-task.log
+
+# One-off scratch scripts in the repo root (one holds a personal job list, one reads the private tracker): never publish.
+/add_to_tracker.mjs
+/test_xlsx.cjs
+/test.js
+/fix.cjs
+/fix2.cjs
+/clean_js.py
+/update_npm.py

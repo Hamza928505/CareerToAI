@@ -44,12 +44,15 @@ import { resolveSite } from "../lib/site.mjs";
 import { buildApplyPack } from "../lib/apply-pack.mjs";
 import { SCHEMA, jobMatchKey } from "../lib/tracker.mjs";
 import { getApplicationCapabilities, runBrowserApplication, searchPlatforms } from "../lib/job-search.mjs";
+import { applyAssignments, decideApplicants } from "../lib/assign-applicant.mjs";
+import { runLocalApplication } from "../lib/local-browser.mjs";
+import { draftEmail, emailRecipient, gmailConfig, sendApplicationEmail, smtpConfig } from "../lib/send-email.mjs";
 import { readApplicationWorkbook, saveApplicationWorkbook } from "../lib/application-workbook.mjs";
-import { assistantQueue, applicationTarget, mergeSearchResults } from "../lib/application-flow.mjs";
+import { applicationRoute, applicationTarget, assistantQueue, mergeSearchResults } from "../lib/application-flow.mjs";
 import { readSettings, saveSettings } from "../lib/env-settings.mjs";
 import { chatJson, llmConfig, llmOverview, llmStatus } from "../lib/llm.mjs";
 import { scoreJobs, suggestRoles } from "../lib/profile-ai.mjs";
-import { hasStudentFiles, readStudent, TAILORED_DIRS } from "../lib/student-files.mjs";
+import { hasStudentFiles, readStudent, TAILORED_DIRS, tailoredPaths } from "../lib/student-files.mjs";
 import { slug, tailorDocuments } from "../lib/tailor-docs.mjs";
 
 const execFileAsync = promisify(execFile);
@@ -316,6 +319,20 @@ async function handleSearchSuggest(res) {
   sendJson(res, 200, { ok: true, ...(await suggestRoles({ options })) });
 }
 
+async function handleAssignApplicant(req, res) {
+  const { ids } = await readBody(req);
+  if (!Array.isArray(ids) || !ids.every((id) => typeof id === 'string') || ids.length > 500) return sendJson(res, 400, { error: 'Send the ids of the rows you filtered.' });
+  if (!llmConfig()) return sendJson(res, 400, { error: 'Set up an AI provider in .env so the assistant can read the applications.' });
+  await withWorkflow('assign', async () => {
+    const snapshot = await readApplicationWorkbook();
+    // The model call can take a while; the revision check below refuses to overwrite edits made meanwhile.
+    const { assign, keep } = await decideApplicants(snapshot.rows, ids);
+    if (assign.length) await saveApplicationWorkbook(applyAssignments(snapshot.rows, assign), { revision: snapshot.revision });
+    const label = (id) => { const row = snapshot.rows.find((item) => item.id === id) || {}; return { id, company: row.company || '', position: row.position || '' }; };
+    sendJson(res, 200, { ok: true, assigned: assign.map((a) => ({ ...label(a.id), reason: a.reason })), kept: keep.map((k) => ({ ...label(k.id), reason: k.reason })) });
+  });
+}
+
 async function handleTailor(req, res) {
   const { id } = await readBody(req);
   if (!llmConfig()) return sendJson(res, 400, { error: 'Set up an AI provider in .env to tailor your documents.' });
@@ -355,17 +372,33 @@ function handleApplyPack(res) {
 async function handleApplyPreview(res) {
   const snapshot = await readApplicationWorkbook();
   const eligible = assistantQueue(snapshot.rows);
-  const rows = eligible.slice(0, 15).map((row) => ({ id: row.id, company: row.company, position: row.position, url: row.app_url || row.job_url, method: row.app_method }));
+  const profile = Object.fromEntries(['profile', 'experience', 'projects'].map((name) => [name, readData(name)]));
+  const drafts = new Map();
+  // One model call per email row, in parallel (at most 15). A failed call leaves the template, never an error.
+  const rows = await Promise.all(eligible.slice(0, 15).map(async (row) => {
+    const route = applicationRoute(row);
+    const files = tailoredPaths(row);
+    let email;
+    if (route === 'email') {
+      email = await draftEmail(row, profile);
+      drafts.set(row.id, { subject: email.subject, body: email.body });
+      email = { to: emailRecipient(row), ...email };
+    }
+    return {
+      id: row.id, company: row.company, position: row.position, url: row.app_url || row.job_url, method: row.app_method, route,
+      attachments: Object.values(files).map((file) => path.basename(file)), email,
+    };
+  }));
   pendingPreview = {
     token: randomUUID(), revision: snapshot.revision, ids: rows.map((row) => row.id),
     approvedRows: new Map(eligible.slice(0, 15).map((row) => [row.id, structuredClone(row)])),
-    expires: Date.now() + 10 * 60_000,
+    drafts, expires: Date.now() + 10 * 60_000,
   };
   sendJson(res, 200, { count: rows.length, remaining: Math.max(0, eligible.length - rows.length), first: rows[0] || null, rows, confirmation: pendingPreview.token, batchLimit: 15 });
 }
 
 async function handleApply(req, res) {
-  const { confirmation } = await readBody(req);
+  const { confirmation, edits, fillOnly } = await readBody(req);
   await withWorkflow('apply', async () => {
     const snapshot = await readApplicationWorkbook();
     if (!pendingPreview || pendingPreview.token !== confirmation || pendingPreview.expires < Date.now() || pendingPreview.revision !== snapshot.revision) {
@@ -373,10 +406,11 @@ async function handleApply(req, res) {
     }
     const ids = pendingPreview.ids;
     const approvedRows = pendingPreview.approvedRows;
+    const drafts = pendingPreview.drafts;
     pendingPreview = null;
     const profile = Object.fromEntries(['profile', 'experience', 'projects', 'certificates'].map((name) => [name, readData(name)]));
     profile['profile-extras'] = readExtras();
-    const counts = { submitted: 0, needsInput: 0, blocked: 0, attempted: 0, skipped: 0 };
+    const counts = { submitted: 0, needsInput: 0, blocked: 0, attempted: 0, skipped: 0, notRun: 0, filled: 0 };
     let nextBrowserAt = 0;
     for (const id of ids) {
       let current = await readApplicationWorkbook();
@@ -387,15 +421,16 @@ async function handleApply(req, res) {
         continue;
       }
       const target = applicationTarget(row);
+      const route = applicationRoute(row);
+      // Fill-only is for the local browser alone: nothing is sent or submitted, so e-mail and remote-browser jobs wait.
+      if (fillOnly === true && route !== 'upload') { counts.notRun++; continue; }
       let outcome;
-      if (target.kind === 'email') {
-        outcome = { status: 'Needs input', evidence: 'Email submission needs a connected sending account. Your contact email alone does not authorize email sending.' };
-      } else if (target.kind === 'missing') {
-        outcome = { status: 'Needs input', evidence: 'Add a valid application URL or job posting URL.' };
+      if (target.kind === 'missing') {
+        outcome = { status: 'Needs input', evidence: 'Add a valid application URL, or the employer e-mail address.' };
       } else if (!profile.profile.email) {
         outcome = { status: 'Needs input', evidence: 'Add your contact email in the profile editor before applying.' };
       } else {
-        const wait = nextBrowserAt - Date.now();
+        const wait = route === 'email' ? 0 : nextBrowserAt - Date.now();
         if (wait > 0) {
           await delay(wait);
           current = await readApplicationWorkbook();
@@ -409,9 +444,15 @@ async function handleApply(req, res) {
         row.assistant_state = 'Needs input';
         row.notes = [row.notes, 'Assistant application started. If interrupted, check the portal before clearing Assistant state and retrying.'].filter(Boolean).join('\n');
         await saveApplicationWorkbook(current.rows, { revision: current.revision });
-        try { outcome = await runBrowserApplication(row, profile); }
-        catch { outcome = { status: 'Needs input', evidence: 'The browser connection stopped. Check the application portal before retrying.' }; }
-        finally { nextBrowserAt = Date.now() + 30_000; }
+        try {
+          if (route === 'email') {
+            // The subject and text the student saw (and may have edited) in the preview; nothing else is ever sent.
+            const edit = { ...drafts?.get(id), ...edits?.[id] };
+            outcome = await sendApplicationEmail(row, profile, { subject: typeof edit.subject === 'string' ? edit.subject : undefined, body: typeof edit.body === 'string' ? edit.body : undefined });
+          } else outcome = await (route === 'upload' ? (r, p) => runLocalApplication(r, p, { fillOnly: fillOnly === true }) : runBrowserApplication)(row, profile);
+        }
+        catch { outcome = { status: 'Needs input', evidence: 'The application run stopped. Check the application portal or your Sent folder before retrying.' }; }
+        finally { if (route !== 'email') nextBrowserAt = Date.now() + 30_000; }
       }
       counts.attempted++;
       const latest = await readApplicationWorkbook();
@@ -420,6 +461,7 @@ async function handleApply(req, res) {
       updated.status = outcome.status === 'Applied' ? 'Applied' : 'To apply';
       updated.assistant_state = outcome.status === 'Applied' ? '' : outcome.status === 'Blocked' ? 'Blocked' : 'Needs input';
       updated.notes = [updated.notes, `Assistant: ${String(outcome.evidence || 'No submission confirmation was returned.').slice(0, 2000)}`].filter(Boolean).join('\n');
+      if (outcome.filledOnly) counts.filled++;
       if (updated.status === 'Applied') {
         updated.date_applied = new Date().toISOString().slice(0, 10);
         counts.submitted++;
@@ -552,7 +594,8 @@ const server = http.createServer(async (req, res) => {
         capabilitiesChecked = Date.now();
         capabilitiesCache = getApplicationCapabilities().catch(() => ({ browser: { available: false }, email: { available: false }, localFileUploads: false }));
       }
-      return sendJson(res, 200, await capabilitiesCache);
+      // Email and local uploads are this server's own, so they are read fresh instead of from the 5-minute cache.
+      return sendJson(res, 200, { ...(await capabilitiesCache), email: { available: Boolean(gmailConfig() || smtpConfig()), via: gmailConfig() ? "gmail" : smtpConfig() ? "smtp" : null }, localFileUploads: true });
     }
     if (pathname === "/__editor/credits" && req.method === "GET") return sendJson(res, 200, { providers: await checkCredits(), ai: llmOverview() });
     if (pathname === "/__editor/status") {
@@ -569,6 +612,7 @@ const server = http.createServer(async (req, res) => {
     if (pathname === "/__editor/llm-test" && req.method === "POST") return await handleLlmTest(res);
     if (pathname === "/__editor/search-suggest" && req.method === "POST") return await handleSearchSuggest(res);
     if (pathname === "/__editor/tailor" && req.method === "POST") return await handleTailor(req, res);
+    if (pathname === "/__editor/assign-applicant" && req.method === "POST") return await handleAssignApplicant(req, res);
     if (pathname === "/__editor/apply-pack" && req.method === "GET") return handleApplyPack(res);
     if (pathname === "/__editor/apply-preview" && req.method === "GET") return await handleApplyPreview(res);
     if (pathname === "/__editor/apply" && req.method === "POST") return await handleApply(req, res);

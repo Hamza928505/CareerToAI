@@ -1161,7 +1161,7 @@ function settingRow(field) {
 function renderSettings(fields) {
   settingsFields = fields;
   removing.clear();
-  for (const [group, id] of [["ai", "settings-ai"], ["search", "settings-search"], ["custom", "settings-custom"]]) {
+  for (const [group, id] of [["ai", "settings-ai"], ["search", "settings-search"], ["email", "settings-email"], ["custom", "settings-custom"]]) {
     const rows = fields.filter((f) => f.group === group).map(settingRow);
     const box = document.getElementById(id);
     if (group === "custom" && !rows.length) rows.push(el("p", "settings-empty", "No other keys yet."));

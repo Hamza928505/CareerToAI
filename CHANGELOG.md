@@ -15,6 +15,27 @@ per-file diff commands.
 
 ### Added
 
+- **Workspace "Apply" now attaches the tailored CV and cover letter.** A web application
+  with tailored files is filled and submitted in a local Chromium (Playwright) that uploads
+  the `.docx` files from disk; an application with an employer e-mail address is sent over
+  the Gmail API (send-only permission, `npm run gmail:auth`) or SMTP, with both files attached and a subject and text you can edit in the
+  preview. Both routes keep the preview-then-confirm step, one row at a time, no automatic
+  retry, and report Applied only on a visible confirmation (web) or an accepted message
+  (email). Both routes run the GJU eligibility gate first (the email route reads the row's duration, pay and advert notes): a FAIL is Blocked and an unclear posting is Needs input, so it is never sent. A CAPTCHA, a login or a required consent box is Blocked, and
+  unanswerable required fields stop with Needs input, all before Submit. Jobs without tailored
+  files still use the Firecrawl/TinyFish route. Set `GMAIL_*` (or `SMTP_*`) under *API keys & email*;
+  one-time `npx playwright install chromium`. The email text is an AI-written draft
+  for each posting (`draftEmail`, one model call per email, only the student's own facts, German
+  or English by posting language) with the standard template as fallback; it is shown in the
+  preview for review and editing before anything is sent.
+  The apply dialog has a *Fill and upload only* option (on by default): each web form opens in a
+  visible browser, filled and with the documents uploaded, and is left open for the student to
+  review and submit; nothing is submitted and no email is sent in that mode.
+  *Let the assistant take what it can* reads the jobs shown in the tracker that are the student's
+  own (Applicant = Me, Apply? = Yes, To apply) and sets Applicant to Assistant where the assistant
+  can apply (`lib/assign-applicant.mjs`). Code requires a usable route and tailored documents; the
+  model may only keep a row with the student, for example when the advert asks for a portfolio.
+  Nothing is sent by this step.
 - **Public GJU internship board runner** (`npm run board:search`, `-- --dry-run` to see the plan,
   `-- --publish` to commit and push, `-- --since=2026-10-01` to accept postings from that date on; the flags
   also work from Windows PowerShell 5.1, which swallows the `--` and leaves npm to pass them on as
