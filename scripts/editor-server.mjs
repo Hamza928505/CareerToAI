@@ -51,7 +51,7 @@ import { readApplicationWorkbook, saveApplicationWorkbook } from "../lib/applica
 import { applicationRoute, applicationTarget, assistantQueue, mergeSearchResults } from "../lib/application-flow.mjs";
 import { readSettings, saveSettings } from "../lib/env-settings.mjs";
 import { chatJson, llmConfig, llmOverview, llmStatus } from "../lib/llm.mjs";
-import { scoreJobs, suggestRoles } from "../lib/profile-ai.mjs";
+import { analyseSkills, scoreJobs, suggestRoles } from "../lib/profile-ai.mjs";
 import { hasStudentFiles, readStudent, TAILORED_DIRS, tailoredPaths } from "../lib/student-files.mjs";
 import { slug, tailorDocuments } from "../lib/tailor-docs.mjs";
 
@@ -312,6 +312,23 @@ async function handleLlmTest(res) {
   sendJson(res, 200, { ok: true, provider: config.provider, model: config.model });
 }
 
+// Rates the skills the editor holds (it may hold unsaved edits) with the configured AI provider.
+// The last analysis is kept in data/skills-analysis.json (gitignored) so it is still there the next time the page opens.
+const ANALYSIS_FILE = path.join(ROOT, "data", "skills-analysis.json");
+
+async function handleSkillsAnalysis(req, res) {
+  if (req.method === "GET") {
+    return sendJson(res, 200, { ok: true, saved: fs.existsSync(ANALYSIS_FILE) ? readJson(ANALYSIS_FILE) : null });
+  }
+  if (!llmConfig()) return sendJson(res, 400, { error: "Set up an AI provider in .env (see API keys & AI provider in the workspace)." });
+  const { profile } = await readBody(req);
+  const strategy = readData("search-strategy");
+  const result = await analyseSkills({ profile, targetRoles: strategy.roles || [] });
+  const saved = { generatedAt: new Date().toISOString(), provider: llmConfig().provider, model: llmConfig().model, ...result };
+  fs.writeFileSync(ANALYSIS_FILE, JSON.stringify(saved, null, 2) + "\n");
+  sendJson(res, 200, { ok: true, ...saved });
+}
+
 async function handleSearchSuggest(res) {
   if (!llmConfig()) return sendJson(res, 400, { error: 'Set up an AI provider in .env to get suggestions from your files.' });
   if (!hasStudentFiles()) return sendJson(res, 400, { error: 'Upload student.json and both base documents in the editor first.' });
@@ -532,6 +549,20 @@ async function handleTrackerWrite(req, res) {
   });
 }
 
+// The phone number: private, so it lives in the gitignored data/profile-private.json, never in the published profile.json.
+async function handlePrivateProfile(req, res) {
+  const file = path.join(ROOT, "data", "profile-private.json");
+  const current = fs.existsSync(file) ? readJson(file) : {};
+  if (req.method === "GET") return sendJson(res, 200, { ok: true, phone: String(current.phone || "") });
+  const { phone } = await readBody(req);
+  const value = String(phone ?? "").trim();
+  if (value.length > 30 || /[^\d+\s().-]/.test(value)) {
+    return sendJson(res, 400, { error: "A phone number may only hold digits, spaces and + ( ) . -" });
+  }
+  fs.writeFileSync(file, JSON.stringify({ ...current, phone: value }, null, 2) + "\n");
+  sendJson(res, 200, { ok: true, phone: value });
+}
+
 async function handleStudentData(req, res) {
   const dir = path.join(ROOT, "src", "assets", "Student-data");
   if (req.method === "GET") {
@@ -601,6 +632,8 @@ const server = http.createServer(async (req, res) => {
     if (pathname === "/__editor/status") {
       return sendJson(res, 200, { ok: true, hasApiKey: Boolean(process.env.ANTHROPIC_API_KEY), llm: llmStatus(), studentFiles: hasStudentFiles() });
     }
+    if (pathname === "/__editor/skills-analysis") return await handleSkillsAnalysis(req, res);
+    if (pathname === "/__editor/private-profile") return await handlePrivateProfile(req, res);
     if (pathname === "/__editor/save" && req.method === "POST") return await handleSave(req, res);
     if (pathname === "/__editor/extract" && req.method === "POST") return await handleExtract(req, res);
     if (pathname === "/__editor/skills" && req.method === "POST") return await handleSkills(req, res);

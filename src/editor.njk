@@ -27,7 +27,7 @@ pageScript: /assets/editor.js
     </svg>
     {% if icon %}<i class="fa-solid {{ icon }}" style="margin-right: 0.5rem; color: var(--accent);"></i>{% endif %}
     {{ label | safe }}
-    {% if counts %}<span class="count" data-count="{{ id }}"></span>{% endif %}
+    {% if counts %}<span class="section-count" data-section-count="{{ id }}"></span>{% endif %}
   </button>
 </legend>
 {% endmacro %}
@@ -98,9 +98,11 @@ pageScript: /assets/editor.js
     <input type="file" accept="application/json,.json" data-import-input hidden>
   </div>
 
+  <ul class="data-summary" data-summary aria-label="What is loaded"></ul>
+
   <form class="editor-form" data-form autocomplete="on">
     <fieldset class="collapsible">
-      {{ sectionHead("student-data", "Student Data & Base Documents", "fa-file-invoice") }}
+      {{ sectionHead("student-data", "Student Data & Base Documents", "fa-file-invoice", true) }}
       <div class="section-body" id="section-student-data">
         <p class="muted">Upload your base CV and Cover Letter here. They will be saved to <code>src/assets/Student-data/</code> for the AI to use.</p>
                   <div class="grid-2">
@@ -161,6 +163,10 @@ pageScript: /assets/editor.js
         <label>Email
           <input type="email" data-path="profile.email" autocomplete="email" placeholder="you@example.com">
           <small>Published in the HTML, the JSON-LD and /llms.txt. Leave blank to publish no email.</small>
+        </label>
+        <label>Phone <span class="optional">optional</span>
+          <input type="tel" data-private-phone autocomplete="tel" placeholder="+49 170 0000000" maxlength="30" disabled>
+          <small data-private-phone-note>Private: saved to the gitignored <code>data/profile-private.json</code> and never published. Needs <code>npm run editor</code>.</small>
         </label>
 
         <h3 class="subhead">Languages</h3>
@@ -230,6 +236,24 @@ pageScript: /assets/editor.js
       <div class="section-body" id="section-links">
         <div data-list="links" class="entry-editor-list"></div>
         {{ listTools("links", "Add link", false) }}
+      </div>
+    </fieldset>
+
+    <fieldset class="collapsible">
+      {{ sectionHead("radar", "Skills radar", "fa-chart-pie") }}
+      <div class="section-body" id="section-radar">
+        <p class="muted">
+          Your skills by field, from every role, project, certificate and extra skill. Skills you have
+          pasted from job adverts (<strong>From a job ad</strong>) show as a second shape, so the gap
+          between what employers ask and what you can show is visible.
+        </p>
+        <div id="skills-radar" class="skills-radar" role="img" aria-label="Radar chart of your skills by field"></div>
+        <div class="radar-ai">
+          <button type="button" class="btn btn-primary" data-action="analyse-skills" disabled><i class="fa-solid fa-wand-magic-sparkles" style="margin-right: 0.3rem;"></i>Analyse with AI</button>
+          <button type="button" class="btn" data-action="radar-reset" hidden>Back to my skills</button>
+          <span class="muted" data-radar-ai-note>Needs <code>npm run editor</code> and an AI provider (set in the workspace).</span>
+        </div>
+        <div class="radar-notes" data-radar-notes aria-live="polite"></div>
       </div>
     </fieldset>
 

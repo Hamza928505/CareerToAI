@@ -15,6 +15,14 @@ per-file diff commands.
 
 ### Added
 
+- **Profile editor: skills radar, private phone field and a counts strip.** The radar draws your
+  skills by field from the skill library, with the skills pasted from job adverts as a second shape,
+  and lists strong and missing points. *Analyse with AI* (`POST /__editor/skills-analysis`, needs
+  `npm run editor` and an AI provider) rates 5 to 8 fields on the evidence in your data only; the
+  last result is kept in the gitignored `data/skills-analysis.json`. The phone field reads and
+  writes the gitignored `data/profile-private.json` (`/__editor/private-profile`) and is never
+  published. A strip above the form counts everything loaded, and the section count badges show
+  again (the template used an attribute the script no longer read).
 - **Workspace "Apply" now attaches the tailored CV and cover letter.** A web application
   with tailored files is filled and submitted in a local Chromium (Playwright) that uploads
   the `.docx` files from disk; an application with an employer e-mail address is sent over

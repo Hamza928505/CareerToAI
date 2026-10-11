@@ -1217,11 +1217,14 @@ function initDropZone(listName) {
  * matters: it is what a collapsed section still tells you.
  */
 function renderCounts() {
+  scheduleRadar();
   const counts = {};
   for (const [name, config] of Object.entries(LISTS)) {
     counts[name] = { n: config.target().length, one: config.label, many: config.plural };
   }
   counts.skills = { n: state.profile.skills.length, one: "extra skill", many: "extra skills" };
+  const docs = root.querySelectorAll(".current-doc strong").length;
+  counts["student-data"] = { n: docs, one: "document", many: "documents" };
 
   for (const [name, { n, one, many }] of Object.entries(counts)) {
     const badge = root.querySelector(`[data-section-count="${name}"]`);
@@ -1232,6 +1235,225 @@ function renderCounts() {
     const line = root.querySelector(`[data-list-count="${name}"]`);
     if (line) line.textContent = n ? `${n} ${n === 1 ? one : many}` : `No ${many} yet`;
   }
+
+  // One strip with every count, so you can see what is loaded without opening a section.
+  const summary = root.querySelector("[data-summary]");
+  if (summary) {
+    const order = ["education", "experience", "projects", "certificates", "links", "languages", "skills", "student-data"];
+    summary.replaceChildren(...order.filter((k) => counts[k]).map((k) => {
+      const { n, one, many } = counts[k];
+      const li = document.createElement("li");
+      li.dataset.empty = String(!n);
+      const num = document.createElement("strong");
+      num.textContent = String(n);
+      li.append(num, ` ${n === 1 ? one : many}`);
+      return li;
+    }));
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Skills radar
+//
+// Each axis is a field from the skill library. "You have" counts your own
+// skills in that field; "Adverts ask" counts the skills you have pasted from
+// job adverts. A shape that falls short of the dashed one is a weak point.
+// 5 skills in a field is a full axis - a rule of thumb, not a proficiency rating.
+// ---------------------------------------------------------------------------
+
+const RADAR_FULL = 5;
+let radarTimer;
+let radarChart = null;
+let aiRadar = null;
+
+function scheduleRadar() {
+  clearTimeout(radarTimer);
+  radarTimer = setTimeout(renderRadar, 250);
+}
+
+function groupsOf(skill) {
+  const key = String(skill).toLowerCase();
+  return SKILL_LIBRARY.filter((g) => g.skills.some((s) => s.toLowerCase() === key)).map((g) => g.group);
+}
+
+async function renderRadar() {
+  const host = root.querySelector("#skills-radar");
+  const notes = root.querySelector("[data-radar-notes]");
+  if (!host || !notes) return;
+
+  if (aiRadar) return; // the AI analysis is on screen; "Back to my skills" returns to this one
+  const own = ownSkills();
+  const ownKeys = new Set(own.map((s) => s.toLowerCase()));
+  const asked = seenSkills();
+  const have = new Map();
+  const ask = new Map();
+  const missing = new Map();
+  const bump = (map, group, skill) => {
+    if (!map.has(group)) map.set(group, []);
+    map.get(group).push(skill);
+  };
+  for (const skill of own) for (const g of groupsOf(skill)) bump(have, g, skill);
+  for (const skill of asked) {
+    for (const g of groupsOf(skill)) {
+      bump(ask, g, skill);
+      if (!ownKeys.has(skill.toLowerCase())) bump(missing, g, skill);
+    }
+  }
+
+  const fields = [...new Set([...have.keys(), ...ask.keys()])]
+    .sort((a, b) => (have.get(b)?.length || 0) + (ask.get(b)?.length || 0) - (have.get(a)?.length || 0) - (ask.get(a)?.length || 0))
+    .slice(0, 8);
+
+  notes.replaceChildren();
+  if (fields.length < 3) {
+    radarChart?.destroy();
+    radarChart = null;
+    host.replaceChildren();
+    const p = document.createElement("p");
+    p.className = "muted";
+    p.textContent = own.length
+      ? "Add skills across at least three fields to draw the radar. Pasting a job ad (From a job ad) adds the second shape."
+      : "No skills yet. Add them to a role, project, certificate or the Extra skills box.";
+    notes.append(p);
+    return;
+  }
+
+  const score = (list) => Math.min(100, Math.round(((list?.length || 0) / RADAR_FULL) * 100));
+  const series = [{ label: "You have", color: "#2ea043", data: fields.map((f) => score(have.get(f))) }];
+  if (asked.length) series.push({ label: "Adverts ask", color: "#d29922", data: fields.map((f) => score(ask.get(f))) });
+
+  try {
+    const { render, newSpec, getChart } = await import("./opencharts/js/opencharts.js");
+    const chart = asked.length ? "radar-multi" : "radar-single";
+    const base = newSpec(getChart(chart)).opts;
+    radarChart?.destroy();
+    radarChart = render(host, {
+      chart,
+      spec: { labels: fields, series, opts: { ...base, max: 100 } },
+      height: 360,
+    });
+  } catch {
+    host.textContent = "The chart could not load, but the notes below still apply.";
+  }
+
+  const line = (title, items) => {
+    const p = document.createElement("p");
+    const strong = document.createElement("strong");
+    strong.textContent = title;
+    p.append(strong, ` ${items.length ? items.join("; ") : "none yet"}`);
+    notes.append(p);
+  };
+  const strong = fields.filter((f) => (have.get(f)?.length || 0) >= 3).map((f) => `${f} (${have.get(f).length})`);
+  const weak = fields
+    .filter((f) => (missing.get(f)?.length || 0) > 0)
+    .sort((a, b) => missing.get(b).length - missing.get(a).length)
+    .map((f) => `${f}: missing ${missing.get(f).slice(0, 4).join(", ")}${missing.get(f).length > 4 ? ` +${missing.get(f).length - 4}` : ""}`);
+  line("Strong points:", strong);
+  if (asked.length) line("Weak points (asked in adverts, not yours yet):", weak);
+  else line("Weak points:", []);
+  if (!asked.length) notes.lastChild.textContent = "Weak points: paste a job ad (From a job ad) to see which asked-for skills you are missing.";
+}
+
+/** The AI's reading of the same skills: its own axes and scores, plus strong and weak points and next steps. */
+async function analyseWithAi(button) {
+  const note = root.querySelector("[data-radar-ai-note]");
+  const profile = {
+    skills: ownSkills(),
+    roles: state.experience.map((r) => ({ title: r.title || r.position || r.role || "", skills: r.skills || [] })),
+    projects: state.projects.map((p) => ({ name: p.name || p.title || "", skills: p.skills || [] })),
+    certificates: state.certificates.map((c) => c.name || c.title || "").filter(Boolean),
+    languages: state.profile.languages.map((l) => `${l.language} (${l.level})`),
+    advertSkills: seenSkills().slice(0, 100),
+  };
+  button.disabled = true;
+  const loader = window.AiStatus?.overlay({ state: "weaving", label: "Reading your skills and rating them by field…" });
+  try {
+    const response = await fetch(`${apiBase()}__editor/skills-analysis`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ profile }),
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || `HTTP ${response.status}`);
+    loader?.close();
+    await showAiRadar(result);
+    if (note) note.textContent = ratedNote(result);
+  } catch (error) {
+    loader?.close();
+    if (note) note.textContent = error.message;
+  } finally {
+    button.disabled = false;
+  }
+}
+
+const ratedNote = (result) => {
+  const when = result.generatedAt ? new Date(result.generatedAt).toLocaleString() : "";
+  return `Rated by ${result.model}${when ? ` on ${when}` : ""} and saved. Scores come from the model's reading of your data, not a test.`;
+};
+
+/** Show the last saved analysis, so it survives closing the page. */
+async function loadSavedAnalysis() {
+  try {
+    const response = await fetch(`${apiBase()}__editor/skills-analysis`, { cache: "no-store" });
+    const { saved } = await response.json();
+    if (!saved?.axes?.length) return;
+    await showAiRadar(saved);
+    const note = root.querySelector("[data-radar-ai-note]");
+    if (note) note.textContent = `${ratedNote(saved)} Press Analyse with AI to refresh it.`;
+  } catch {
+    /* nothing saved yet, or the server is not running */
+  }
+}
+
+async function showAiRadar(result) {
+  aiRadar = result;
+  const host = root.querySelector("#skills-radar");
+  const notes = root.querySelector("[data-radar-notes]");
+  root.querySelector("[data-action='radar-reset']").hidden = false;
+  try {
+    const { render, newSpec, getChart } = await import("./opencharts/js/opencharts.js");
+    const base = newSpec(getChart("radar-single")).opts;
+    radarChart?.destroy();
+    radarChart = render(host, {
+      chart: "radar-single",
+      spec: { labels: result.axes.map((a) => a.label), series: [{ label: "AI rating", color: "#2ea043", data: result.axes.map((a) => a.score) }], opts: { ...base, max: 100 } },
+      height: 360,
+    });
+  } catch {
+    host.textContent = "The chart could not load, but the notes below still apply.";
+  }
+  notes.replaceChildren();
+  const block = (title, items) => {
+    if (!items.length) return;
+    const p = document.createElement("p");
+    const strong = document.createElement("strong");
+    strong.textContent = title;
+    p.append(strong);
+    const ul = document.createElement("ul");
+    for (const item of items) {
+      const li = document.createElement("li");
+      li.textContent = item;
+      ul.append(li);
+    }
+    notes.append(p, ul);
+  };
+  block("Axes and what backs them:", result.axes.map((a) => `${a.label} — ${a.score}${a.evidence ? `: ${a.evidence}` : ""}`));
+  block("Strong points:", result.strengths);
+  block("Weak points:", result.weaknesses);
+  block("Next steps:", result.advice);
+}
+
+function initAiRadar() {
+  const button = root.querySelector("[data-action='analyse-skills']");
+  const reset = root.querySelector("[data-action='radar-reset']");
+  if (!button) return;
+  button.addEventListener("click", () => analyseWithAi(button));
+  reset.addEventListener("click", () => {
+    aiRadar = null;
+    reset.hidden = true;
+    root.querySelector("[data-radar-ai-note]").textContent = "";
+    renderRadar();
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -1801,12 +2023,15 @@ const localMode = { available: false, hasApiKey: false };
 /** The site may be served under a path prefix, so derive the API base from this page's URL. */
 const apiBase = () => location.pathname.replace(/editor\/?$/, "");
 
+let aiStatus = {};
+
 async function detectLocalMode() {
   const note = root.querySelector("[data-mode-note]");
   try {
     const response = await fetch(`${apiBase()}__editor/status`, { cache: "no-store" });
     if (!response.ok) throw new Error(String(response.status));
     const status = await response.json();
+    aiStatus = status;
     localMode.available = true;
     localMode.hasApiKey = Boolean(status.hasApiKey);
   } catch {
@@ -1816,7 +2041,7 @@ async function detectLocalMode() {
   root.querySelector("[data-action='save-server']").hidden = !localMode.available;
   const saveStudentDataBtn = root.querySelector("[data-action='save-student-data']");
   if (saveStudentDataBtn) saveStudentDataBtn.hidden = !localMode.available;
-  if (localMode.available) loadStudentData();
+  if (localMode.available) { loadStudentData(); initPrivatePhone(); enableAiRadar(aiStatus); }
   root.querySelector("[data-local-help]").hidden = !localMode.available;
 
   if (note) {
@@ -1927,6 +2152,7 @@ function init() {
   form.addEventListener("submit", (event) => event.preventDefault());
 
   setupDropzones();
+  initAiRadar();
 
   for (const button of root.querySelectorAll("[data-add]")) {
     button.addEventListener("click", () => {
@@ -2089,6 +2315,49 @@ async function saveStudentData(button) {
   }
 }
 
+function enableAiRadar(status) {
+  const button = root.querySelector("[data-action='analyse-skills']");
+  const note = root.querySelector("[data-radar-ai-note]");
+  if (!button) return;
+  const ready = Boolean(status.llm?.configured);
+  button.disabled = !ready;
+  if (ready) loadSavedAnalysis();
+  if (note) note.textContent = ready ? `Uses ${status.llm.provider} (${status.llm.model}).` : "Set up an AI provider in the workspace (API keys & AI provider) to use this.";
+}
+
+/** The phone field is private: it reads and writes data/profile-private.json through the local server, never the published profile. */
+async function initPrivatePhone() {
+  const input = root.querySelector("[data-private-phone]");
+  const note = root.querySelector("[data-private-phone-note]");
+  if (!input) return;
+  try {
+    const response = await fetch(`${apiBase()}__editor/private-profile`, { cache: "no-store" });
+    const result = await response.json();
+    input.value = result.phone || "";
+    input.disabled = false;
+  } catch {
+    return;
+  }
+  let timer;
+  const save = async () => {
+    try {
+      const response = await fetch(`${apiBase()}__editor/private-profile`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: input.value }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || `HTTP ${response.status}`);
+      input.removeAttribute("aria-invalid");
+      setStatus("Phone saved privately", "ok");
+    } catch (error) {
+      input.setAttribute("aria-invalid", "true");
+      if (note) note.textContent = error.message;
+    }
+  };
+  input.addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(save, 600); });
+}
+
 async function loadStudentData() {
   try {
     const response = await fetch(`${apiBase()}__editor/student-data`);
@@ -2117,6 +2386,7 @@ async function loadStudentData() {
             displayEl.style.marginTop = "0.5rem";
           }
         }
+        renderCounts();
       }
     }
   } catch (e) {
