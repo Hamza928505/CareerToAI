@@ -23,6 +23,7 @@
         "gmail:auth": "node scripts/gmail-auth.mjs",
         "board:search": "node scripts/board-search.mjs",
         "board:demo": "node scripts/board-demo.mjs",
+        "board:preview": "node scripts/board-preview.mjs",
         "board:vendor": "node scripts/build-board-vendor.mjs"
     },
     "devDependencies": {

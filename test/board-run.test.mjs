@@ -475,3 +475,44 @@ test("an engine that is not installed or fails is a warning and an incomplete ru
   assert.equal(summary.complete, false);
   assert.ok(summary.warnings.some((w) => /JobSearchEngine: The search engine is not set up/.test(w)));
 });
+
+// ------------------------------------------------------------ the local "every way" preview
+
+test("the preview source keeps every kind of result and labels the unchecked ones; the public source keeps none of them", async () => {
+  const { fetchAllFromEngine, fetchFromEngine } = await import("../lib/board-source-engine.mjs");
+  const dir = fakeEngineDir();
+  try {
+    const lead = engineJob({ original_url: "https://www.stepstone.de/stellenangebote--Praktikum-Softwareentwicklung-1-inline.html", verification_status: "unverified",
+      sources: [{ source_id: "stepstone", name: "StepStone", collection_method: "discovery", display: "link-only" }] });
+    const personal = engineJob({ original_url: "https://www.arbeitnow.com/jobs/companies/x/praktikum-softwareentwicklung-2", sources: [{ source_id: "arbeitnow", name: "Arbeitnow", collection_method: "api", display: "personal" }] });
+    const jobs = [engineJob(), lead, personal];
+    const { run, asked } = engineFrom(jobs);
+    const all = await fetchAllFromEngine({ oldest: "2026-10-01", today: "2026-10-11", dir, run });
+    assert.equal(all.jobs.length, 3);
+    assert.deepEqual(asked[0].request.sources, undefined); // every source, not only the public-display ones
+    assert.equal(asked[0].options, undefined);             // and not in public mode
+    assert.equal(all.jobs.find((j) => j.url === lead.original_url).source, "StepStone (search lead, not checked)");
+    const pub = await fetchFromEngine({ oldest: "2026-10-01", today: "2026-10-11", dir, run: engineFrom(jobs).run });
+    assert.equal(pub.jobs.length, 1);
+  } finally { fs.rmSync(dir, { recursive: true, force: true }); }
+});
+
+test("allowUnverified lets a lead onto the board page of a preview, and is off for every real run", async () => {
+  const lead = { url: "https://www.stepstone.de/stellenangebote--Praktikum-Softwareentwicklung-9-inline.html", title: "Praktikum Softwareentwicklung (m/w/d)", company: "", location: "", date_posted: "",
+    snippet: "Python und SQL", source: "StepStone (search lead, not checked)", verified: false };
+  const searchEngine = async () => ({ jobs: [lead], known: [], settled: [], warnings: [] });
+  const strict = await run(boardDir(), fakeServers(), { sources: ["engine"], searchEngine });
+  assert.equal(strict.added, 0);
+  assert.equal(strict.found, 0);
+  const dir = boardDir();
+  const preview = await run(dir, fakeServers(), { sources: ["engine"], searchEngine, allowUnverified: true });
+  assert.equal(preview.added, 1);
+  assert.equal(read(dir, "data", "postings.json")[0].source, "StepStone (search lead, not checked)");
+});
+
+test("the preview script never writes into the board repo and its output folder is git-ignored", () => {
+  const script = fs.readFileSync(new URL("../scripts/board-preview.mjs", import.meta.url), "utf8");
+  assert.match(script, /must not be built inside the board repo/);
+  assert.doesNotMatch(script, /execFile|child_process|--publish|"push"|git push/); // it runs no git command and has no publish step
+  assert.match(fs.readFileSync(new URL("../.gitignore", import.meta.url), "utf8"), /^\/\.board-preview\/$/m);
+});

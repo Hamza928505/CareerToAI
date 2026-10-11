@@ -95,6 +95,15 @@ per-file diff commands.
   once with their portal. Pinned by four new cases in `test_rank_command.py`, each
   verified to fail against the rule-less spec.
 
+### Added
+
+- **`npm run board:preview` - a local preview of the board from every search way.** `scripts/board-preview.mjs`
+  builds a copy of the board page into the git-ignored `.board-preview/` (never into the board repo, no publish step) and fills it from
+  all the JobSearchEngine's sources: free APIs, APIs whose terms allow personal use only (Arbeitnow, Remotive), feeds, and search-engine
+  leads for restricted sites, labelled "(search lead, not checked)". Leads give little to go on (duration and pay are usually "not stated").
+  The page carries a notice that it is local. `--since=YYYY-MM-DD` sets the window; `--serve` serves it on 127.0.0.1.
+  The public board still keeps only what each source's terms allow (`board:search -- --sources=engine`).
+
 ### Changed
 
 - **The public board has a source again: the JobSearchEngine's free APIs.** `npm run board:search -- --sources=engine
