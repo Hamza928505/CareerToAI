@@ -7,6 +7,7 @@ import test from "node:test";
 import { DEFAULT_CONFIG, capsFromCredits, limitedServers, nextState, orderGroups, pickAreas, pickPlatforms, strategyFor } from "../lib/board-budget.mjs";
 import { lookbackFor, lookbackForFree, planRun, runBoard } from "../lib/board-run.mjs";
 import { SEARCH_PLATFORMS } from "../lib/job-search.mjs";
+import { mayFetch } from "../lib/source-policy.mjs";
 
 const rules = JSON.parse(fs.readFileSync(new URL("../data/gju-rules.json", import.meta.url), "utf8"));
 const berlin = (offsetDays = 0) => new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Berlin", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(Date.now() - offsetDays * 86400000));
@@ -61,7 +62,9 @@ function fakeServers({ publishedDaysAgo = 0, pageTitle = (id) => `Praktikum Soft
 
 // The free Arbeitsagentur source is off here so these tests never reach the network; its own tests inject a fake source.
 const smallConfig = { ...DEFAULT_CONFIG, areasPerRun: 2, platformsPerRun: 3, caps: { exa: 50, tavily: 50, firecrawl: 50 }, reserve: {}, arbeitsagentur: { enabled: false } };
-const run = (dir, servers, extra = {}) => runBoard({ boardDir: dir, statePath: path.join(dir, "state.json"), rules, germanCities: new Set(["berlin"]), openServers: servers.openServers, config: smallConfig, today, ...extra });
+// mayFetch: true stands for sites whose terms permit reading their pages; the policy gate has its own tests below.
+const noEngine = async () => ({ jobs: [], known: [], settled: [], warnings: [] }); // the engine has its own tests below; the others must not start it
+const run = (dir, servers, extra = {}) => runBoard({ boardDir: dir, searchEngine: noEngine, statePath: path.join(dir, "state.json"), rules, germanCities: new Set(["berlin"]), openServers: servers.openServers, config: smallConfig, today, mayFetch: () => true, ...extra });
 const read = (dir, ...parts) => JSON.parse(fs.readFileSync(path.join(dir, ...parts), "utf8"));
 
 test("budget: caps never go below a provider's reserve, and unknown balances keep the cap", () => {
@@ -371,4 +374,104 @@ test("the free source is off unless the configuration says true: not by default,
     assert.ok(summary.added > 0); // the credit search still runs
   }
   assert.equal(spy.asked.length, 0);
+});
+
+// ------------------------------------------------------------ the source policy gate (data/source-access-policy.json)
+
+test("with today's policy no search site permits automated reading, so the platform search pauses and spends nothing", async () => {
+  const dir = boardDir();
+  const servers = fakeServers();
+  let searched = 0;
+  const search = async () => { searched++; return { jobs: [], known: [], settled: [], warnings: [] }; };
+  const summary = await run(dir, servers, { search, mayFetch, sources: ["search"] });
+  assert.equal(searched, 0);
+  assert.equal(servers.calls.exa + servers.calls.firecrawl, 0);
+  assert.ok(summary.warnings.some((w) => /Platform search paused/.test(w)));
+  assert.deepEqual(summary.platforms, []);
+  assert.deepEqual(summary.areas, []); // nothing was searched, so no area counts as refreshed
+});
+
+test("only the permitted sites of the day are searched, and a search result whose page was not read is never published", async () => {
+  const dir = boardDir();
+  const asked = [];
+  const job = { title: "Praktikum Softwareentwicklung (m/w/d)", url: "https://www.jobware.de/job/praktikum-1", company: "Firma", location: "Berlin", date_posted: today, source: "Jobware", verified: false };
+  const search = async (_strategy, options) => { asked.push(options.platforms.map((p) => p.name)); return { jobs: [job], known: [], settled: [], warnings: [] }; };
+  const permitted = (domain) => domain !== SEARCH_PLATFORMS[0].domain; // the first site of the rotation is not permitted
+  const summary = await run(dir, fakeServers(), { search, mayFetch: permitted });
+  assert.ok(asked.length && asked.every((names) => !names.includes(SEARCH_PLATFORMS[0].name)));
+  assert.ok(summary.warnings.some((w) => w.startsWith("Not searched") && w.includes(SEARCH_PLATFORMS[0].name)));
+  assert.equal(summary.found, 0);
+  assert.equal(summary.added, 0);
+  assert.deepEqual(read(dir, "data", "postings.json"), []);
+});
+
+// ------------------------------------------------------------ the JobSearchEngine source (free APIs that allow public display)
+
+const engineJob = (over = {}) => ({
+  original_url: "https://himalayas.app/companies/acme/jobs/praktikum-softwareentwicklung-1", title: "Praktikum Softwareentwicklung (m/w/d)", company: "Acme GmbH",
+  posted_date: today, verification_status: "from_source", snippet: "Python und SQL im Backend. Dauer: 6 Monate. Vergütung 600 EUR im Monat.",
+  location: { country: "Germany", text: "Germany" }, salary: {}, sources: [{ source_id: "himalayas", name: "Himalayas", collection_method: "api", attribution: "Source: Himalayas - visible link back to himalayas.app.", display: "public-with-attribution" }], ...over,
+});
+const engineFrom = (jobs, extra = {}) => {
+  const asked = [];
+  const run = async (_py, _dir, request, options) => { asked.push({ request, options }); return { jobs, report: { providers: [{ source_id: "himalayas", status: "ok" }] }, ...extra }; };
+  return { run, asked };
+};
+const fakeEngineDir = () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "engine-"));
+  fs.mkdirSync(path.join(dir, "config"), { recursive: true });
+  fs.writeFileSync(path.join(dir, "config", "sources.json"), JSON.stringify({ sources: [
+    { id: "himalayas", display: "public-with-attribution", access: { methods: ["api"] } }, { id: "arbeitnow", display: "personal", access: { methods: ["api"] } },
+    { id: "stepstone", display: "link-only", access: { methods: ["discovery"] } }] }));
+  const py = process.platform === "win32" ? path.join(dir, ".venv", "Scripts", "python.exe") : path.join(dir, ".venv", "bin", "python");
+  fs.mkdirSync(path.dirname(py), { recursive: true });
+  fs.writeFileSync(py, "");
+  return dir;
+};
+
+test("the engine source asks only public-display sources, in public mode, and keeps only structured records from them", async () => {
+  const { fetchFromEngine, publicSourceIds, publishable } = await import("../lib/board-source-engine.mjs");
+  const dir = fakeEngineDir();
+  try {
+    assert.deepEqual(publicSourceIds(dir), ["himalayas"]); // not the personal-use API, not a discovery site
+    const lead = engineJob({ original_url: "https://www.stepstone.de/stellenangebote--x-1-inline.html", verification_status: "unverified", sources: [{ source_id: "stepstone", display: "link-only" }] });
+    const personal = engineJob({ original_url: "https://www.arbeitnow.com/jobs/x", sources: [{ source_id: "arbeitnow", display: "personal" }] });
+    const mixed = engineJob({ original_url: "https://himalayas.app/x/2", sources: [{ source_id: "himalayas", display: "public-with-attribution" }, { source_id: "arbeitnow", display: "personal" }] });
+    const { run, asked } = engineFrom([engineJob(), lead, personal, mixed]);
+    const result = await fetchFromEngine({ oldest: "2026-10-01", today: "2026-10-11", dir, run });
+    assert.deepEqual(result.jobs.map((j) => j.source), ["Himalayas"]);
+    assert.equal(result.jobs[0].verified, undefined);
+    assert.equal(asked.length, 2); // "Praktikum" and "Internship"
+    assert.deepEqual(asked[0].request.sources, ["himalayas"]);
+    assert.equal(asked[0].request.posted_within_days, 10);
+    assert.equal(asked[0].options.env.JOBSEARCH_DEPLOYMENT, "public");
+    assert.equal([lead, personal, mixed].filter(publishable).length, 0);
+  } finally { fs.rmSync(dir, { recursive: true, force: true }); }
+});
+
+test("a run with the engine source publishes its internships with the source name, and a second run reads them as already known", async () => {
+  const dir = boardDir();
+  const search = async () => ({ jobs: [], known: [], settled: [], warnings: [] });
+  const searchEngine = async ({ isKnown }) => {
+    const { toHit } = await import("../lib/engine-search.mjs");
+    const { postingKey } = await import("../lib/job-search.mjs");
+    const hit = toHit(engineJob());
+    return isKnown(postingKey(hit.url)) ? { jobs: [], known: [postingKey(hit.url)], settled: [], warnings: [] } : { jobs: [hit], known: [], settled: [], warnings: [], stats: { sources: 1, answered: 1 } };
+  };
+  const first = await run(dir, fakeServers(), { search, searchEngine, sources: ["engine"] });
+  assert.equal(first.added, 1);
+  const [posting] = read(dir, "data", "postings.json");
+  assert.equal(posting.source, "Himalayas");
+  assert.match(posting.url, /^https:\/\/himalayas\.app\//);
+  assert.ok(first.platforms.includes("JobSearchEngine"));
+  const second = await run(dir, fakeServers(), { search, searchEngine, sources: ["engine"] });
+  assert.equal(second.added, 0);
+  assert.equal(second.seenAgain, 1);
+});
+
+test("an engine that is not installed or fails is a warning and an incomplete run, not a crash", async () => {
+  const dir = boardDir();
+  const summary = await run(dir, fakeServers(), { sources: ["engine"], searchEngine: async () => { throw new Error("The search engine is not set up"); } });
+  assert.equal(summary.complete, false);
+  assert.ok(summary.warnings.some((w) => /JobSearchEngine: The search engine is not set up/.test(w)));
 });

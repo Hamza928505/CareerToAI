@@ -43,7 +43,8 @@ import { extractAdSkills } from "../lib/extract-skills.mjs";
 import { resolveSite } from "../lib/site.mjs";
 import { buildApplyPack } from "../lib/apply-pack.mjs";
 import { SCHEMA, jobMatchKey } from "../lib/tracker.mjs";
-import { getApplicationCapabilities, runBrowserApplication, searchPlatforms } from "../lib/job-search.mjs";
+import { getApplicationCapabilities, runBrowserApplication } from "../lib/job-search.mjs";
+import { searchWithEngine } from "../lib/engine-search.mjs";
 import { applyAssignments, decideApplicants } from "../lib/assign-applicant.mjs";
 import { runLocalApplication } from "../lib/local-browser.mjs";
 import { draftEmail, emailRecipient, gmailConfig, sendApplicationEmail, smtpConfig } from "../lib/send-email.mjs";
@@ -276,7 +277,8 @@ async function handleSearch(req, res) {
   await withWorkflow('search', async () => {
     const strategyPath = path.join(ROOT, 'data', 'search-strategy.json');
     if (!fs.existsSync(strategyPath)) return sendJson(res, 400, { error: 'Choose and save your search strategy first.' });
-    const result = await searchPlatforms(JSON.parse(fs.readFileSync(strategyPath, 'utf8')));
+    // The JobSearchEngine decides what each source permits; this page never searches or opens job sites itself.
+    const result = await searchWithEngine(JSON.parse(fs.readFileSync(strategyPath, 'utf8')));
     if (useProfile && result.jobs.length) {
       // Optional and best-effort: any failure keeps the built-in score and says so.
       try {
@@ -291,7 +293,7 @@ async function handleSearch(req, res) {
     const snapshot = await readApplicationWorkbook();
     const merged = mergeSearchResults(snapshot.rows, result.jobs);
     if (result.jobs.length) await saveApplicationWorkbook(merged.rows, { revision: snapshot.revision });
-    sendJson(res, 200, { ok: true, found: result.jobs.length, added: merged.added, rows: merged.rows.length, unavailableServers: result.unavailableServers || [], warnings: result.warnings || [] });
+    sendJson(res, 200, { ok: true, found: result.jobs.length, added: merged.added, unverified: result.unverified || 0, rows: merged.rows.length, unavailableServers: result.unavailableServers || [], warnings: result.warnings || [] });
   });
 }
 

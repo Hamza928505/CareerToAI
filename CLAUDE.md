@@ -121,7 +121,11 @@ The public GJU board is a separate project. Its page and data live in the siblin
 `Hamza928505/GJUInternshipBoard` (branch `main`; GitHub Pages stays off, the host is still to be chosen), so
 `npm run board:search -- --publish` pushes the day's data to a public place. The only part in this repo is the private runner, `scripts/board-search.mjs`
 with `lib/board-*.mjs`: it uses the keys and MCP config here, never reads the student's tracker or
-profile, and writes derived facts only. It searches one area and eight sites a day with the credit-based tools. A
+profile, and writes derived facts only. It searches one area and eight sites a day with the credit-based tools, but
+only sites that `data/source-access-policy.json` marks `permitted` (`lib/source-policy.mjs`): today none is, so
+that search is paused. The workspace search no longer searches job sites itself: it asks the JobSearchEngine
+(`../JobSearchEngine`, `lib/engine-search.mjs`), whose results from free APIs and feeds are used as they are and whose
+search-engine leads for restricted sites become unverified rows, nothing opened. Never mark a site `permitted` without quoted evidence from its terms. A
 second, free source for the Bundesagentur für Arbeit's job board is built (`lib/board-source-ba.mjs`) but **off by
 default and not to be switched on for the public board**: the agency's terms of use forbid robots and reading content
 out of the portal through interfaces (section 2a(3)), so it needs the agency's permission first

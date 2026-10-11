@@ -24,6 +24,7 @@ import { loadEnv } from "../lib/extract-certificate.mjs";
 import { openMcpServers } from "../lib/antigravity-mcp.mjs";
 import { DEFAULT_CONFIG } from "../lib/board-budget.mjs";
 import { SOURCES, lookbackFor, lookbackForFree, planRun, runBoard } from "../lib/board-run.mjs";
+import { mayFetch } from "../lib/source-policy.mjs";
 
 const git = promisify(execFile);
 const args = new Set(process.argv.slice(2));
@@ -58,8 +59,9 @@ if (!sources.length || sources.some((name) => !SOURCES.includes(name))) {
 }
 const wantFree = sources.includes("arbeitsagentur") && config.arbeitsagentur?.enabled === true; // opt-in: see lib/board-source-ba.mjs
 const wantPaid = sources.includes("search");
+const wantEngine = sources.includes("engine");
 const freeOff = "Arbeitsagentur Jobbörse: switched off. Its terms of use forbid robots and automated reading of the portal (section 2a(3)); set arbeitsagentur.enabled to true in data/board-config.json only with the agency's permission.";
-if (!wantFree && !wantPaid) {
+if (!wantFree && !wantPaid && !wantEngine) {
   console.error(sources.includes("arbeitsagentur") ? freeOff : "Nothing to do.");
   process.exit(1);
 }
@@ -79,11 +81,15 @@ if (args.has("--dry-run")) {
   if (sources.includes("arbeitsagentur")) {
     console.log(wantFree ? `Arbeitsagentur Jobbörse (free, every area): posting age limit ${freeWindow()}.` : freeOff);
   }
+  if (wantEngine) console.log(`JobSearchEngine (free APIs that allow public display): posting age limit ${windowText(lookbackForFree({ config, state, today: berlinToday, source: "engine" }))}.`);
   if (wantPaid) {
     const credits = await checkCredits();
     const plan = planRun({ majorsFile, state, config, credits });
     console.log(`Credit search, areas today: ${plan.areas.map((a) => `${a.area} (${a.majors.length} majors)`).join("; ")}`);
-    console.log(`Job sites today: ${plan.platforms.map((p) => p.name).join(", ")}`);
+    const allowed = plan.platforms.filter((p) => mayFetch(p.domain));
+    const blocked = plan.platforms.filter((p) => !allowed.includes(p));
+    console.log(allowed.length ? `Job sites today: ${allowed.map((p) => p.name).join(", ")}` : "Job sites today: none. Platform search paused: no site in today's rotation permits automated reading.");
+    if (blocked.length) console.log(`Not searched (terms do not permit automated reading, data/source-access-policy.json): ${blocked.map((p) => p.name).join(", ")}`);
     console.log(`Type groups:     ${plan.groups.map((g) => g.join("/")).join("  then  ")}`);
     console.log(`Provider call caps: ${JSON.stringify(plan.caps)} (balances: ${credits.map((c) => `${c.id}=${c.remaining ?? "unknown"}`).join(", ")})`);
     console.log(`Verify up to ${config.maxVerify} hits per site; posting age limit ${paidWindow(plan)}.`);
@@ -98,11 +104,14 @@ const germanCities = new Set(cities.map((city) => String(city.name).toLowerCase(
 
 if (wantFree) console.log(`Arbeitsagentur Jobbörse (free): posting age limit ${freeWindow()}.`);
 else if (asked !== undefined && sources.includes("arbeitsagentur")) console.log(freeOff); // said out loud only when it was asked for by name
+if (wantEngine) console.log(`JobSearchEngine: posting age limit ${windowText(lookbackForFree({ config, state, today: berlinToday, source: "engine" }))}.`);
 if (wantPaid) console.log(`Credit search: posting age limit ${paidWindow(planRun({ majorsFile, state, config }))}.`);
 const summary = await runBoard({ boardDir, statePath, rules, germanCities, openServers: openMcpServers, readCredits: checkCredits, config, today: berlinToday, sources, log: console.log });
 fs.appendFileSync(logPath, `${JSON.stringify(summary)}\n`);
 console.log(`Found ${summary.found}, added ${summary.added}, already known ${summary.seenAgain}, same internship on another site ${summary.duplicates}, no fit for a GJU major ${summary.notRelevant}, not an internship ${summary.notInternship}, pruned ${summary.pruned}.`);
 const ba = summary.sources.arbeitsagentur;
+const eng = summary.sources.engine;
+if (eng) console.log(`JobSearchEngine: ${eng.sources} public sources asked, ${eng.answered} answered.`);
 if (ba) console.log(`Arbeitsagentur: ${ba.pages} list pages, ${ba.inWindow} entries in the window, ${ba.candidates} new internships (${ba.known} already known), ${ba.fetched} adverts read, ${ba.unavailable} gone.`);
 if (wantPaid) console.log(`Areas: ${summary.areas.join("; ")}. Calls: ${JSON.stringify(summary.calls)}. Credits spent: ${JSON.stringify(summary.creditsSpent)}.`);
 for (const warning of summary.warnings) console.log(`Note: ${warning}`);

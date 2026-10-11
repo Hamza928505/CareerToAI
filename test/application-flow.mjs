@@ -115,3 +115,15 @@ test("application destinations distinguish email, web and missing URLs", () => {
   assert.equal(applicationTarget({ job_url: "https://example.org/apply" }).kind, "web");
   assert.equal(applicationTarget({ app_url: "file:///private/cv.pdf" }).kind, "missing");
 });
+
+test("an unverified search result is added with a note saying nothing was read from the site", () => {
+  const result = mergeSearchResults([], [
+    { title: "Marketing Praktikum", url: "https://www.stepstone.de/stellenangebote--x-1.html", snippet: "From the search engine", data_source: "exa search, unverified", verified: false },
+    { title: "Data Praktikum", url: "https://example.org/job/2", snippet: "Read from the page" },
+  ]);
+  assert.equal(result.added, 2);
+  assert.match(result.rows[0].notes, /^Unverified search result: .*Nothing was read from the site\.\nFrom the search engine$/);
+  assert.equal(result.rows[0].data_source, "exa search, unverified");
+  assert.equal(result.rows[0].status, "To apply"); // the status vocabulary is unchanged
+  assert.equal(result.rows[1].notes, "Read from the page");
+});

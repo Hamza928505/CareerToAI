@@ -196,3 +196,9 @@ data/board-task.log
 /fix2.cjs
 /clean_js.py
 /update_npm.py
+
+# The internship search tools: the Python venv is rebuilt from search-tools/requirements.txt.
+search-tools/.venv/
+__pycache__/
+# Page snapshots and console logs the Playwright MCP server writes into its working folder.
+.playwright-mcp/

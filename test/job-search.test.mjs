@@ -14,7 +14,8 @@ function livePage(url, date = today, statusCode = 200) {
 function connection(tools, call, scrape = args => livePage(args.url)) {
   let closed = 0;
   const pool = { tools: (name) => name === 'firecrawl' ? [scrapeTool, ...(tools[name] || [])] : tools[name] || [], call: (server, tool, args) => tool === 'firecrawl_scrape' ? scrape(args) : call(server, tool, args), errors: [], close: async () => { closed++; } };
-  return { openServers: async () => pool, get closed() { return closed; } };
+  // mayFetch: true stands for a site whose terms permit opening its pages; the gate itself has its own tests.
+  return { openServers: async () => pool, mayFetch: () => true, get closed() { return closed; } };
 }
 
 test("Exa text blocks load only platform URLs and retain distinct posting IDs and case", async () => {
@@ -219,4 +220,34 @@ test("strategy.typeInTitle makes the title, not the snippet, name the wanted typ
   assert.equal(matchesSearchStrategy({ ...item, title: "Praktikum Software Development" }, { ...base, typeInTitle: true }), true);
   assert.equal(matchesSearchStrategy({ ...item, title: "Praktikum Software Development", location: "Hamburg" }, { ...base, typeInTitle: true }), false); // other rules still apply
   assert.equal(matchesSearchStrategy({ ...item, title: "Praktikum Software Development", location: "Hamburg" }, { ...base, typeInTitle: true, anyCity: true }), true);
+});
+
+test("the source policy gate: a site whose terms do not permit it is never fetched, its hits come back unverified", async () => {
+  const fetched = [];
+  const mock = connection({ exa: [exa] }, async (_server, _tool, args) => {
+    const domain = args.query.match(/^site:([^ ]+)/)[1];
+    return { structuredContent: { results: [{ title: "Data analyst internship Berlin", url: `https://${domain}/job/data-analyst-internship-777`, text: "Internship in Berlin" }] } };
+  }, (args) => { fetched.push(args.url); return livePage(args.url); });
+  const result = await searchPlatforms(strategy, { ...mock, mayFetch: () => false });
+  assert.deepEqual(fetched, []); // no posting page was opened
+  assert.equal(result.jobs.length, SEARCH_PLATFORMS.length);
+  assert.ok(result.jobs.every((job) => job.verified === false && /unverified/.test(job.data_source)));
+  assert.ok(result.warnings.some((w) => /search results only/.test(w)));
+
+  // A gated search does not need the scrape tool at all.
+  const noScrape = { openServers: async () => ({ tools: (name) => (name === "exa" ? [exa] : []), call: async (_s, _t, args) => ({ structuredContent: { results: [{ title: "Data analyst internship Berlin", url: `https://${args.query.match(/^site:([^ ]+)/)[1]}/job/x-1` }] } }), errors: [], close: async () => {} }) };
+  assert.equal((await searchPlatforms(strategy, { ...noScrape, mayFetch: () => false, platforms: SEARCH_PLATFORMS.slice(0, 2) })).jobs.length, 2);
+});
+
+test("the default policy reads data/source-access-policy.json: no search platform may be fetched today, subdomains resolve, unknown sites are refused", async () => {
+  const { mayFetch, policyFor } = await import("../lib/source-policy.mjs");
+  for (const platform of SEARCH_PLATFORMS) {
+    assert.ok(policyFor(platform.domain), `${platform.domain} has a policy entry`);
+    assert.equal(mayFetch(platform.domain), false, `${platform.domain} is discovery-only`);
+  }
+  assert.equal(policyFor("jobboerse.arbeitsagentur.de").automatedExtraction, "prohibited");
+  assert.equal(policyFor("de.indeed.com").domain, "indeed.de"); // matched through the current URL
+  assert.equal(mayFetch("never-heard-of.example"), false);
+  assert.equal(mayFetch("arbeitnow.com"), true);
+  assert.equal(mayFetch("jobs.example", [{ domain: "example", currentUrl: "https://jobs.example/", automatedExtraction: "permitted" }]), true);
 });

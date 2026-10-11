@@ -385,7 +385,7 @@ export async function initWorkspaceFlows({ local, api, Swal, dialog, readStrateg
   $('btn-start-search').addEventListener('click', () => run('search-run-status', async () => {
     const strategy = readStrategy();
     if (Object.values(strategy).some((values) => !values.length)) throw new Error('Choose at least one role, location, and opportunity type.');
-    const loader = AiStatus.overlay({ state: 'searching', label: 'Searching for postings published today and checking each live page. This can take a few minutes…' });
+    const loader = AiStatus.overlay({ state: 'searching', label: 'Searching free job sources and search engines. This can take a minute…' });
     let result;
     try {
       if (dirty) await save();
@@ -394,7 +394,8 @@ export async function initWorkspaceFlows({ local, api, Swal, dialog, readStrateg
       await reload();
     } finally { loader.close(); }
     const warnings = (result.warnings || []).join(' ');
-    $('search-run-status').textContent = `${result.found ? `Verified ${result.found} postings published today. Added ${result.added} jobs` : 'No individual postings with a verified publication date of today were found'}. Your existing choices are preserved.${warnings ? ` ${warnings}` : result.unavailableServers?.length ? ' Some search connections were unavailable.' : ''}`;
+    const leads = result.unverified || 0;
+    $('search-run-status').textContent = `${result.found ? `Found ${result.found} postings${leads ? `, ${leads} of them search-engine leads you should open to check` : ''}. Added ${result.added} new jobs` : 'No postings were found for this search'}. Your existing choices are preserved.${warnings ? ` ${warnings}` : ''}`;
   }));
   $('btn-suggest-strategy').addEventListener('click', () => run('search-run-status', async () => {
     const loader = AiStatus.overlay({ state: 'shaping', label: 'Reading your files to suggest roles…' });

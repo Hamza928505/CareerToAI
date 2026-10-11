@@ -95,8 +95,34 @@ per-file diff commands.
   once with their portal. Pinned by four new cases in `test_rank_command.py`, each
   verified to fail against the rule-less spec.
 
+### Changed
+
+- **The public board has a source again: the JobSearchEngine's free APIs.** `npm run board:search -- --sources=engine
+  [--since=YYYY-MM-DD] [--publish]` (`lib/board-source-engine.mjs`) asks only the engine's sources whose terms allow showing
+  listings publicly with a credit (today Himalayas, Remote OK and Jobicy; Adzuna, Jooble, Careerjet and The Muse once a key is set), runs the engine in
+  public mode so personal-use sources such as Arbeitnow are never requested, and keeps only structured records, never
+  search-engine leads. Each posting keeps its source name ("via Himalayas") and its link back; the board footer credits the sources.
+  Postings still go through the board's own rules (internship kind, a fitting GJU major, derived facts only).
+- **The workspace search now runs on the JobSearchEngine.** `lib/engine-search.mjs` runs the sibling Python repo
+  `../JobSearchEngine` (`main.py search --stdin-json --json`, no shell) with the saved strategy, one request per city or
+  the remote search, and turns its jobs into tracker rows. Results from free job APIs and published feeds come in
+  as they are; search-engine leads for sites that forbid automated reading come in as unverified rows. The page no
+  longer searches or opens job sites itself (`searchPlatforms` is not called from the editor server). Set
+  `JOBSEARCH_ENGINE_DIR` if the engine is not next to this repo. Free-key sources (Adzuna and others) are named in the
+  result when their key is missing.
+
 ### Security
 
+- **Job sites are read only where their terms allow it.** `data/source-access-policy.json`
+  records, for each of the 28 job sites, whether automated reading is permitted, with the quoted
+  clause or `robots.txt` rule and the date checked (8 prohibited, 16 live sites unknown, 3 gone,
+  LinkedIn prohibited). `lib/source-policy.mjs` `mayFetch()` reads it, and only a `permitted`
+  entry lets code open a site's pages. The platform search (`searchPlatforms`) no longer opens
+  posting pages with Firecrawl to verify them on any other site. Their search hits are added to the
+  tracker as unverified rows, with a note saying nothing was read from the site, and the status
+  vocabulary is unchanged. The public board publishes facts read from posting pages, so it searches
+  only permitted sites. Today none of the 20 is permitted, so `npm run board:search` reports the
+  platform search as paused and spends no credits.
 - **`settings.json` no longer pre-approves `bun run` on arbitrary files** (#396) - the
   template's permission allowlist granted `Bash(bun run:*)`, which auto-approved
   `bun run <any file on disk>` in every fork. It is now one path-scoped entry per shipped
