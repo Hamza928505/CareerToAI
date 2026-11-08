@@ -522,6 +522,7 @@
 .credit[data-provider="firecrawl"] { --accent: #ffb741; }
 .credit[data-provider="tavily"] { --accent: #1890ff; }
 .credit[data-provider="tinyfish"] { --accent: #01c3a8; }
+.credit[data-provider="apify"] { --accent: #97d700; }
 .credit[data-provider="exa"] { --accent: #a78bfa; }
 .credit[data-provider="adzuna"] { --accent: #34d399; }
 .credit[data-provider="jooble"] { --accent: #fb923c; }

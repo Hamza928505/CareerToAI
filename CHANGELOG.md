@@ -15,6 +15,9 @@ per-file diff commands.
 
 ### Changed
 
+- **An Apify card shows the monthly usage left.** With `APIFY_TOKEN` in `.env`, the workspace's Search & AI services cards show how
+  much of the Apify plan's monthly usage limit is left, in dollars, and when the cycle resets. The StepStone and Arbeitsagentur Actors run
+  through Claude's connector but are billed to the same account. The token is only used for this read and only sent to api.apify.com.
 - **An NVIDIA NIM model joins the search, and the board shows who found each internship.** `lib/nim-agent.mjs` searches LinkedIn and
   other boards through Tavily, Exa, Firecrawl and the Arbeitnow API (snippets only), so Claude is left with Indeed and Apify. The board
   gains *Searched by*, *Site* and *Posted* filters (default last 7 days), an AI tag on every row, and Fit shown as a percentage. The headless
