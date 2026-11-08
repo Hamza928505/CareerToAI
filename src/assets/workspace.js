@@ -266,7 +266,7 @@ const el = (tag, cls, text) => {
 };
 
 // One orb per search service, its animation matched to what the service does.
-const CREDIT_ORB = { firecrawl: "weaving", tavily: "searching", tinyfish: "working", exa: "connecting", adzuna: "searching", jooble: "searching", careerjet: "connecting" };
+const CREDIT_ORB = { firecrawl: "weaving", tavily: "searching", tinyfish: "working", apify: "working", exa: "connecting", adzuna: "searching", jooble: "searching", careerjet: "connecting" };
 function creditOrb(id, name) {
   const canvas = document.createElement("canvas");
   canvas.setAttribute("role", "img");
@@ -277,7 +277,7 @@ function creditOrb(id, name) {
 
 // Each service is a colour-graded card (coloured top, dark gauge, dark footer). The gauge is a half doughnut
 // (Chart.js, loaded for the charts below): the share of the plan or wallet that is left.
-const CREDIT_KIND = { firecrawl: "Crawler", tavily: "Search API", tinyfish: "Web agent", exa: "Search", adzuna: "Job postings", jooble: "Job postings", careerjet: "Job postings" };
+const CREDIT_KIND = { firecrawl: "Crawler", tavily: "Search API", tinyfish: "Web agent", apify: "Scraping Actors", exa: "Search", adzuna: "Job postings", jooble: "Job postings", careerjet: "Job postings" };
 const creditGauges = [];
 const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
 
@@ -339,7 +339,7 @@ function creditCard(p, { loading = false } = {}) {
   const li = el("li", loading ? "credit credit--loading" : "credit");
   li.dataset.provider = p.id;
   if (loading) li.setAttribute("aria-busy", "true");
-  const accent = { firecrawl: "#ffb741", tavily: "#1890ff", tinyfish: "#01c3a8", exa: "#a78bfa", adzuna: "#34d399", jooble: "#fb923c", careerjet: "#38bdf8" }[p.id] || "#01c3a8";
+  const accent = { firecrawl: "#ffb741", tavily: "#1890ff", tinyfish: "#01c3a8", apify: "#97d700", exa: "#a78bfa", adzuna: "#34d399", jooble: "#fb923c", careerjet: "#38bdf8" }[p.id] || "#01c3a8";
 
   // What this card has to say.
   const hasNumber = p.status === "ok" && p.remaining != null;
@@ -351,7 +351,7 @@ function creditCard(p, { loading = false } = {}) {
     : hasNumber ? (level === "low" ? "Running low" : level === "mid" ? "Getting low" : "Plenty left")
       : p.status === "ok" ? "Key saved" : "Unavailable";
   const desc = loading ? `Asking ${p.name} for your balance…`
-    : hasNumber ? (p.total ? `of ${fmt(p.total)} ${p.unit === "USD" ? "" : p.unit}`.trim() : "wallet balance")
+    : hasNumber ? (p.total ? `of ${fmt(p.total)} ${p.unit === "USD" ? "" : p.unit}`.trim() + (p.resetsAt ? ` · resets ${new Date(`${p.resetsAt}T00:00:00Z`).toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" })}` : "") : "wallet balance")
       : p.status === "no-key" ? "Add a key to see your balance" : p.status === "ok" ? p.note || "Your balance is on its dashboard" : p.message || "No number came back.";
 
   // Coloured top: kind, link to the service, name, description.
@@ -508,6 +508,7 @@ const SERVICES = [
   { id: "firecrawl", name: "Firecrawl", envName: "FIRECRAWL_API_KEY", getKey: "https://www.firecrawl.dev/app/api-keys" },
   { id: "tavily", name: "Tavily", envName: "TAVILY_API_KEY", getKey: "https://app.tavily.com/home" },
   { id: "tinyfish", name: "TinyFish", envName: "TINYFISH_API_KEY", getKey: "https://agent.tinyfish.ai" },
+  { id: "apify", name: "Apify", envName: "APIFY_TOKEN", getKey: "https://console.apify.com/settings/integrations" },
   { id: "exa", name: "Exa", envName: "EXA_API_KEY", getKey: "https://dashboard.exa.ai/api-keys" },
   { id: "adzuna", name: "Adzuna", envName: "ADZUNA_APP_KEY", getKey: "https://developer.adzuna.com/signup" },
   { id: "jooble", name: "Jooble", envName: "JOOBLE_API_KEY_DE", getKey: "https://de.jooble.org/api/about" },
