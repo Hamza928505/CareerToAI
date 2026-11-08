@@ -159,6 +159,10 @@ ALLOWED_IGNORE_NEGATIONS = {
     "!certs-source/.gitkeep",
     # Published site content that the blanket *.pdf rule would otherwise catch.
     "!src/assets/gy-internships/**/*.pdf",
+    # Published site content that the blanket *.png rule (personal photos and
+    # signatures) would otherwise catch: the service logos on the workspace page.
+    # Exact folder only; every other PNG stays ignored.
+    "!src/assets/service-logos/*.png",
 }
 
 # Hook commands the template legitimately ships, as "<Event>:<command>" strings.
