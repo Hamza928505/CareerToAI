@@ -26,7 +26,7 @@ test("the NIM search keeps only postings a tool returned, and dates them from th
   let nvidiaCalls = 0;
   const reply = (body) => ({ ok: true, status: 200, json: async () => body, text: async () => "" });
   const fetchImpl = async (url) => {
-    if (String(url).includes("nvidia.com")) {
+    if (new URL(String(url)).hostname === "integrate.api.nvidia.com") {
       nvidiaCalls++;
       if (nvidiaCalls === 1) return reply({ usage: { prompt_tokens: 10, completion_tokens: 2 }, choices: [{ message: { content: "", tool_calls: [{ id: "c1", function: { name: "exa_search", arguments: '{"query":"Praktikum Informatik"}' } }] } }] });
       return reply({ usage: { prompt_tokens: 20, completion_tokens: 30 }, choices: [{ message: { content: JSON.stringify({ postings: [
