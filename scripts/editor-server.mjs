@@ -16,7 +16,9 @@
  *   POST __editor/run      run one of four named npm scripts (see TASKS)
  *
  * The API key is read from .env here, in Node, so it never reaches the browser.
- * It binds to 127.0.0.1 only.
+ * It binds to 127.0.0.1 only, and lib/local-guard.mjs refuses what other web pages in the browser could still send it:
+ * requests addressed to another host name (DNS rebinding), methods other than GET and POST, another site's POST, and
+ * any /__editor/ request another site started.
  */
 import { execFile } from "node:child_process";
 import { randomUUID } from "node:crypto";
@@ -31,6 +33,7 @@ import { z } from "zod";
 
 import { applyPayload } from "../lib/apply-data.mjs";
 import { ROOT, readJson } from "../lib/content.mjs";
+import { refusal } from "../lib/local-guard.mjs";
 import {
   Anthropic,
   DEFAULT_MODEL,
@@ -45,14 +48,18 @@ import { buildApplyPack } from "../lib/apply-pack.mjs";
 import { SCHEMA, jobMatchKey } from "../lib/tracker.mjs";
 import { getApplicationCapabilities, runBrowserApplication } from "../lib/job-search.mjs";
 import { searchWithEngine } from "../lib/engine-search.mjs";
+import { searchIndeed } from "../lib/indeed-agent.mjs";
+import { searchApify } from "../lib/apify-agent.mjs";
+import { searchNim } from "../lib/nim-agent.mjs";
+import { findCompanySites } from "../lib/company-site.mjs";
 import { applyAssignments, decideApplicants } from "../lib/assign-applicant.mjs";
 import { runLocalApplication } from "../lib/local-browser.mjs";
 import { draftEmail, emailRecipient, gmailConfig, sendApplicationEmail, smtpConfig } from "../lib/send-email.mjs";
 import { readApplicationWorkbook, saveApplicationWorkbook } from "../lib/application-workbook.mjs";
-import { applicationRoute, applicationTarget, assistantQueue, mergeSearchResults } from "../lib/application-flow.mjs";
+import { MIN_FIT, NEW_DAYS, applicationRoute, applicationTarget, assistantQueue, mergeSearchResults, newEligible } from "../lib/application-flow.mjs";
 import { readSettings, saveSettings } from "../lib/env-settings.mjs";
 import { chatJson, llmConfig, llmOverview, llmStatus } from "../lib/llm.mjs";
-import { analyseSkills, scoreJobs, suggestRoles } from "../lib/profile-ai.mjs";
+import { analyseSkills, scoreJobs } from "../lib/profile-ai.mjs";
 import { hasStudentFiles, readStudent, TAILORED_DIRS, tailoredPaths } from "../lib/student-files.mjs";
 import { slug, tailorDocuments } from "../lib/tailor-docs.mjs";
 
@@ -99,8 +106,9 @@ const MIME = {
   ".svg": "image/svg+xml",
   ".pdf": "application/pdf",
   ".ico": "image/x-icon",
+  ".woff2": "font/woff2",
+  ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 };
-
 loadEnv();
 
 const site = resolveSite();
@@ -155,7 +163,7 @@ function readBody(req) {
   });
 }
 
-/** Resolve a URL path to a file inside _site, refusing anything that escapes it. */
+/** Resolve a URL path to a file inside `root` (_site by default), refusing anything that escapes it. */
 function resolveStatic(pathname) {
   const decoded = decodeURIComponent(pathname);
   const candidate = path.resolve(OUTPUT_DIR, `.${decoded}`);
@@ -226,27 +234,6 @@ async function handleSkills(req, res) {
   sendJson(res, 200, result);
 }
 
-async function handleSearchStrategy(req, res) {
-  const strategyPath = path.join(ROOT, "data", "search-strategy.json");
-  if (req.method === "GET") {
-    if (fs.existsSync(strategyPath)) {
-      sendJson(res, 200, JSON.parse(fs.readFileSync(strategyPath, "utf-8")));
-    } else {
-      sendJson(res, 200, { roles: [], cities: [], types: [] });
-    }
-  } else if (req.method === "POST") {
-    const payload = await readBody(req);
-    const strategy = {};
-    for (const key of ['roles', 'cities', 'types']) {
-      if (!Array.isArray(payload[key]) || payload[key].length > 5000 || payload[key].some((item) => typeof item !== 'string' || item.length > 200)) {
-        return sendJson(res, 400, { error: `Choose valid ${key} for your strategy.` });
-      }
-      strategy[key] = [...new Set(payload[key].map((item) => item.trim()).filter(Boolean))];
-    }
-    fs.writeFileSync(strategyPath, JSON.stringify(strategy, null, 2), "utf-8");
-    sendJson(res, 200, { ok: true });
-  }
-}
 
 // One local workflow writes the workbook at a time. Excel edits are guarded by revision.
 let runningFlow = null;
@@ -275,25 +262,53 @@ async function handleSearch(req, res) {
   if (useProfile && !llmConfig()) return sendJson(res, 400, { error: 'Set up an AI provider in .env to score jobs with your profile files.' });
   if (useProfile && !hasStudentFiles()) return sendJson(res, 400, { error: 'Upload student.json and both base documents in the editor first.' });
   await withWorkflow('search', async () => {
-    const strategyPath = path.join(ROOT, 'data', 'search-strategy.json');
-    if (!fs.existsSync(strategyPath)) return sendJson(res, 400, { error: 'Choose and save your search strategy first.' });
-    // The JobSearchEngine decides what each source permits; this page never searches or opens job sites itself.
-    const result = await searchWithEngine(JSON.parse(fs.readFileSync(strategyPath, 'utf8')));
-    if (useProfile && result.jobs.length) {
+    // Any IT internship anywhere in Germany, in German and English. The JobSearchEngine decides what each source
+    // permits; this page never searches or opens job sites itself. Indeed comes through the student's Claude connector
+    // (lib/indeed-agent.mjs) and StepStone/Arbeitsagentur through Claude's Apify connector: those two are Claude's, they need
+    // its connectors. Everything an NVIDIA NIM model can reach through plain search APIs (LinkedIn and the other boards)
+    // goes to it instead (lib/nim-agent.mjs), so Claude spends no tokens there. Any may fail alone; that is a warning.
+    const [engine, indeed, apify, nim] = await Promise.allSettled([searchWithEngine({ days: NEW_DAYS }), searchIndeed({ days: NEW_DAYS }), searchApify({ days: NEW_DAYS }), searchNim({ days: NEW_DAYS })]);
+    if ([engine, indeed, apify, nim].every((r) => r.status === 'rejected')) throw engine.reason;
+    const result = engine.status === 'fulfilled' ? engine.value : { jobs: [], warnings: [`Free job sources: ${engine.reason.message}`], unverified: 0 };
+    if (indeed.status === 'fulfilled') { result.jobs.push(...indeed.value.jobs); result.warnings.push(...indeed.value.warnings); }
+    else result.warnings.push(`Indeed was not searched: ${indeed.reason.message}`);
+    if (apify.status === 'fulfilled') { result.jobs.push(...apify.value.jobs); result.warnings.push(...apify.value.warnings); }
+    else result.warnings.push(`Apify was not searched: ${apify.reason.message}`);
+    if (nim.status === 'fulfilled') { result.jobs.push(...nim.value.jobs); result.warnings.push(...nim.value.warnings); }
+    else result.warnings.push(`NVIDIA NIM was not searched: ${nim.reason.message}`);
+    // Only what is new and can count for the German Year goes on, so AI scoring is spent on those alone.
+    const { jobs, skipped } = newEligible(result.jobs, (await readApplicationWorkbook()).rows);
+    let unfit = 0;
+    if (useProfile && jobs.length) {
       // Optional and best-effort: any failure keeps the built-in score and says so.
       try {
-        const { scores, error } = await scoreJobs({ jobs: result.jobs });
-        for (const job of result.jobs) if (scores.has(job.url)) job.match = scores.get(job.url);
-        result.warnings = [...(result.warnings || []), error ? `AI scoring stopped early: ${error}` : `AI scored ${scores.size} of ${result.jobs.length} postings against your files.`];
+        const { scores, error } = await scoreJobs({ jobs });
+        for (const job of jobs) if (scores.has(job.url)) job.match = scores.get(job.url);
+        result.warnings.push(error ? `AI scoring stopped early: ${error}` : `AI scored ${scores.size} of ${jobs.length} new postings against your files.`);
       } catch (error) {
-        result.warnings = [...(result.warnings || []), `AI scoring was skipped: ${error.message}`];
+        result.warnings.push(`AI scoring was skipped: ${error.message}`);
       }
+      unfit = jobs.filter((job) => job.match && job.match.score < MIN_FIT).length;
     }
+    // Only a score from the AI provider drops a posting; one it did not score stays.
+    const fit = jobs.filter((job) => !job.match || job.match.score >= MIN_FIT);
+    // A company with no logo and no website gets its website looked up by name (Exa), so the table can show its icon.
+    const unplaced = fit.filter((job) => job.company && !job.website && !job.logo_url);
+    if (unplaced.length) {
+      const { sites, error } = await findCompanySites(unplaced.map((job) => job.company));
+      for (const job of unplaced) if (sites[job.company]) job.website = sites[job.company];
+      if (error && error !== 'no Exa key') result.warnings.push(`Company websites were not all looked up: ${error}`);
+    }
+    const left = [[skipped.known, 'already in your workbook'], [skipped.undated, 'without a posting date'], [skipped.old, `posted more than ${NEW_DAYS} days ago`],
+      [skipped.ineligible, 'not internships or failing the GJU rules'], [skipped.notIT, 'not IT (no IT field in the title)'], [unfit, `scored under ${MIN_FIT}`]].filter(([count]) => count);
+    if (left.length) result.warnings.push(`Left out: ${left.map(([count, why]) => `${count} ${why}`).join(', ')}.`);
     // Read after the network calls so edits made in Excel during the search are retained.
     const snapshot = await readApplicationWorkbook();
-    const merged = mergeSearchResults(snapshot.rows, result.jobs);
-    if (result.jobs.length) await saveApplicationWorkbook(merged.rows, { revision: snapshot.revision });
-    sendJson(res, 200, { ok: true, found: result.jobs.length, added: merged.added, unverified: result.unverified || 0, rows: merged.rows.length, unavailableServers: result.unavailableServers || [], warnings: result.warnings || [] });
+    const merged = mergeSearchResults(snapshot.rows, fit);
+    if (fit.length) await saveApplicationWorkbook(merged.rows, { revision: snapshot.revision });
+    const { Meets = 0, Check = 0 } = merged.gju;
+    if (merged.added) result.warnings.push(`GJU check of the ${merged.added} new jobs: meets the rules ${Meets}, check by hand ${Check}.`);
+    sendJson(res, 200, { ok: true, found: result.jobs.length, added: merged.added, unverified: fit.filter((job) => job.verified === false).length, rows: merged.rows.length, unavailableServers: result.unavailableServers || [], warnings: result.warnings });
   });
 }
 
@@ -324,18 +339,10 @@ async function handleSkillsAnalysis(req, res) {
   }
   if (!llmConfig()) return sendJson(res, 400, { error: "Set up an AI provider in .env (see API keys & AI provider in the workspace)." });
   const { profile } = await readBody(req);
-  const strategy = readData("search-strategy");
-  const result = await analyseSkills({ profile, targetRoles: strategy.roles || [] });
+  const result = await analyseSkills({ profile, targetRoles: ["Any IT internship (Pflichtpraktikum) in Germany: software and web development, data, IT, cloud and DevOps, security"] });
   const saved = { generatedAt: new Date().toISOString(), provider: llmConfig().provider, model: llmConfig().model, ...result };
   fs.writeFileSync(ANALYSIS_FILE, JSON.stringify(saved, null, 2) + "\n");
   sendJson(res, 200, { ok: true, ...saved });
-}
-
-async function handleSearchSuggest(res) {
-  if (!llmConfig()) return sendJson(res, 400, { error: 'Set up an AI provider in .env to get suggestions from your files.' });
-  if (!hasStudentFiles()) return sendJson(res, 400, { error: 'Upload student.json and both base documents in the editor first.' });
-  const options = readJson(path.join(ROOT, 'src', 'assets', 'search-options.json'));
-  sendJson(res, 200, { ok: true, ...(await suggestRoles({ options })) });
 }
 
 async function handleAssignApplicant(req, res) {
@@ -615,9 +622,8 @@ const server = http.createServer(async (req, res) => {
   }
 
   try {
-    if (req.method === 'POST' && req.headers.origin && ![`http://${HOST}:${PORT}`, `http://localhost:${PORT}`].includes(req.headers.origin)) {
-      return sendJson(res, 403, { error: 'Open the local workspace to change its files.' });
-    }
+    const refused = refusal(req, pathname, PORT); // lib/local-guard.mjs: own address only, GET/POST, no other site's requests
+    if (refused) return sendJson(res, refused.status, { error: refused.error });
     if (pathname === '/__editor/application-settings' && req.method === 'GET') {
       const profile = readJson(path.join(ROOT, 'data', 'profile.json'));
       return sendJson(res, 200, { candidateEmail: profile.email || '', emailSendingAvailable: false });
@@ -641,11 +647,9 @@ const server = http.createServer(async (req, res) => {
     if (pathname === "/__editor/skills" && req.method === "POST") return await handleSkills(req, res);
     if (pathname === "/__editor/run" && req.method === "POST") return await handleRun(req, res);
     if (pathname === "/__editor/student-data") return await handleStudentData(req, res);
-    if (pathname === "/__editor/search-strategy") return await handleSearchStrategy(req, res);
     if (pathname === "/__editor/search" && req.method === "POST") return await handleSearch(req, res);
     if (pathname === "/__editor/settings") return await handleSettings(req, res);
     if (pathname === "/__editor/llm-test" && req.method === "POST") return await handleLlmTest(res);
-    if (pathname === "/__editor/search-suggest" && req.method === "POST") return await handleSearchSuggest(res);
     if (pathname === "/__editor/tailor" && req.method === "POST") return await handleTailor(req, res);
     if (pathname === "/__editor/assign-applicant" && req.method === "POST") return await handleAssignApplicant(req, res);
     if (pathname === "/__editor/apply-pack" && req.method === "GET") return handleApplyPack(res);
@@ -673,7 +677,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (pathname === "/") {
-      res.writeHead(302, { Location: `${prefix}editor/` });
+      res.writeHead(302, { Location: `${prefix}workspace/` });
       return res.end();
     }
 
@@ -699,14 +703,12 @@ await build();
 
 server.listen(PORT, HOST, () => {
   console.log(`
-Editor ready:     http://${HOST}:${PORT}${prefix}editor/
+Old draft export: http://${HOST}:${PORT}${prefix}editor/
 Workspace ready:  http://${HOST}:${PORT}${prefix}workspace/
 Site preview:     http://${HOST}:${PORT}${prefix}
 
-  "Save to data/" writes data/*.json plus src/certs/ and src/media/, then rebuilds.
-  ${process.env.ANTHROPIC_API_KEY
-    ? '"Extract with AI" is enabled (key found in .env).'
-    : '"Extract with AI" is off — add ANTHROPIC_API_KEY to .env to enable it.'}
+  Profile editor: serve ../GJUBoard and open editor.html.
+  Import its JSON here with npm run import-data -- <file>.
 
 Press Ctrl+C to stop.
 `);

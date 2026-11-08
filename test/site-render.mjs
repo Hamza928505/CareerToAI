@@ -11,16 +11,22 @@ assert.ok((prose.match(/<p>/g) || []).length > 1, 'bio should render as paragrap
 assert.match(html, /href="#contact-heading"/);
 
 const workspace = readFileSync(new URL('../_site/workspace/index.html', import.meta.url), 'utf8');
-for (const key of ['roles', 'cities', 'types']) {
-  assert.match(workspace, new RegExp(`data-strategy-options="${key}"`));
-  assert.match(workspace, new RegExp(`data-strategy-custom="${key}"`));
-}
-assert.match(workspace, /value="Software Engineering"/);
-assert.match(workspace, /value="Praktikum"/);
-assert.match(workspace, /id="strategy-save-status" role="status"/);
-assert.match(workspace, /data-strategy-search="roles"/);
-assert.match(workspace, /data-strategy-browse="roles"/);
-assert.match(workspace, /data-strategy-search="cities"/);
+// One search for every IT internship in Germany: no strategy form, no hand-run GJU checker, results on the board moved
+// from the private page (its hero, filters and list), which no longer exists.
+// The search lives in the Shortlist panel; there is no panel of its own.
+const shortlist = workspace.slice(workspace.indexOf('id="flow-review"'), workspace.indexOf('id="flow-apply"'));
+assert.match(shortlist, /id="btn-start-search"/);
+assert.match(shortlist, /id="search-use-profile"/);
+assert.doesNotMatch(workspace, /id="flow-search"|href="#flow-search"/);
+assert.doesNotMatch(workspace, /id="strategy-form"|id="flow-check"|id="checker"|href="#flow-check"|private-board/);
+assert.match(workspace, /class="gb gb-hero"/);
+// The board hero is the page's only hero, at the top and outside any tab panel; no stat tiles or funnel above the tabs.
+assert.doesNotMatch(workspace, /ws-head|workspace-overview|id="stat-total"|id="mode-pill"/);
+assert.equal((workspace.match(/gb-hero"/g) || []).length, 1);
+assert.ok(workspace.indexOf('class="gb gb-hero"') < workspace.indexOf('id="settings-form"') && workspace.indexOf('class="gb gb-hero"') < workspace.indexOf('id="flow-review"'));
+for (const stat of ['total', 'meets', 'fresh', 'companies']) assert.match(workspace, new RegExp(`data-stat="${stat}"`));
+for (const filter of ['skills', 'status', 'city', 'kind', 'gju', 'apply', 'german', 'english', 'applicant', 'sort']) assert.match(workspace, new RegExp(`id="board-f-${filter}"`));
+assert.match(workspace, /<option value="results">Board<\/option>/);
 
 const options = JSON.parse(readFileSync(new URL('../src/assets/search-options.json', import.meta.url), 'utf8'));
 assert.ok(options.roles.length >= 2900, 'ESCO role catalog should be complete');

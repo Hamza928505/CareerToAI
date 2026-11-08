@@ -1,12 +1,17 @@
 #!/usr/bin/env node
 /**
- * The daily run behind the public GJU internship board. Two sources:
+ * The daily run behind the public GJU internship board. Three sources:
  *   arbeitsagentur  the Bundesagentur für Arbeit's Jobbörse: free, every area in one go (unofficial, see lib/board-source-ba.mjs)
  *   search          the credit-based MCP search of a rotating slice of areas and job sites, within the daily caps
+ *   engine          the JobSearchEngine: the public board gets only what the sources' terms let others see
+ *                   (lib/board-source-engine.mjs). The owner's private search is the workspace's (npm run editor).
+ *
+ * Every run first takes off the board whatever today's policy no longer allows (publicPostingRule), day files included.
  *
  *   npm run board:search -- --dry-run     show what today's run would do and spend; searches nothing
- *   npm run board:search                  run both sources and write the board's data files
- *   npm run board:search -- --sources=arbeitsagentur   only the free source (no credits are read or spent)
+ *   npm run board:search                  run every source that is switched on and write the board's data files
+ *   npm run board:search -- --sources=engine   only the JobSearchEngine
+ *   npm run board:search -- --sources=arbeitsagentur   only the free source (off until the agency gives permission)
  *   npm run board:search -- --publish     the same, then commit and push the data in the board repo
  *   npm run board:search -- --since=2026-10-01   accept postings from that date on (default: 3 days back, 14 for a first visit)
  *
@@ -24,6 +29,7 @@ import { loadEnv } from "../lib/extract-certificate.mjs";
 import { openMcpServers } from "../lib/antigravity-mcp.mjs";
 import { DEFAULT_CONFIG } from "../lib/board-budget.mjs";
 import { SOURCES, lookbackFor, lookbackForFree, planRun, runBoard } from "../lib/board-run.mjs";
+import { publicPostingRule } from "../lib/board-source-engine.mjs";
 import { mayFetch } from "../lib/source-policy.mjs";
 
 const git = promisify(execFile);
@@ -72,16 +78,28 @@ if (!fs.existsSync(path.join(boardDir, "board", "majors.json"))) {
 }
 const majorsFile = readJson(path.join(boardDir, "board", "majors.json"));
 const state = fs.existsSync(statePath) ? readJson(statePath) : {};
+// What may stay public. Without the rule nothing could be checked, so a run without it touches nothing.
+let keepPosting;
+try { keepPosting = publicPostingRule(); } catch (error) {
+  console.error(`The publication rule could not be read (the JobSearchEngine's config/sources.json): ${error.message}`);
+  process.exit(1);
+}
+const onBoard = fs.existsSync(path.join(boardDir, "data", "postings.json")) ? readJson(path.join(boardDir, "data", "postings.json")) : [];
+const notAllowed = onBoard.filter((p) => !(p.datePosted && keepPosting(p))); // the run's own rule (lib/board-run.mjs)
 const windowText = (days) => `${days} days (postings from ${new Date(Date.parse(berlinToday) - days * 86_400_000).toISOString().slice(0, 10)} to ${berlinToday})`;
 const freeWindow = () => windowText(lookbackForFree({ config, state, today: berlinToday }));
 const paidWindow = (plan) => windowText(lookbackFor({ config, plan, state }));
 
 if (args.has("--dry-run")) {
   console.log(`Board repo: ${boardDir}`);
+  if (notAllowed.length) console.log(`Would take off the public board (no posting date, or today's policy does not allow them): ${notAllowed.length} of ${onBoard.length}, ${[...new Set(notAllowed.map((p) => p.source))].join("; ")}.`);
   if (sources.includes("arbeitsagentur")) {
     console.log(wantFree ? `Arbeitsagentur Jobbörse (free, every area): posting age limit ${freeWindow()}.` : freeOff);
   }
-  if (wantEngine) console.log(`JobSearchEngine (free APIs that allow public display): posting age limit ${windowText(lookbackForFree({ config, state, today: berlinToday, source: "engine" }))}.`);
+  if (wantEngine) {
+    console.log(`JobSearchEngine, the sources whose terms allow public display: posting age limit ${windowText(lookbackForFree({ config, state, today: berlinToday, source: "engine" }))}.`);
+    console.log("  public board: APIs whose terms allow public display, and link-only leads from sites that allow them.");
+  }
   if (wantPaid) {
     const credits = await checkCredits();
     const plan = planRun({ majorsFile, state, config, credits });
@@ -104,14 +122,21 @@ const germanCities = new Set(cities.map((city) => String(city.name).toLowerCase(
 
 if (wantFree) console.log(`Arbeitsagentur Jobbörse (free): posting age limit ${freeWindow()}.`);
 else if (asked !== undefined && sources.includes("arbeitsagentur")) console.log(freeOff); // said out loud only when it was asked for by name
-if (wantEngine) console.log(`JobSearchEngine: posting age limit ${windowText(lookbackForFree({ config, state, today: berlinToday, source: "engine" }))}.`);
 if (wantPaid) console.log(`Credit search: posting age limit ${paidWindow(planRun({ majorsFile, state, config }))}.`);
-const summary = await runBoard({ boardDir, statePath, rules, germanCities, openServers: openMcpServers, readCredits: checkCredits, config, today: berlinToday, sources, log: console.log });
+
+if (wantEngine) console.log(`JobSearchEngine, the sources whose terms allow public display: posting age limit ${windowText(lookbackForFree({ config, state, today: berlinToday, source: "engine" }))}.`);
+
+// The public board: only what the sources' terms let others see.
+const summary = await runBoard({
+  boardDir, statePath, rules, germanCities, openServers: openMcpServers, readCredits: checkCredits, config, today: berlinToday, sources, log: console.log,
+  keepPosting,
+});
 fs.appendFileSync(logPath, `${JSON.stringify(summary)}\n`);
-console.log(`Found ${summary.found}, added ${summary.added}, already known ${summary.seenAgain}, same internship on another site ${summary.duplicates}, no fit for a GJU major ${summary.notRelevant}, not an internship ${summary.notInternship}, pruned ${summary.pruned}.`);
+console.log(`Public board: found ${summary.found}, added ${summary.added}, already known ${summary.seenAgain}, no posting date ${summary.undated}, posted before the window ${summary.tooOld}, same internship on another site ${summary.duplicates}, no fit for a GJU major ${summary.notRelevant}, not an internship ${summary.notInternship}, pruned ${summary.pruned}.`);
+if (summary.removedByPolicy) console.log(`Taken off the public board (no posting date, or today's policy does not allow them): ${summary.removedByPolicy} ${JSON.stringify(summary.removedSources)}.`);
 const ba = summary.sources.arbeitsagentur;
 const eng = summary.sources.engine;
-if (eng) console.log(`JobSearchEngine: ${eng.sources} public sources asked, ${eng.answered} answered.`);
+if (eng) console.log(`JobSearchEngine: ${eng.sources} sources asked, ${eng.answered} answered.`);
 if (ba) console.log(`Arbeitsagentur: ${ba.pages} list pages, ${ba.inWindow} entries in the window, ${ba.candidates} new internships (${ba.known} already known), ${ba.fetched} adverts read, ${ba.unavailable} gone.`);
 if (wantPaid) console.log(`Areas: ${summary.areas.join("; ")}. Calls: ${JSON.stringify(summary.calls)}. Credits spent: ${JSON.stringify(summary.creditsSpent)}.`);
 for (const warning of summary.warnings) console.log(`Note: ${warning}`);

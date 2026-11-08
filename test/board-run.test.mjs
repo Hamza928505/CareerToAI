@@ -163,7 +163,7 @@ test("a day with nothing to spend searches nothing and says so", async () => {
 test("old postings are pruned and the posting age limit is honoured", async () => {
   const dir = boardDir();
   fs.mkdirSync(path.join(dir, "data"), { recursive: true });
-  const old = { id: "old000000000", title: "Alt", url: "https://x.de/a", firstSeen: berlin(90), lastSeen: berlin(60), majors: [], skills: [], gju: {} };
+  const old = { id: "old000000000", title: "Alt", url: "https://x.de/a", datePosted: berlin(90), firstSeen: berlin(90), lastSeen: berlin(60), majors: [], skills: [], gju: {} };
   fs.writeFileSync(path.join(dir, "data", "postings.json"), JSON.stringify([old]));
   const stale = await run(dir, fakeServers({ publishedDaysAgo: 2 }), { config: { ...smallConfig, maxAgeDays: 0, backfillDays: 0 } });
   assert.equal(stale.added, 0); // two days old is too old when only today counts
@@ -423,6 +423,7 @@ const fakeEngineDir = () => {
   fs.writeFileSync(path.join(dir, "config", "sources.json"), JSON.stringify({ sources: [
     { id: "himalayas", type: "api", display: "public-with-attribution", access: { methods: ["api"] } }, { id: "arbeitnow", type: "api", display: "personal", access: { methods: ["api"] } },
     { id: "stepstone", type: "site", domains: ["stepstone.de"], display: "link-only", access: { methods: ["discovery"] } },
+    { id: "connecticum", type: "site", domains: ["connecticum.de"], display: "link-only", access: { methods: ["discovery"] } },
     { id: "absolventa", type: "site", domains: ["absolventa.de"], display: "link-only", access: { methods: ["discovery"] } },
     { id: "linkedin", type: "site", domains: ["linkedin.com"], display: "link-only", access: { methods: ["discovery"] } },
     { id: "nopolicy", type: "site", domains: ["no-policy-entry.example"], display: "link-only", access: { methods: ["discovery"] } }] }));
@@ -438,7 +439,7 @@ test("the engine source asks only public-display sources, in public mode, and ke
   try {
     assert.deepEqual(publicSourceIds(dir), ["himalayas"]); // not the personal-use API, not a discovery site
     const { leadSourceIds } = await import("../lib/board-source-engine.mjs");
-    assert.deepEqual(leadSourceIds(dir), ["absolventa"]); // stepstone and linkedin are forbidden, a site with no policy entry is no
+    assert.deepEqual(leadSourceIds(dir), ["connecticum"]); // stepstone, linkedin and absolventa restrict it; a site with no policy entry is no
     const lead = engineJob({ original_url: "https://www.stepstone.de/stellenangebote--x-1-inline.html", verification_status: "unverified", sources: [{ source_id: "stepstone", display: "link-only" }] });
     const personal = engineJob({ original_url: "https://www.arbeitnow.com/jobs/x", sources: [{ source_id: "arbeitnow", display: "personal" }] });
     const mixed = engineJob({ original_url: "https://himalayas.app/x/2", sources: [{ source_id: "himalayas", display: "public-with-attribution" }, { source_id: "arbeitnow", display: "personal" }] });
@@ -447,7 +448,7 @@ test("the engine source asks only public-display sources, in public mode, and ke
     assert.deepEqual(result.jobs.map((j) => j.source), ["Himalayas"]);
     assert.equal(result.jobs[0].verified, undefined);
     assert.equal(asked.length, 2); // "Praktikum" and "Internship"
-    assert.deepEqual(asked[0].request.sources, ["himalayas", "absolventa"]); // public-display APIs, then the discovery sites the policy allows
+    assert.deepEqual(asked[0].request.sources, ["himalayas", "connecticum"]); // public-display APIs, then the discovery sites the policy allows
     assert.equal(asked[0].request.posted_within_days, 10);
     assert.equal(asked[0].options.env.JOBSEARCH_DEPLOYMENT, "public");
     assert.equal([lead, personal, mixed].filter(publishable).length, 0);
@@ -481,45 +482,41 @@ test("an engine that is not installed or fails is a warning and an incomplete ru
   assert.ok(summary.warnings.some((w) => /JobSearchEngine: The search engine is not set up/.test(w)));
 });
 
-// ------------------------------------------------------------ the local "every way" preview
-
-test("the preview source keeps every kind of result and labels the unchecked ones; the public source keeps none of them", async () => {
-  const { fetchAllFromEngine, fetchFromEngine } = await import("../lib/board-source-engine.mjs");
-  const dir = fakeEngineDir();
+test("a posting today's policy does not allow comes off the board and out of every day file", async () => {
+  const { publicPostingRule } = await import("../lib/board-source-engine.mjs");
+  const engine = fakeEngineDir();
+  const dir = boardDir();
   try {
-    const lead = engineJob({ original_url: "https://www.stepstone.de/stellenangebote--Praktikum-Softwareentwicklung-1-inline.html", verification_status: "unverified",
-      sources: [{ source_id: "stepstone", name: "StepStone", collection_method: "discovery", display: "link-only" }] });
-    const personal = engineJob({ original_url: "https://www.arbeitnow.com/jobs/companies/x/praktikum-softwareentwicklung-2", sources: [{ source_id: "arbeitnow", name: "Arbeitnow", collection_method: "api", display: "personal" }] });
-    const jobs = [engineJob(), lead, personal];
-    const { run, asked } = engineFrom(jobs);
-    const all = await fetchAllFromEngine({ oldest: "2026-10-01", today: "2026-10-11", dir, run });
-    assert.equal(all.jobs.length, 3);
-    assert.deepEqual(asked[0].request.sources, undefined); // every source, not only the public-display ones
-    assert.equal(asked[0].options, undefined);             // and not in public mode
-    assert.equal(all.jobs.find((j) => j.url === lead.original_url).source, "StepStone (search lead, not checked)");
-    const pub = await fetchFromEngine({ oldest: "2026-10-01", today: "2026-10-11", dir, run: engineFrom(jobs).run });
-    assert.equal(pub.jobs.length, 1);
-  } finally { fs.rmSync(dir, { recursive: true, force: true }); }
+    const registry = JSON.parse(fs.readFileSync(path.join(engine, "config", "sources.json"), "utf8"));
+    registry.sources[0].domains = ["himalayas.app"];
+    fs.writeFileSync(path.join(engine, "config", "sources.json"), JSON.stringify(registry));
+    const posting = (id, url, source) => ({ id, url, source, title: `Praktikum ${id}`, company: "", city: "", majors: ["cs"], datePosted: today, firstSeen: today, lastSeen: today });
+    const himalayas = posting("h1", "https://himalayas.app/companies/acme/jobs/praktikum-1", "Himalayas");
+    const connecticum = posting("c1", "https://www.connecticum.de/jobboerse/praktikum-stellenangebot-1.html", "Connecticum (search lead, not checked)");
+    const absolventa = posting("a1", "https://www.absolventa.de/stellenangebote/1-b-praktikum", "Absolventa (search lead, not checked)");
+    const pageRead = posting("p1", "https://www.praktika.de/praktikum-1", "praktika.de"); // read directly by the old platform search
+    const undated = { ...posting("u1", "https://www.connecticum.de/jobboerse/praktikum-stellenangebot-2.html", "Connecticum (search lead, not checked)"), datePosted: "" };
+    fs.mkdirSync(path.join(dir, "data", "days"), { recursive: true });
+    fs.writeFileSync(path.join(dir, "data", "postings.json"), JSON.stringify([himalayas, connecticum, absolventa, pageRead, undated]));
+    fs.writeFileSync(path.join(dir, "data", "days", `${today}.json`), JSON.stringify([himalayas, absolventa, pageRead]));
+    fs.writeFileSync(path.join(dir, "data", "days", `${ago(3)}.json`), JSON.stringify([absolventa]));
+    const summary = await run(dir, fakeServers(), { sources: ["engine"], keepPosting: publicPostingRule(engine) });
+    assert.deepEqual(read(dir, "data", "postings.json").map((p) => p.id).sort(), ["c1", "h1"]);
+    assert.deepEqual(read(dir, "data", "days", `${today}.json`).map((p) => p.id), ["h1"]);
+    assert.equal(fs.existsSync(path.join(dir, "data", "days", `${ago(3)}.json`)), false); // emptied, so gone
+    assert.deepEqual(read(dir, "data", "index.json").days.map((d) => d.date), [today]);
+    assert.equal(summary.removedByPolicy, 3); // the undated one too: the page would date it by the day it was found
+    assert.deepEqual(summary.removedSources, { "Absolventa (search lead, not checked)": 1, "praktika.de": 1, "Connecticum (search lead, not checked)": 1 });
+  } finally { fs.rmSync(engine, { recursive: true, force: true }); fs.rmSync(dir, { recursive: true, force: true }); }
 });
 
-test("allowUnverified lets a lead onto the board page of a preview, and is off for every real run", async () => {
-  const lead = { url: "https://www.stepstone.de/stellenangebote--Praktikum-Softwareentwicklung-9-inline.html", title: "Praktikum Softwareentwicklung (m/w/d)", company: "", location: "", date_posted: "",
+test("an unchecked search lead never reaches the board unless its site's policy allows leads", async () => {
+  const lead = { url: "https://www.stepstone.de/stellenangebote--Praktikum-Softwareentwicklung-9-inline.html", title: "Praktikum Softwareentwicklung (m/w/d)", company: "", location: "", date_posted: today,
     snippet: "Python und SQL", source: "StepStone (search lead, not checked)", verified: false };
   const searchEngine = async () => ({ jobs: [lead], known: [], settled: [], warnings: [] });
   const strict = await run(boardDir(), fakeServers(), { sources: ["engine"], searchEngine });
   assert.equal(strict.added, 0);
   assert.equal(strict.found, 0);
-  const dir = boardDir();
-  const preview = await run(dir, fakeServers(), { sources: ["engine"], searchEngine, allowUnverified: true });
-  assert.equal(preview.added, 1);
-  assert.equal(read(dir, "data", "postings.json")[0].source, "StepStone (search lead, not checked)");
-});
-
-test("the preview script never writes into the board repo and its output folder is git-ignored", () => {
-  const script = fs.readFileSync(new URL("../scripts/board-preview.mjs", import.meta.url), "utf8");
-  assert.match(script, /must not be built inside the board repo/);
-  assert.doesNotMatch(script, /execFile|child_process|--publish|"push"|git push/); // it runs no git command and has no publish step
-  assert.match(fs.readFileSync(new URL("../.gitignore", import.meta.url), "utf8"), /^\/\.board-preview\/$/m);
 });
 
 test("a lead is published only from a site the policy allows, and only as a link-only row", async () => {
@@ -528,20 +525,21 @@ test("a lead is published only from a site the policy allows, and only as a link
   try {
     const lead = (id, name, url) => engineJob({ original_url: url, title: "Praktikum Softwareentwicklung (m/w/d)", company: "Quoted by the search engine", posted_date: "", verification_status: "unverified",
       collection_method: "discovery", snippet: "A sentence the search engine quoted from the page.", sources: [{ source_id: id, name, collection_method: "discovery", display: "link-only", attribution: "Found with Parallel" }] });
-    const allowed = lead("absolventa", "Absolventa", "https://www.absolventa.de/stellenangebote/1-b-praktikum-softwareentwicklung");
+    const allowed = lead("connecticum", "Connecticum", "https://www.connecticum.de/jobboerse/praktikum-softwareentwicklung-stellenangebot-1.html");
+    const absolventa = lead("absolventa", "Absolventa", "https://www.absolventa.de/stellenangebote/1-b-praktikum-softwareentwicklung");
     const forbidden = lead("stepstone", "StepStone", "https://www.stepstone.de/stellenangebote--Praktikum-Softwareentwicklung-1-inline.html");
     const linkedin = lead("linkedin", "LinkedIn", "https://de.linkedin.com/jobs/view/praktikum-softwareentwicklung-1");
     const unknown = lead("nopolicy", "Nowhere", "https://no-policy-entry.example/job/1");
-    const result = await fetchFromEngine({ oldest: "2026-10-01", today: "2026-10-11", dir, run: engineFrom([allowed, forbidden, linkedin, unknown]).run });
-    assert.deepEqual(result.jobs.map((j) => j.source), ["Absolventa (search lead, not checked)"]);
+    const result = await fetchFromEngine({ oldest: "2026-10-01", today: "2026-10-11", dir, run: engineFrom([allowed, absolventa, forbidden, linkedin, unknown]).run });
+    assert.deepEqual(result.jobs.map((j) => j.source), ["Connecticum (search lead, not checked)"]); // Absolventa's AGB forbid it since the re-check
     const [row] = result.jobs;
     assert.equal(row.snippet, "");                          // nothing the search engine quoted from the page
     assert.equal(row.company, "");
     assert.equal(row.url, allowed.original_url);            // the link is the point
     assert.equal(row.publishLead, true);
-    assert.equal(publishableLead(allowed, new Set(["absolventa"])), true);
-    assert.equal(publishableLead(forbidden, new Set(["absolventa"])), false);
-    assert.equal(publishableLead({ ...allowed, verification_status: "from_source", collection_method: "api" }, new Set(["absolventa"])), false); // an API record is not a lead
+    assert.equal(publishableLead(allowed, new Set(["connecticum"])), true);
+    assert.equal(publishableLead(forbidden, new Set(["connecticum"])), false);
+    assert.equal(publishableLead({ ...allowed, verification_status: "from_source", collection_method: "api" }, new Set(["connecticum"])), false); // an API record is not a lead
     assert.equal(leadHit(allowed).verified, false);
     const { internalHost } = await import("../lib/board-source-engine.mjs");
     assert.equal(internalHost("https://uno-production.absolventa.de/stellenangebote/1-b-x"), true);
@@ -550,9 +548,20 @@ test("a lead is published only from a site the policy allows, and only as a link
   } finally { fs.rmSync(dir, { recursive: true, force: true }); }
 });
 
+test("the window is by posting date: an undated hit and one posted before the window are not taken, from any source", async () => {
+  const dir = boardDir();
+  const hit = (n, date_posted) => engineJob({ original_url: `https://himalayas.app/companies/acme/jobs/praktikum-softwareentwicklung-${n}`, posted_date: date_posted });
+  const { toHit } = await import("../lib/engine-search.mjs");
+  const jobs = [hit(1, ago(2)), hit(2, ""), hit(3, ago(20))].map(toHit);
+  const summary = await run(dir, fakeServers(), { sources: ["engine"], config: { ...smallConfig, lookbackDays: 10 }, searchEngine: async () => ({ jobs, known: [], settled: [], warnings: [] }) });
+  assert.deepEqual([summary.added, summary.undated, summary.tooOld], [1, 1, 1]);
+  const [kept] = read(dir, "data", "postings.json");
+  assert.deepEqual([kept.datePosted, kept.firstSeen], [ago(2), ago(2)]); // the page's date is the posting day
+});
+
 test("a published lead reaches the board with its label, and the page says some rows are leads", async () => {
   const dir = boardDir();
-  const lead = { url: "https://www.absolventa.de/stellenangebote/9-b-praktikum-softwareentwicklung", title: "Praktikum Softwareentwicklung (m/w/d)", company: "", location: "", date_posted: "",
+  const lead = { url: "https://www.absolventa.de/stellenangebote/9-b-praktikum-softwareentwicklung", title: "Praktikum Softwareentwicklung (m/w/d)", company: "", location: "", date_posted: today,
     snippet: "", source: "Absolventa (search lead, not checked)", verified: false, publishLead: true };
   const unmarked = { ...lead, url: "https://www.absolventa.de/stellenangebote/10-b-praktikum-softwareentwicklung", publishLead: undefined };
   await run(dir, fakeServers(), { sources: ["engine"], searchEngine: async () => ({ jobs: [lead, unmarked], known: [], settled: [], warnings: [] }) });

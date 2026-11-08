@@ -13,7 +13,68 @@ per-file diff commands.
 
 ## [Unreleased]
 
+### Changed
+
+- **An NVIDIA NIM model joins the search, and the board shows who found each internship.** `lib/nim-agent.mjs` searches LinkedIn and
+  other boards through Tavily, Exa, Firecrawl and the Arbeitnow API (snippets only), so Claude is left with Indeed and Apify. The board
+  gains *Searched by*, *Site* and *Posted* filters (default last 7 days), an AI tag on every row, and Fit shown as a percentage. The headless
+  Claude searches now use Sonnet instead of Haiku.
+- **The search moved into the Shortlist.** The workspace has no Search panel any more: *Search new postings* and
+  *Score new jobs against my profile files* sit at the top of the Shortlist, under its hero, and the page opens on
+  the Shortlist. The step strip is Shortlist, Apply, Insights, Tools. The internship board hero is now the
+  page's only hero, at the very top: the old "Your German Year starts here" banner, the connection pill and the
+  four stat tiles with the funnel chart are gone.
+- **The workspace follows the hero's theme.** The page now wears the internship board's blue, surfaces and light and
+  dark pairs (`board.css` tokens, re-pointed on `.workspace` at the end of `workspace.css`): buttons, links, the step
+  strip, panels, tables and guidance notes. The site header and the chart colours are unchanged.
+
 ### Added
+
+- **Adzuna, Jooble and Careerjet keys in the workspace.** *Search & AI services* has a status card for each, and the
+  Keys tab has their rows (`ADZUNA_APP_ID`, `ADZUNA_APP_KEY`, `JOOBLE_API_KEY_DE`, `CAREERJET_API_KEY`,
+  `CAREERJET_USER_IP`) with a "Get a key" link and a how-to-get-each-key note. A saved key reaches the
+  JobSearchEngine on the next search. `.env.example` lists them too.
+- **One search for every IT internship in Germany, checked by the guideline's rules.** The search form is
+  gone: *Search new postings* looks for any IT internship anywhere in Germany, in German and English
+  (Praktikum, Pflichtpraktikum and internship with Informatik, software, IT, data, web, cloud, security,
+  AI and SAP). The JobSearchEngine gets one request per keyword, since its APIs read several keywords as
+  all of them at once. The GJU check now follows the GJU Praktikumsrichtlinien: an internship of 20 weeks
+  to 6 months (longer is "check", not a fail), in Germany or a country approved as easily. Pay and
+  language level are no longer rules: unpaid is allowed, pay is often settled at the interview, and
+  employers take students at their level, so the keyword score's German-level penalty is gone and the AI
+  scoring is told to ignore language. The hand-run eligibility checker tab is removed, and so is the
+  roles suggester it no longer needs. Only titles that name an IT field are added (`isIT` in
+  `lib/application-flow.mjs`), so Werkstudent and other non-IT jobs stay out, and a new row gets the
+  duration, pay and German and English levels the advert states, blank when it states none.
+
+- **The private board page moved into the workspace.** The shortlist now has the board page's hero (count
+  tiles for internships, meeting the rules, posted this week and companies, and *How the check works* with
+  the guideline's rules), its filter panel (search, skills with all/any, status, city, kind, GJU rules,
+  Apply?, who applies, your German and English level, minimum weeks, pay range and posting dates, with
+  filter chips and counts per option) and its internship list as a table or cards: position with tags,
+  company initials, city, duration, pay, languages, the GJU badge with its reason, posted, the row's
+  *Status* to change in place, and an ⓘ that opens every field. Rows can be ticked and downloaded as
+  Excel (what is shown, the ticked ones, or everything). The same filters drive the spreadsheet views, and
+  *Who applies* takes the filtered rows. The old filter bar and *More filters* are gone; the bottom button
+  is now *Download workbook*. The page, `npm run board:preview`, `.board-preview/` and the editor's
+  `/__editor/private-board/` route are removed, and `board:search` now asks the engine only for the
+  sources the public board may show.
+
+- **Workspace search adds only new internships that can count, and searches Indeed too.** A search now
+  adds a posting only if it is not in the workbook yet (by link, or by company and title, so a job two
+  sources found counts once), has a known posting date in the last 7 days (`NEW_DAYS`; undated ones are
+  left out, the board's rule), is an internship the GJU check does not fail, and, with AI scoring on,
+  scored 10 or more (`MIN_FIT`). AI scoring now runs on those postings only. The status line counts what
+  was left out and why. Indeed comes through the Indeed connector of your Claude account:
+  `lib/indeed-agent.mjs` runs `claude -p` headless in your internships folder (`INTERNSHIPS_DIR`, default
+  `~/Desktop/Internships`) with only ToolSearch and the two Indeed tools, and reads the postings from the
+  tool results, never from the model's text. Indeed rows stay in the private tracker; the public board
+  never takes them.
+
+- **Workspace search checks every result against the GJU rules.** Each new tracker row gets a
+  *GJU check* cell from the board's own check (`gjuCheck` in `lib/board-extract.mjs`): *Meets*,
+  *Fails*, *Check* (with what is not stated) or *Not an internship*. The search status counts them,
+  and a search for Werkstudent jobs only is warned that GJU counts a full-time internship.
 
 - **Profile editor: skills radar, private phone field and a counts strip.** The radar draws your
   skills by field from the skill library, with the skills pasted from job adverts as a second shape,
@@ -95,29 +156,24 @@ per-file diff commands.
   once with their portal. Pinned by four new cases in `test_rank_command.py`, each
   verified to fail against the rule-less spec.
 
-### Added
-
-- **`npm run board:preview` - a local preview of the board from every search way.** `scripts/board-preview.mjs`
-  builds a copy of the board page into the git-ignored `.board-preview/` (never into the board repo, no publish step) and fills it from
-  all the JobSearchEngine's sources: free APIs, APIs whose terms allow personal use only (Arbeitnow, Remotive), feeds, and search-engine
-  leads for restricted sites, labelled "(search lead, not checked)". Leads give little to go on (duration and pay are usually "not stated").
-  The page carries a notice that it is local. `--since=YYYY-MM-DD` sets the window; `--serve` serves it on 127.0.0.1.
-  The public board still keeps only what each source's terms allow (`board:search -- --sources=engine`).
-
 ### Changed
 
 - **The public board has a source again: the JobSearchEngine's free APIs.** `npm run board:search -- --sources=engine
   [--since=YYYY-MM-DD] [--publish]` (`lib/board-source-engine.mjs`) asks only the engine's sources whose terms allow showing
-  listings publicly with a credit (today Himalayas, Remote OK and Jobicy; Adzuna, Jooble, Careerjet and The Muse once a key is set), runs the engine in
+  listings publicly with a credit (today Himalayas, Remote OK and Jobicy; The Muse once a key is set; Adzuna, Jooble and Careerjet
+  stay private until their display terms are met, e.g. Adzuna's required logo link), runs the engine in
   public mode so personal-use sources such as Arbeitnow are never requested, and keeps only structured records, never
   search-engine leads. Each posting keeps its source name ("via Himalayas") and its link back; the board footer credits the sources.
   Postings still go through the board's own rules (internship kind, a fitting GJU major, derived facts only).
   Search-engine leads (a title and link from a search engine, the page never read) are published only from sites whose
-  policy entry says `publicLeads` (their terms had no clause on reproducing listings: Absolventa, bonding, Connecticum, stellenanzeigen.de,
-  Jobware, UNICUM, Praktikum.info, KULTweet, Jobworld, Joboter), only as link-only rows (title and link, no snippet, no company), labelled
+  policy entry says `publicLeads`: their terms and imprint were read and say nothing against it (Connecticum, Jobworld, Joboter).
+  Only as link-only rows (title and link, no snippet, no company), labelled
   "(search lead, not checked)", and never from a back-end host such as uno-production.absolventa.de. The page says so in its notice.
-  Every other site's leads (LinkedIn, StepStone, Indeed, Arbeitsagentur, academics, kimeta, meinestadt, praktikum.de, Talent.com,
-  praktika.de, MeinPraktikum, Jobmensa, Monster) stay off the public board.
+  Every other site's leads stay off the public board: LinkedIn, StepStone, Indeed, Arbeitsagentur, academics, kimeta, meinestadt,
+  praktikum.de, Talent.com, praktika.de, MeinPraktikum, Jobmensa, Monster, and, since a second reading of their terms and
+  imprints, Absolventa and Praktikum.info (their AGB forbid using their data to build or enrich a database, and their imprints
+  reserve text and data mining), stellenanzeigen.de, UNICUM, bonding, KULTweet and Jobware (their imprints or terms restrict
+  copying or reusing the listings; Jobware also blocks automated requests now).
 - **The workspace search now runs on the JobSearchEngine.** `lib/engine-search.mjs` runs the sibling Python repo
   `../JobSearchEngine` (`main.py search --stdin-json --json`, no shell) with the saved strategy, one request per city or
   the remote search, and turns its jobs into tracker rows. Results from free job APIs and published feeds come in
@@ -128,6 +184,13 @@ per-file diff commands.
 
 ### Security
 
+- **Other web pages can no longer read or drive the local editor server.** It listened on 127.0.0.1 only,
+  but a page whose domain was re-pointed at 127.0.0.1 (DNS rebinding) could read every GET route: the tracker with
+  employers' contacts, the student's files, the phone number and settings. And a request
+  with any method other than POST skipped the origin check, while some handlers treat every method but GET as a
+  write. `lib/local-guard.mjs` now answers only requests addressed to `127.0.0.1:PORT` or `localhost:PORT`, accepts only
+  GET and POST, refuses another site's POST, and refuses any `/__editor/` request another site started
+  (`Sec-Fetch-Site`), so a link or an image elsewhere cannot start the apply preview's paid AI drafts.
 - **Job sites are read only where their terms allow it.** `data/source-access-policy.json`
   records, for each of the 28 job sites, whether automated reading is permitted, with the quoted
   clause or `robots.txt` rule and the date checked (8 prohibited, 16 live sites unknown, 3 gone,
@@ -149,6 +212,23 @@ per-file diff commands.
 
 ### Fixed
 
+- **NVIDIA scoring answered 404, so nothing was scored.** The default NVIDIA model,
+  `nvidia/nemotron-3-super-120b-a12b`, is still in the catalogue but its endpoint now answers
+  "Function not found for account". The default is now `nvidia/nemotron-3-ultra-550b-a55b`, which scored
+  real postings in about 8 seconds. `LLM_MODEL` still overrides it.
+
+- **Indeed jobs are no longer added again on every search.** The Indeed connector gives each result a new
+  `to.indeed.com` short link, so `jobMatchKey` matches those by company and title instead of by link.
+
+- **The board dated search-engine leads by the day they were found, so old adverts looked new.** A lead's page is never
+  read, so its posting date is unknown, and the board filled the gap with the day the search found it: an advert from
+  5 August showed up as found on 11 October, inside a "since 1 October" window. The board run now takes a posting only
+  with a known posting date inside the run's window, from every source (`summary.undated`, `summary.tooOld`), and takes
+  undated postings already on the board off at the next run; the page's date is therefore always the posting day, and
+  its labels say "Posted" (column, details, date filter) instead of "Found"/"Seen". The private spreadsheet lists what
+  was posted in the window, with the links that have no posting date on a sheet of their own. The JobSearchEngine keeps
+  the publication date a search provider states for a page (Parallel's `publish_date`, Exa's `Published:`), so a lead
+  with a stated date can be listed, or dropped as too old; most leads have none.
 - **`/rank` now bounds each scoring batch** (#395) - a bare run scores at most 10
   eligible jobs instead of attempting the entire backlog. `--limit <N>` controls
   scoring independently of `--top`, and the report makes deferred work visible so

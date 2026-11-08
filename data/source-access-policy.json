@@ -1,5 +1,5 @@
 {
-  "$comment": "Per-source access rules for the internship search. 'permitted' needs evidence; anything unclear is 'unknown', which means no automated extraction. robots.txt rules and a 403 to an identified bot are technical restrictions and are respected. This records what was read on dateChecked; it is not legal advice, so re-check before relying on it.",
+  "$comment": "Per-source access rules for the internship search. 'permitted' needs evidence; anything unclear is 'unknown', which means no automated extraction. robots.txt rules and a 403 to an identified bot are technical restrictions and are respected. This records what was read on dateChecked; it is not legal advice, so re-check before relying on it. Re-checked on 2026-10-11 against each site's imprint as well as its terms: an imprint often carries the copyright and database clauses.",
   "dateChecked": "2026-10-11",
   "values": {
     "automatedExtraction": [
@@ -13,7 +13,7 @@
       "obsolete",
       "defunct"
     ],
-    "publicLeads": "true only where the terms read had no clause on reproducing or reusing listings: the board may then show a search-engine lead as a link-only row (title and link, labelled not checked). Never for a site whose terms forbid it."
+    "publicLeads": "true only where the terms AND the imprint were read and contain no clause on reproducing, reusing or storing listings: the public board may then show a search-engine lead as a link-only row (title and link, labelled not checked). false means the lead is for the owner's private use only."
   },
   "sources": [
     {
@@ -120,12 +120,13 @@
       "publicRss": "None found.",
       "searchEngineDiscovery": "likely (public pages; not verified per domain)",
       "automatedExtraction": "unknown",
-      "evidence": "The AGB found cover employers ordering ads; no clause on automated access by job seekers.",
-      "sourcePolicyUrl": "https://www.stellenanzeigen.de/ueber-uns/agb/",
+      "evidence": "Impressum: '© Copyright Alle Rechte vorbehalten. Text, Bilder und Grafiken sowie deren Anordnung auf der Website unterliegen dem Schutz des Urheberrechts und anderer Schutzgesetze. Der Inhalt dieser Websites darf nicht zu kommerziellen Zwecken kopiert, verbreitet, verändert oder Dritten zugänglich gemacht werden.' The AGB found cover employers.",
+      "sourcePolicyUrl": "https://www.stellenanzeigen.de/ueber-uns/impressum-agb/",
       "technicalRestrictions": "robots.txt blocks some bots (yandex, semrushbot …) and the job print and preview paths.",
       "dateChecked": "2026-10-11",
       "recommendedAccessMethod": "Discover posting URLs with Parallel/Exa search results and open them yourself. No automated fetching or extraction until the terms clearly allow it or the operator agrees in writing. Never republish.",
-      "publicLeads": true
+      "publicLeads": false,
+      "publicLeadsReason": "Its imprint forbids copying or making its content accessible to third parties for commercial purposes, and the board shows ads."
     },
     {
       "domain": "academics.de",
@@ -167,7 +168,7 @@
       "publicRss": "None found.",
       "searchEngineDiscovery": "likely (public pages; not verified per domain)",
       "automatedExtraction": "unknown",
-      "evidence": "Only an Impressum was found; no terms of use.",
+      "evidence": "Only an Impressum (Internext GmbH) exists; no terms of use and no clause on reuse. Itself a job search engine across 50+ job boards.",
       "sourcePolicyUrl": "https://www.jobworld.de/impressum",
       "technicalRestrictions": "robots.txt blocks named crawlers (amazonbot, dotbot, yandex …).",
       "dateChecked": "2026-10-11",
@@ -245,13 +246,14 @@
       "officialApi": "None found.",
       "publicRss": "None found.",
       "searchEngineDiscovery": "likely (public pages; not verified per domain)",
-      "automatedExtraction": "unknown",
-      "evidence": "No clause on automated access found in the Nutzungsbedingungen.",
-      "sourcePolicyUrl": "https://www.praktikum.info/nutzungsbedingungen",
+      "automatedExtraction": "prohibited",
+      "evidence": "Same operator and AGB as Absolventa (FUNKE Works GmbH), § 9 (1): no processing of data 'zur Datenbankerstellung oder Anreicherung', even partially. Impressum: TDM reservation under § 44b UrhG.",
+      "sourcePolicyUrl": "https://www.praktikum.info/agb",
       "technicalRestrictions": "None observed over IPv4.",
       "dateChecked": "2026-10-11",
-      "recommendedAccessMethod": "Discover posting URLs with Parallel/Exa search results and open them yourself. No automated fetching or extraction until the terms clearly allow it or the operator agrees in writing. Never republish.",
-      "publicLeads": true
+      "recommendedAccessMethod": "Search-engine discovery only (Parallel/Exa result links), for your own use: open and apply by hand. Do not fetch, scrape or extract pages automatically, and do not republish listings.",
+      "publicLeads": false,
+      "publicLeadsReason": "Its AGB forbid processing its data for building or enriching a database; its imprint reserves text and data mining."
     },
     {
       "domain": "praktikum.de",
@@ -277,8 +279,8 @@
       "publicRss": "None found.",
       "searchEngineDiscovery": "likely (public pages; not verified per domain)",
       "automatedExtraction": "unknown",
-      "evidence": "AGB read; no clause on automated access.",
-      "sourcePolicyUrl": "https://www.connecticum.de/agb",
+      "evidence": "AGB read (they cover exhibitors at its career fairs, B2B) and Impressum read: no clause on copying, reusing or linking its listings.",
+      "sourcePolicyUrl": "https://www.connecticum.de/impressum",
       "technicalRestrictions": "robots.txt disallows /joboffer.php (the job pages) for all agents.",
       "dateChecked": "2026-10-11",
       "recommendedAccessMethod": "Discover posting URLs with Parallel/Exa search results and open them yourself. No automated fetching or extraction until the terms clearly allow it or the operator agrees in writing. Never republish.",
@@ -292,12 +294,13 @@
       "publicRss": "None found.",
       "searchEngineDiscovery": "likely (public pages; not verified per domain)",
       "automatedExtraction": "unknown",
-      "evidence": "The AGB cover the employer API ('Anfragen, die über das angegebene Rate-Limit erfolgen, werden als DDoS-ähnliche Angriffe eingestuft'); no seeker clause.",
+      "evidence": "AGB (Stand Juli 2025): 'Alle von Jobware veröffentlichten Informationen (Texte, Bilder usw.) unterliegen dem Urheberrecht der Jobware GmbH. Ausgenommen hiervon sind die Informationen …, die vom Auftraggeber beigestellt werden.' Since 2026-10-11 the site answers an identified non-browser request with HTTP 403.",
       "sourcePolicyUrl": "https://www.jobware.de/pdf/agb-jobware-gmbh.pdf",
-      "technicalRestrictions": "robots.txt disallows /api/ and /jobmail/.",
+      "technicalRestrictions": "403 to an identified non-browser request since 2026-10-11; robots.txt disallows /api/ and /jobmail/.",
       "dateChecked": "2026-10-11",
       "recommendedAccessMethod": "Discover posting URLs with Parallel/Exa search results and open them yourself. No automated fetching or extraction until the terms clearly allow it or the operator agrees in writing. Never republish.",
-      "publicLeads": true
+      "publicLeads": false,
+      "publicLeadsReason": "It claims copyright on everything it publishes and now blocks automated requests (403)."
     },
     {
       "domain": "unicum.de",
@@ -307,12 +310,13 @@
       "publicRss": "None found.",
       "searchEngineDiscovery": "likely (public pages; not verified per domain)",
       "automatedExtraction": "unknown",
-      "evidence": "Nutzungsbedingungen read; no clause on automated access.",
-      "sourcePolicyUrl": "https://www.unicum.de/nutzungsbedingungen-unicum",
+      "evidence": "Impressum (Rechtliche Hinweise): 'Eine Verwertung der urheberrechtlich geschützten Publikation oder aller in ihr enthaltenen Beiträge … insbesondere durch Vervielfältigung oder Verbreitung, ist ohne vorherige schriftliche Zustimmung der UNICUM Digital GmbH unzulässig … Insbesondere ist eine Einspeicherung oder Verarbeitung in Datensystemen ohne Zustimmung des Anbieters unzulässig.'",
+      "sourcePolicyUrl": "https://www.unicum.de/impressum-unicum",
       "technicalRestrictions": "robots.txt disallows /search/.",
       "dateChecked": "2026-10-11",
       "recommendedAccessMethod": "Discover posting URLs with Parallel/Exa search results and open them yourself. No automated fetching or extraction until the terms clearly allow it or the operator agrees in writing. Never republish.",
-      "publicLeads": true
+      "publicLeads": false,
+      "publicLeadsReason": "Its imprint forbids storing or processing its content in data systems without consent."
     },
     {
       "domain": "bonding.de",
@@ -322,12 +326,13 @@
       "publicRss": "None found.",
       "searchEngineDiscovery": "likely (public pages; not verified per domain)",
       "automatedExtraction": "unknown",
-      "evidence": "AGB read; no clause on automated access.",
-      "sourcePolicyUrl": "https://www.bonding.de/agb",
+      "evidence": "Impressum: 'Die bonding-studierendeninitiative e.V. gestattet die Übernahme von bonding Texten in Datenbestände, die ausschließlich für den privaten Gebrauch eines Nutzers bestimmt sind. Die Übernahme und Nutzung der Daten zu anderen Zwecken bedarf der schriftlichen Zustimmung.'",
+      "sourcePolicyUrl": "https://www.bonding.de/impressum",
       "technicalRestrictions": "None observed.",
       "dateChecked": "2026-10-11",
       "recommendedAccessMethod": "Discover posting URLs with Parallel/Exa search results and open them yourself. No automated fetching or extraction until the terms clearly allow it or the operator agrees in writing. Never republish.",
-      "publicLeads": true
+      "publicLeads": false,
+      "publicLeadsReason": "Its imprint allows taking its texts only into databases for a user's private use; anything else needs written consent."
     },
     {
       "domain": "absolventa.de",
@@ -336,13 +341,14 @@
       "officialApi": "None found.",
       "publicRss": "None found.",
       "searchEngineDiscovery": "likely (public pages; not verified per domain)",
-      "automatedExtraction": "unknown",
-      "evidence": "Nutzungsbedingungen read; no clause on automated access.",
-      "sourcePolicyUrl": "https://www.absolventa.de/nutzungsbedingungen",
+      "automatedExtraction": "prohibited",
+      "evidence": "AGB (FUNKE Works GmbH) § 9 Unzulässige Nutzungen (1): 'Jede zweckfremde Nutzung der Webseiten und Dienste der FUNKE Works ist unzulässig, insbesondere das Verarbeiten von Daten aus Datenbanken der FUNKE Works sowie die vollständige, teilweise oder auszugsweise Verarbeitung der Daten zur Datenbankerstellung oder Anreicherung.' Impressum: 'Die FUNKE Works GmbH behält sich eine Nutzung ihrer Inhalte für kommerzielles Text- und Data-Mining im Sinne von § 44b UrhG ausdrücklich vor.'",
+      "sourcePolicyUrl": "https://www.absolventa.de/agb",
       "technicalRestrictions": "None observed.",
       "dateChecked": "2026-10-11",
-      "recommendedAccessMethod": "Discover posting URLs with Parallel/Exa search results and open them yourself. No automated fetching or extraction until the terms clearly allow it or the operator agrees in writing. Never republish.",
-      "publicLeads": true
+      "recommendedAccessMethod": "Search-engine discovery only (Parallel/Exa result links), for your own use: open and apply by hand. Do not fetch, scrape or extract pages automatically, and do not republish listings.",
+      "publicLeads": false,
+      "publicLeadsReason": "Its AGB forbid processing its data for building or enriching a database, even partially; its imprint reserves text and data mining."
     },
     {
       "domain": "jobscout24.de",
@@ -368,7 +374,7 @@
       "publicRss": "None found.",
       "searchEngineDiscovery": "likely (public pages; not verified per domain)",
       "automatedExtraction": "unknown",
-      "evidence": "Only an imprint was found; no terms of use.",
+      "evidence": "Only an Impressum (Karrieremagazin Verlagsgesellschaft mbH) exists; no terms of use and no clause on reuse. Itself a job search engine ('Der Spider für Jobs').",
       "sourcePolicyUrl": "https://www.joboter.de/imprint.php",
       "technicalRestrictions": "None observed.",
       "dateChecked": "2026-10-11",
@@ -445,12 +451,13 @@
       "publicRss": "None found.",
       "searchEngineDiscovery": "likely (public pages; not verified per domain)",
       "automatedExtraction": "unknown",
-      "evidence": "AGB read; no clause on automated access. Its own guide may only be used privately.",
-      "sourcePolicyUrl": "https://www.kultweet.de/agb.php",
+      "evidence": "Impressum: 'Downloads und Kopien dieser Seite sind nur für den privaten, nicht kommerziellen Gebrauch gestattet. Die KULTweet-Stellendatenbank ist im Sinne der §§ 87a ff. UrhG rechtlich geschützt. Sie darf nicht ohne unsere Erlaubnis in wesentlichen Teilen kopiert oder verbreitet werden. Bei Zuwiderhandlungen wird die Zahlung einer Vertragsstrafe fällig.'",
+      "sourcePolicyUrl": "https://www.kultweet.de/impressum.php",
       "technicalRestrictions": "None observed.",
       "dateChecked": "2026-10-11",
       "recommendedAccessMethod": "Discover posting URLs with Parallel/Exa search results and open them yourself. No automated fetching or extraction until the terms clearly allow it or the operator agrees in writing. Never republish.",
-      "publicLeads": true
+      "publicLeads": false,
+      "publicLeadsReason": "Its imprint allows copies for private, non-commercial use only and claims database protection with a contractual penalty."
     },
     {
       "domain": "arbeitnow.com",

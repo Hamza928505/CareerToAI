@@ -15,7 +15,8 @@ duplicate none of them.
    `.claude/skills/job-application-assistant/01-candidate-profile.md`, **generated**
    from `data/profile.json`, `data/experience.json`, `data/projects.json`,
    `data/certificates.json` and `data/profile-extras.json` by `npm run profile`. Never edit the markdown; edit
-   the JSON, or use the editor (`npm run editor`). A fact that is not in `data/`
+   the JSON, or use the standalone GJUBoard editor and import its JSON with
+   `npm run import-data -- <file>`. A fact that is not in `data/`
    does not belong in a CV, a letter, or an interview answer.
 
 2. **The workflows.** `.claude/commands/` and `.claude/skills/` hold the

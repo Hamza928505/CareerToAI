@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { assistantQueue, applicationTarget, mergeSearchResults } from "../lib/application-flow.mjs";
-import { inferOpportunityType, postingIdFromUrl } from "../lib/tracker.mjs";
+import { assistantQueue, applicationTarget, isIT, mergeSearchResults, newEligible } from "../lib/application-flow.mjs";
+import { inferOpportunityType, jobMatchKey, postingIdFromUrl } from "../lib/tracker.mjs";
 import { scoreJobMatch } from "../lib/job-match.mjs";
 
 test('posting IDs come from direct URL identifiers, without inventing IDs for slugs', () => {
@@ -107,6 +107,52 @@ test('search adds stated posting details and a profile score without changing an
   assert.equal(added.full_part, 'Part time');
   assert.ok(Number(added.match_score) >= 70);
   assert.match(added.missing_reqs, /React/);
+});
+
+test("a search keeps only new postings from the last 7 days that the GJU rules do not rule out", () => {
+  const hit = (n, extra) => ({ url: `https://example.org/job/${n}-12345`, company: `Firma ${n}`, title: "Praktikum Softwareentwicklung", date_posted: "2026-10-20", ...extra });
+  const rows = [
+    { company: "Known GmbH", position: "Praktikum Backend", job_url: "https://example.org/job/known-1" },
+    { company: "Old Row GmbH", position: "Praktikum Data", job_url: "" },
+  ];
+  const { jobs, skipped } = newEligible([
+    hit(1),
+    hit(2, { url: "https://example.org/job/known-1" }), // in the workbook, by link
+    hit(3, { company: "Old Row GmbH", title: "Praktikum Data" }), // in the workbook, by company and title
+    hit(4, { date_posted: "" }), // undated: never dated by the day it was found
+    hit(5, { date_posted: "2026-10-16" }), // before the window, which starts 2026-10-17
+    hit(6, { title: "Werkstudent Softwareentwicklung" }), // not an internship
+    hit(7, { snippet: "Dauer: 3 Monate" }), // fails: under 20 weeks
+    hit(8, { url: "https://to.indeed.com/aaaa", company: "Firma 1" }), // job 1 again, found on Indeed
+    hit(9, { date_posted: "2026-10-17T09:00:00Z" }), // the window's first day
+    hit(10, { title: "Praktikum Marketing" }), // not IT
+    hit(11, { title: "Praktikum IT-Support" }), // IT, said in capitals only
+  ], rows, { now: Date.parse("2026-10-24T08:00:00Z"), days: 7 });
+  assert.deepEqual(jobs.map((job) => job.url), ["https://example.org/job/1-12345", "https://example.org/job/9-12345", "https://example.org/job/11-12345"]);
+  assert.deepEqual(skipped, { known: 3, undated: 1, old: 1, ineligible: 2, notIT: 1 });
+});
+
+test("a search names an IT field only from the title", () => {
+  for (const title of ["Praktikum Softwareentwicklung", "Internship Data & AI", "Praktikum IT-Sicherheit", "Pflichtpraktikum Webentwicklung", "Intern Cloud Engineering"]) assert.ok(isIT(title), title);
+  for (const title of ["Praktikum Marketing", "Praktikum Personalwesen", "Internship Finance", "Praktikum Vertrieb (it's fun)"]) assert.ok(!isIT(title), title);
+});
+
+test("a new row gets duration, pay and language levels as the advert states them, and blanks when it does not", () => {
+  const [row] = mergeSearchResults([], [{ url: "https://example.org/job/77777", company: "Firma", title: "Praktikum Softwareentwicklung",
+    description: "Dauer: 6 Monate. Vergütung: 1.200 € pro Monat. Deutsch auf B2-Niveau, Englisch C1." }]).rows;
+  assert.equal(row.duration, "26 weeks");
+  assert.equal(row.salary, "1200 EUR/month");
+  assert.equal(row.req_german, "B2");
+  assert.equal(row.req_english, "C1");
+  const [bare] = mergeSearchResults([], [{ url: "https://example.org/job/88888", company: "Firma", title: "Praktikum Softwareentwicklung" }]).rows;
+  assert.deepEqual([bare.duration, bare.salary, bare.req_german, bare.req_english], ["", "", "", ""]);
+});
+
+test("Indeed's short links say nothing about the job, so one job found twice is merged once", () => {
+  const job = { company: "SYSTAG Systemhaus", position: "Praktikum Softwareentwicklung" };
+  assert.equal(jobMatchKey({ ...job, job_url: "https://to.indeed.com/aab74nl6vx9k" }), jobMatchKey({ ...job, job_url: "https://to.indeed.com/aajpmjm8gnzz" }));
+  const first = mergeSearchResults([], [{ url: "https://to.indeed.com/aab74nl6vx9k", company: job.company, title: job.position }]);
+  assert.equal(mergeSearchResults(first.rows, [{ url: "https://to.indeed.com/aajpmjm8gnzz", company: job.company, title: job.position }]).added, 0);
 });
 
 test("application destinations distinguish email, web and missing URLs", () => {

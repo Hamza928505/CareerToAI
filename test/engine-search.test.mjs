@@ -5,9 +5,9 @@ import path from "node:path";
 import test from "node:test";
 
 import { mergeSearchResults } from "../lib/application-flow.mjs";
-import { enginePython, requestsFor, searchWithEngine, toHit } from "../lib/engine-search.mjs";
+import { ENGINE_KEYWORDS, enginePython, requestsFor, searchWithEngine, toHit } from "../lib/engine-search.mjs";
 
-const strategy = { roles: ["Marketing", "Data analyst"], cities: ["Berlin", "Remote", "Hamburg"], types: ["Werkstudent", "Praktikum", "Something odd"] };
+const keywords = ["Marketing", "Data analyst", "Sales"];
 
 const apiJob = {
   original_url: "https://www.arbeitnow.com/jobs/companies/x/marketing-1", title: "Marketing Intern", company: "Beispiel GmbH", posted_date: "2026-10-09",
@@ -30,16 +30,13 @@ function fakeEngine() {
   return { dir, py, done: () => fs.rmSync(dir, { recursive: true, force: true }) };
 }
 
-test("a strategy becomes one engine request per place, with types mapped and unknown words left out", () => {
-  const requests = requestsFor(strategy);
-  assert.deepEqual(requests.map((r) => r.city || (r.workplace ? "remote" : "country")), ["Berlin", "remote", "Hamburg"]);
-  assert.deepEqual(requests[0].employment_types, ["working_student", "internship"]);
-  assert.deepEqual(requests[0].keywords, ["Marketing", "Data analyst"]);
-  assert.equal(requests[0].country, "DE");
-  assert.deepEqual(requests[1].workplace, ["remote"]);
-  assert.deepEqual(requestsFor({ roles: ["x"], cities: ["Germany-wide"], types: ["Praktikum"] }).map((r) => r.city), [undefined]);
-  assert.deepEqual(requestsFor({ roles: ["x"], cities: ["Berlin"], types: ["Praktikum"], anyCity: true }).map((r) => r.city), [undefined, "Berlin"]);
-  assert.equal(requestsFor({ roles: ["x"], cities: Array.from({ length: 30 }, (_, i) => `City${i}`), types: [] }).length, 6);
+test("the IT search is one engine request per keyword, for internships anywhere in Germany", () => {
+  const requests = requestsFor({ days: 7 });
+  assert.deepEqual(requests.map((r) => r.keywords), ENGINE_KEYWORDS.map((keyword) => [keyword]));
+  assert.ok(requests.every((r) => r.country === "DE" && r.posted_within_days === 7 && !r.city && !r.workplace));
+  assert.deepEqual(requests[0].employment_types, ["internship", "mandatory_internship"]);
+  assert.ok(!ENGINE_KEYWORDS.some((keyword) => /^it$/i.test(keyword)), "\"it\" would match almost every advert");
+  assert.equal(JSON.stringify(requestsFor()[0]).includes("posted_within_days"), false);
 });
 
 test("an engine job becomes a tracker hit; a search-engine lead stays unverified and attribution travels with it", () => {
@@ -67,10 +64,10 @@ test("results from several requests are merged by link, source problems are repo
     const asked = [];
     const run = async (_py, _dir, request) => {
       asked.push(request);
-      return { jobs: [apiJob, ...(request.city === "Berlin" ? [lead] : [])], report: { providers: [
+      return { jobs: [apiJob, ...(request.keywords[0] === "Data analyst" ? [lead] : [])], report: { providers: [
         { source_id: "arbeitnow", status: "ok" }, { source_id: "adzuna", status: "needs_key" }, { source_id: "remotive", status: "quota" }] } };
     };
-    const result = await searchWithEngine(strategy, { dir: eng.dir, run });
+    const result = await searchWithEngine({ dir: eng.dir, run, keywords });
     assert.equal(asked.length, 3);
     assert.equal(result.jobs.length, 2); // the same API job in three answers counts once
     assert.equal(result.unverified, 1);
@@ -80,19 +77,41 @@ test("results from several requests are merged by link, source problems are repo
   } finally { eng.done(); }
 });
 
-test("one failing request is a warning; all failing, a missing install or no roles is an error", async () => {
+test("one failing request is a warning; all failing or a missing install is an error", async () => {
   const eng = fakeEngine();
   try {
     let n = 0;
     const flaky = async () => { if (n++ === 0) throw new Error("boom"); return { jobs: [apiJob], report: { providers: [] } }; };
-    const result = await searchWithEngine(strategy, { dir: eng.dir, run: flaky });
+    const result = await searchWithEngine({ dir: eng.dir, run: flaky, keywords });
     assert.equal(result.jobs.length, 1);
-    assert.ok(result.warnings.some((w) => /Berlin: boom/.test(w)));
-    await assert.rejects(searchWithEngine(strategy, { dir: eng.dir, run: async () => { throw new Error("down"); } }), /down/);
-    await assert.rejects(searchWithEngine({ roles: [], cities: ["Berlin"], types: [] }, { dir: eng.dir, run: async () => ({}) }), /at least one role/);
+    assert.ok(result.warnings.some((w) => /Search for Marketing: boom/.test(w)));
+    await assert.rejects(searchWithEngine({ dir: eng.dir, run: async () => { throw new Error("down"); }, keywords }), /down/);
   } finally { eng.done(); }
-  await assert.rejects(searchWithEngine(strategy, { dir: path.join(os.tmpdir(), "no-such-engine-dir") }), /not set up/);
+  await assert.rejects(searchWithEngine({ dir: path.join(os.tmpdir(), "no-such-engine-dir") }), /not set up/);
   assert.equal(enginePython(path.join(os.tmpdir(), "no-such-engine-dir")), null);
+});
+
+test("every new search result gets the German Year check: an internship of 20 weeks to 6 months, pay and language aside", () => {
+  const hit = (n, title, snippet, url = `https://example.de/jobs/${n}`) => ({ url, title, company: "Beispiel GmbH", location: "Remote", snippet });
+  const { rows, gju } = mergeSearchResults([], [
+    hit(1, "Praktikum Marketing", "Dauer: 6 Monate, Vergütung 1.200 € pro Monat"),
+    hit(2, "Praktikum Vertrieb", "Dauer: 3 Monate"),
+    hit(3, "Pflichtpraktikum Logistik", "Start ab März", "https://jobs.example.com/3"),
+    hit(4, "Werkstudent Marketing", "20 Stunden pro Woche, 6 Monate"),
+    hit(5, "Praktikum Softwareentwicklung", "Unbezahlt, für 5-6 Monate. Deutsch C2 erforderlich."),
+    hit(6, "Praktikum IT", "Vergütung 400 € pro Monat, Dauer 20 Wochen"),
+    hit(7, "Praktikum Data", "Dauer: 12 Monate"),
+  ]);
+  assert.deepEqual(rows.map((r) => r.gju_check), [
+    "Meets",
+    "Fails: under 20 weeks",
+    "Check: duration not stated", // the place is not named, and the search covers Germany only
+    "Not an internship",
+    "Meets", // unpaid and German C2: neither is a rule
+    "Meets", // low pay is not a rule either
+    "Check: longer than 6 months",
+  ]);
+  assert.deepEqual(gju, { Meets: 3, Fails: 1, Check: 2, "Not an internship": 1 });
 });
 
 test("the editor server's search no longer searches or opens job sites itself", () => {

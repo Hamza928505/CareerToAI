@@ -3,14 +3,26 @@
     "Software Engineering",
     "Backend",
     "Full-Stack .NET",
-    "Frontend"
+    "Computer Vision",
+    "Machine Learning",
+    "Frontend",
+    "Data Engineering",
+    "Cloud / DevOps"
   ],
   "cities": [
-    "Remote",
+    "Berlin",
+    "Germany-wide",
+    "München",
+    "Hamburg",
+    "Frankfurt am Main",
+    "Köln",
+    "Stuttgart",
+    "Düsseldorf",
+    "Leipzig",
     "Deggendorf",
     "Plattling"
   ],
   "types": [
-    "Werkstudent"
+    "Internship"
   ]
 }

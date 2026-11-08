@@ -1,0 +1,278 @@
+{
+  "$comment": "The 27 requested job sites, normalised. inProjectSearch marks the 20 already in lib/job-search.mjs SEARCH_PLATFORMS. Access rules per site are in data/source-access-policy.json.",
+  "dateChecked": "2026-10-11",
+  "summary": {
+    "requested": 27,
+    "exactDuplicates": 0,
+    "active": 21,
+    "redirected": [
+      "indeed.de -> de.indeed.com",
+      "monster.de -> monster.com",
+      "neuvoo.de -> de.talent.com"
+    ],
+    "defunct": [
+      "jobscout24.de",
+      "letitshine.de"
+    ],
+    "obsolete": [
+      "jobscanner.de"
+    ],
+    "sameOperator": [
+      "stepstone.de and meinestadt.de (The Stepstone Group)"
+    ]
+  },
+  "sources": [
+    {
+      "id": 1,
+      "domain": "indeed.de",
+      "canonicalDomain": "de.indeed.com",
+      "currentUrl": "https://de.indeed.com/",
+      "status": "redirected",
+      "note": "Redirects to de.indeed.com.",
+      "inProjectSearch": true
+    },
+    {
+      "id": 2,
+      "domain": "jobmensa.de",
+      "canonicalDomain": "jobmensa.de",
+      "currentUrl": "https://www.jobmensa.de/",
+      "status": "active",
+      "note": "Operated by Studitemps.",
+      "inProjectSearch": true
+    },
+    {
+      "id": 3,
+      "domain": "monster.de",
+      "canonicalDomain": "monster.com",
+      "currentUrl": "https://www.monster.com/de/",
+      "status": "redirected",
+      "note": "monster.de redirects to monster.com/de. Monster Worldwide Deutschland GmbH has been in insolvency since August 2025 (Wikipedia, checked 2026-10-11).",
+      "inProjectSearch": true
+    },
+    {
+      "id": 4,
+      "domain": "stepstone.de",
+      "canonicalDomain": "stepstone.de",
+      "currentUrl": "https://www.stepstone.de/",
+      "status": "active",
+      "note": "Homepage redirects to an onboarding page. The Stepstone Group also runs meinestadt.de.",
+      "inProjectSearch": true
+    },
+    {
+      "id": 5,
+      "domain": "arbeitsagentur.de",
+      "canonicalDomain": "arbeitsagentur.de",
+      "currentUrl": "https://www.arbeitsagentur.de/jobsuche/",
+      "status": "active",
+      "note": "Bundesagentur für Arbeit, Jobbörse.",
+      "inProjectSearch": true
+    },
+    {
+      "id": 6,
+      "domain": "stellenanzeigen.de",
+      "canonicalDomain": "stellenanzeigen.de",
+      "currentUrl": "https://www.stellenanzeigen.de/",
+      "status": "active",
+      "inProjectSearch": true
+    },
+    {
+      "id": 7,
+      "domain": "academics.de",
+      "canonicalDomain": "academics.de",
+      "currentUrl": "https://www.academics.de/",
+      "status": "active",
+      "note": "Operated by ZEIT Verlagsgruppe.",
+      "inProjectSearch": true
+    },
+    {
+      "id": 8,
+      "domain": "kimeta.de",
+      "canonicalDomain": "kimeta.de",
+      "currentUrl": "https://www.kimeta.de/",
+      "status": "active",
+      "note": "Job search engine (aggregator).",
+      "inProjectSearch": true
+    },
+    {
+      "id": 9,
+      "domain": "jobworld.de",
+      "canonicalDomain": "jobworld.de",
+      "currentUrl": "https://www.jobworld.de/",
+      "status": "active",
+      "inProjectSearch": true
+    },
+    {
+      "id": 10,
+      "domain": "meinestadt.de",
+      "canonicalDomain": "meinestadt.de",
+      "currentUrl": "https://www.meinestadt.de/",
+      "status": "active",
+      "note": "A Stepstone Group company.",
+      "inProjectSearch": true
+    },
+    {
+      "id": 11,
+      "domain": "meinpraktikum.de",
+      "canonicalDomain": "meinpraktikum.de",
+      "currentUrl": "https://www.meinpraktikum.de/",
+      "status": "active",
+      "note": "Operated by Ausbildung.de GmbH.",
+      "inProjectSearch": true
+    },
+    {
+      "id": 12,
+      "domain": "praktikumsstellen.de",
+      "canonicalDomain": "praktikumsstellen.de",
+      "currentUrl": "https://www.praktikumsstellen.de/",
+      "status": "active",
+      "note": "Reachable over IPv4 only from this network.",
+      "inProjectSearch": true
+    },
+    {
+      "id": 13,
+      "domain": "praktika.de",
+      "canonicalDomain": "praktika.de",
+      "currentUrl": "https://www.praktika.de/",
+      "status": "active",
+      "inProjectSearch": true
+    },
+    {
+      "id": 14,
+      "domain": "praktikum.info",
+      "canonicalDomain": "praktikum.info",
+      "currentUrl": "https://www.praktikum.info/",
+      "status": "active",
+      "note": "Reachable over IPv4 only from this network.",
+      "inProjectSearch": true
+    },
+    {
+      "id": 15,
+      "domain": "praktikum.de",
+      "canonicalDomain": "praktikum.de",
+      "currentUrl": "https://www.praktikum.de/",
+      "status": "active",
+      "note": "Operated by VIPEX.",
+      "inProjectSearch": true
+    },
+    {
+      "id": 16,
+      "domain": "connecticum.de",
+      "canonicalDomain": "connecticum.de",
+      "currentUrl": "https://www.connecticum.de/",
+      "status": "active",
+      "inProjectSearch": true
+    },
+    {
+      "id": 17,
+      "domain": "jobware.de",
+      "canonicalDomain": "jobware.de",
+      "currentUrl": "https://www.jobware.de/",
+      "status": "active",
+      "inProjectSearch": true
+    },
+    {
+      "id": 18,
+      "domain": "unicum.de",
+      "canonicalDomain": "unicum.de",
+      "currentUrl": "https://www.unicum.de/",
+      "status": "active",
+      "inProjectSearch": true
+    },
+    {
+      "id": 19,
+      "domain": "bonding.de",
+      "canonicalDomain": "bonding.de",
+      "currentUrl": "https://www.bonding.de/",
+      "status": "active",
+      "note": "Student initiative.",
+      "inProjectSearch": true
+    },
+    {
+      "id": 20,
+      "domain": "absolventa.de",
+      "canonicalDomain": "absolventa.de",
+      "currentUrl": "https://www.absolventa.de/",
+      "status": "active",
+      "inProjectSearch": true
+    },
+    {
+      "id": 21,
+      "domain": "jobscout24.de",
+      "canonicalDomain": null,
+      "currentUrl": null,
+      "status": "defunct",
+      "note": "DNS does not resolve (checked twice). JobScout24 still runs in Switzerland (jobscout24.ch), which is not a German source.",
+      "inProjectSearch": false
+    },
+    {
+      "id": 22,
+      "domain": "joboter.de",
+      "canonicalDomain": "joboter.de",
+      "currentUrl": "https://www.joboter.de/",
+      "status": "active",
+      "note": "Small aggregator; only an imprint page found.",
+      "inProjectSearch": false
+    },
+    {
+      "id": 23,
+      "domain": "neuvoo.de",
+      "canonicalDomain": "de.talent.com",
+      "currentUrl": "https://de.talent.com/",
+      "status": "redirected",
+      "note": "Neuvoo rebranded as Talent.com; neuvoo.de itself now answers 404 and its certificate does not match.",
+      "inProjectSearch": false
+    },
+    {
+      "id": 24,
+      "domain": "letitshine.de",
+      "canonicalDomain": null,
+      "currentUrl": null,
+      "status": "defunct",
+      "note": "DNS does not resolve.",
+      "inProjectSearch": false
+    },
+    {
+      "id": 25,
+      "domain": "backinjob.de",
+      "canonicalDomain": "backinjob.de",
+      "currentUrl": "https://www.backinjob.de/",
+      "status": "active",
+      "note": "Operated by Ideenkraftwerk GmbH.",
+      "inProjectSearch": false
+    },
+    {
+      "id": 26,
+      "domain": "jobscanner.de",
+      "canonicalDomain": "jobscanner.de",
+      "currentUrl": "http://www.jobscanner.de/",
+      "status": "obsolete",
+      "note": "The HTTPS certificate does not match the domain; the page says 'Stand: 24.1.20' and lists 2108 jobs from 8 companies.",
+      "inProjectSearch": false
+    },
+    {
+      "id": 27,
+      "domain": "kultweet.de",
+      "canonicalDomain": "kultweet.de",
+      "currentUrl": "https://www.kultweet.de/",
+      "status": "active",
+      "note": "Career service for humanities graduates (KULTweet).",
+      "inProjectSearch": false
+    }
+  ],
+  "additionalSources": [
+    {
+      "id": "arbeitnow",
+      "domain": "arbeitnow.com",
+      "type": "api",
+      "url": "https://www.arbeitnow.com/api/job-board-api",
+      "client": "search-tools/arbeitnow.py"
+    },
+    {
+      "id": "backinjob-rss",
+      "domain": "backinjob.de",
+      "type": "rss",
+      "url": "https://www.backinjob.de/rss/jobs.xml",
+      "note": "20 more feeds by field are listed at https://www.backinjob.de/rss/"
+    }
+  ]
+}

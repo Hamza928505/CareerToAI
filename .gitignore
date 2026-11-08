@@ -203,5 +203,3 @@ __pycache__/
 # Page snapshots and console logs the Playwright MCP server writes into its working folder.
 .playwright-mcp/
 
-# Local board preview built from every search way (never published).
-/.board-preview/

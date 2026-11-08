@@ -3,8 +3,8 @@
 One project, two halves that share a spine:
 
 - **The site** — an Eleventy static profile built to be read by machines. Source in
-  `src/`, `lib/`, `scripts/`, data in `data/`, edited through `/editor/`
-  (`npm run editor`), deployed to GitHub Pages by `.github/workflows/deploy.yml`.
+  `src/`, `lib/`, `scripts/`, data in `data/`, edited in GJUBoard and imported with
+  `npm run import-data -- <file>`, deployed to GitHub Pages by `.github/workflows/deploy.yml`.
 - **The job search** — the `job-search/` framework (vendored from
   [ai-job-search](https://github.com/MadsLorentzen/ai-job-search), MIT) plus the
   GJU German Year layer in `.claude/skills/gju-internship/`.
@@ -38,7 +38,7 @@ Rules that follow from that:
   certificates and links publish in the order the JSON lists them; `lib/content.mjs`
   re-sorts nothing on load. Reordering an array is a real edit to the profile, so
   never rearrange one incidentally. `byDateDesc` is there when date order is
-  wanted explicitly, and `/editor/` reorders by dragging.
+  wanted explicitly, and the GJUBoard editor reorders by dragging.
 - **The student's files stay out of git too.** `src/assets/Student-data/student.json`, the two
   base `.docx` files and everything in `Student-data/tailored/` (the per-application CV and
   cover letter) hold contact details, so they are gitignored and never published. The workspace
@@ -88,7 +88,7 @@ root tree.
 
 | Command | Does |
 |---|---|
-| `npm run editor` | Serves `/editor/` and `/workspace/` locally — the only mode where they can write files or run tasks |
+| `npm run editor` | Serves the local `/workspace/` and application APIs; `/editor/` offers migration of old browser drafts to GJUBoard |
 | `npm run profile` | Regenerate the framework's candidate profile from `data/*.json` |
 | `npm run profile:check` | Fail if that file is stale (what CI should run) |
 | `npm run tracker` | Re-render `job_search_tracker.xlsx` from `data/applications.csv` |
@@ -104,9 +104,7 @@ rendering of them.
 `data/applications.csv` live, runs the four deterministic npm tasks above through
 `POST /__editor/run` (a fixed task map — the browser names a key, never a
 command), and appends tracker rows through `POST /__editor/tracker`. On the
-published site it is static and says so: nothing runs, the tracker is empty, and
-only the GJU eligibility checker works, because that is arithmetic in the
-browser against `data/gju-rules.json`.
+published site it is static and says so: nothing runs and the tracker is empty.
 
 Applying (`POST /__editor/apply`) picks a route per row (`applicationRoute`): an employer
 e-mail address is sent with the tailored CV and cover letter attached
@@ -116,16 +114,47 @@ filled in a local Chromium that uploads them from disk (`lib/local-browser.mjs`)
 without them falls back to the remote Firecrawl/TinyFish tool, which cannot upload local files.
 All three run only after the preview is confirmed and never retry on their own.
 
+A search (`POST /__editor/search`) has no settings: it looks for any IT internship anywhere in Germany, in German and
+English (`ENGINE_KEYWORDS` in `lib/engine-search.mjs`, one engine request each; `INDEED_SEARCHES` in
+`lib/indeed-agent.mjs`). It adds only what is new and can count: not in the workbook yet (by link, or by company and
+title), a known posting date in the last `NEW_DAYS` (7) days, an internship the GJU check does not fail, an IT field
+named in the title (`isIT`; Werkstudent and other non-IT jobs are left out) (`newEligible` in
+`lib/application-flow.mjs`), and, with AI scoring on, a score of at least `MIN_FIT` (10). Only a score from the AI
+provider drops a posting. A new row gets the duration, pay and language levels the advert states (`lib/board-extract.mjs`),
+blank when it states none. The GJU check (`gjuVerdict`) is the guideline's: an internship of 20 weeks to 6 months, in
+Germany or a country approved as easily; pay and language level are not rules (unpaid is allowed, pay is often settled
+at the interview, employers take students at their level), and the AI scoring is told to ignore language too. Besides
+the JobSearchEngine it searches Indeed through the Indeed connector of the student's Claude account:
+`lib/indeed-agent.mjs` runs `claude -p` in `INTERNSHIPS_DIR` with only ToolSearch and the two Indeed tools allowed
+(`dontAsk`), `--setting-sources project` so the user's plugins and hooks stay out, and no `ANTHROPIC_*` in its env
+(connectors load only with the claude.ai login). Postings are parsed from the tool results, never from the model's text. A Cowork pre-search saved as `indeed-presearch.md` in that folder (the connector's raw results) is merged in; a missing or old file is fine (the laptop may have been off) and a failed live run falls back to it.
+Indeed rows are for the private tracker only; never feed them to the public board. Claude searches only what nothing else reaches (Indeed, and StepStone and Arbeitsagentur through its Apify connector, both with `--model sonnet`). An NVIDIA NIM model (`lib/nim-agent.mjs`, model and key from `.env`) searches LinkedIn and the other boards through plain search APIs (Tavily, Exa, Firecrawl, the Arbeitnow API) so Claude spends no tokens there; it reads snippets only, never opens a page, never searches Indeed, takes dates from the tool results by code, and its rows are unverified leads. The search tags every row with `data_source`, and the board derives *Searched by* (Claude, NVIDIA NIM, Search APIs) from it, with *Site* and *Posted* (default: last 7 days) filters and Fit as a percentage. The shortlist (`#flow-review`) is
+the old private board page moved into the workspace: its hero with count tiles, its filter panel and its internship list
+(`src/assets/workspace-board.js`, the dropdown in `board-combo.js`, the look in `board.css`, every class and token
+prefixed `gb-`), fed from the tracker rows. The filters also drive the spreadsheet views (Shortlist essentials, All
+columns, …), and *Who applies* takes the filtered rows. The board dates a row by its posting date only, never by the day
+it was found.
+
+Every request to the editor server goes through `lib/local-guard.mjs`: its own address only (no DNS rebinding),
+GET and POST only, no POST from another site, no `/__editor/` request started by another site. Keep new routes
+behind it, and serve private files (the tracker, the student's files) from this server only,
+never from a second one such as `python -m http.server`, which also listens on every network interface by default.
+
 The public GJU board is a separate project. Its page and data live in the sibling repo `../GJUBoard`
 (static site, no keys, internships only), whose remote is the **public** GitHub repo
-`Hamza928505/GJUInternshipBoard` (branch `main`; GitHub Pages stays off, the host is still to be chosen), so
+`Hamza928505/GJUYearKit` (branch `main`; GitHub Pages stays off, the host is still to be chosen), so
 `npm run board:search -- --publish` pushes the day's data to a public place. The only part in this repo is the private runner, `scripts/board-search.mjs`
 with `lib/board-*.mjs`: it uses the keys and MCP config here, never reads the student's tracker or
 profile, and writes derived facts only. It searches one area and eight sites a day with the credit-based tools, but
 only sites that `data/source-access-policy.json` marks `permitted` (`lib/source-policy.mjs`): today none is, so
 that search is paused. The workspace search no longer searches job sites itself: it asks the JobSearchEngine
 (`../JobSearchEngine`, `lib/engine-search.mjs`), whose results from free APIs and feeds are used as they are and whose
-search-engine leads for restricted sites become unverified rows, nothing opened. `npm run board:preview` builds a local, never-published copy of the board page filled from every way (leads and personal-use sources included); the public board takes only sources whose terms allow public display (`board:search -- --sources=engine`). It also shows link-only search leads, but only from sites whose policy entry has `publicLeads: true`; never add that flag without reading the site's terms. Never mark a site `permitted` without quoted evidence from its terms. A
+search-engine leads for restricted sites become unverified rows, nothing opened. The private board page
+(`board:preview`, `.board-preview/`) is gone: its hero, filters and list are the workspace's shortlist now. The public
+board takes only sources whose terms allow public display (`board:search -- --sources=engine`, which asks the engine for
+those sources alone), and every run first drops whatever the policy no longer allows (`publicPostingRule`, day files
+included). It takes a posting only with a known posting date inside the run's window (`absorb` in `lib/board-run.mjs`):
+never date a posting by the day it was found, because an old advert then looks new. The public board shows link-only search leads only from sites whose policy entry has `publicLeads: true`; never add that flag without reading the site's terms **and imprint** (a second reading found clauses against it on 7 of 10 sites). Never mark a site `permitted` without quoted evidence from its terms. A
 second, free source for the Bundesagentur für Arbeit's job board is built (`lib/board-source-ba.mjs`) but **off by
 default and not to be switched on for the public board**: the agency's terms of use forbid robots and reading content
 out of the portal through interfaces (section 2a(3)), so it needs the agency's permission first
@@ -135,13 +164,15 @@ state and credit log are the git-ignored
 page with invented sample internships; `npm run board:vendor` rebuilds the page's vendored libraries.
 
 `data/gju-rules.json` is a fourth shared file in the same spirit as the spine:
-the 20-week minimum, the country table and the 861 EUR/month threshold are
-written once there, and both the workbook formulas and the checker read them.
+the 20-week minimum, the 6 recognised months, the country table and the 861 EUR/month
+figure are written once there, and the workbook formulas and the workspace search's GJU
+check both read them.
 
 ## For a GJU German Year internship
 
 The `gju-internship` skill outranks the general job-application skill. Its
-eligibility rules are hard gates — the 20-week minimum, approved countries, the
-861 EUR/month threshold — not preferences to weigh against a good score. The rules
+eligibility rules are hard gates — the 20-week minimum, approved countries — not
+preferences to weigh against a good score. Pay is not one: unpaid is allowed, and
+861 EUR/month only matters for a visa extension. The rules
 themselves are in `src/assets/gy-internships/`, which is reference material and is
 never rewritten.

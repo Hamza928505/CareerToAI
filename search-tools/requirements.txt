@@ -1,0 +1,24 @@
+# Internship search tools (search-tools/). Install into the project venv, not the global Python:
+#   python -m venv search-tools/.venv
+#   search-tools/.venv/Scripts/python -m pip install -r search-tools/requirements.txt   (Windows)
+#   search-tools/.venv/bin/python -m pip install -r search-tools/requirements.txt       (macOS/Linux)
+# Versions are the ones installed and import-tested on 2026-10-11 (Python 3.13.3, Windows 11).
+
+requests==2.34.2
+httpx==0.28.1
+feedparser==6.0.14
+pandas==3.0.6
+openpyxl==3.1.5
+python-dotenv==1.2.4
+
+# Scrapling (https://github.com/D4Vinci/Scrapling), parser only: turns HTML you already hold into data (CSS/XPath,
+# adaptive selectors). Installed WITHOUT the [fetchers] extra, so no stealth browser or fetching: those would be
+# detection evasion, which this project does not do. Fetch only from sources marked `permitted` in
+# data/source-access-policy.json (or pages you saved by hand), then parse here.
+scrapling==0.5.1
+
+# Optional, installed only: collection stays OFF until each source is reviewed (see data/source-access-policy.json).
+# 1.3.0 was released 2026-10-08. The last older release (1.1.82) pins numpy==1.26.3 and pandas<3 and
+# does not install on Python 3.13. It pulls in curl_cffi, which imitates a browser's TLS fingerprint:
+# never point it at a site that blocks automated access.
+python-jobspy==1.3.0
