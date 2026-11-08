@@ -277,7 +277,7 @@ function creditOrb(id, name) {
 
 // Each service is a colour-graded card (coloured top, dark gauge, dark footer). The gauge is a half doughnut
 // (Chart.js, loaded for the charts below): the share of the plan or wallet that is left.
-const CREDIT_KIND = { firecrawl: "Crawler", tavily: "Search API", tinyfish: "Web agent", apify: "Scraping Actors", exa: "Search", adzuna: "Job postings", jooble: "Job postings", careerjet: "Job postings" };
+const CREDIT_KIND = { firecrawl: "Crawler", tavily: "Search API", tinyfish: "Web agent", apify: "Scraper", exa: "Search", adzuna: "Job postings", jooble: "Job postings", careerjet: "Job postings" };
 const creditGauges = [];
 const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
 
@@ -335,6 +335,20 @@ function clearGauges() {
   while (creditGauges.length) creditGauges.pop().destroy();
 }
 
+// Each service's own logo, bundled with the page (assets/service-logos) so the page asks no other site for it.
+// The name sits beside it, so it is decoration; if the file is missing it removes itself.
+function creditLogo(id) {
+  const img = el("img", "credit-logo");
+  Object.assign(img, { src: new URL(`./service-logos/${id}.png`, import.meta.url).href, alt: "", width: 40, height: 40, decoding: "async" });
+  img.addEventListener("error", () => img.remove());
+  return img;
+}
+const creditTitle = (id, name) => {
+  const row = el("div", "credit-title");
+  row.append(creditLogo(id), el("h3", "credit-name", name));
+  return row;
+};
+
 function creditCard(p, { loading = false } = {}) {
   const li = el("li", loading ? "credit credit--loading" : "credit");
   li.dataset.provider = p.id;
@@ -366,7 +380,7 @@ function creditCard(p, { loading = false } = {}) {
     site.setAttribute("aria-label", `Open the ${p.name} website`);
     head.append(site);
   }
-  top.append(head, el("h3", "credit-name", p.name), el("p", "credit-sub", desc));
+  top.append(head, creditTitle(p.id, p.name), el("p", "credit-sub", desc));
 
   // Dark middle: the gauge with its reading.
   const gauge = el("div", "credit-gauge");
@@ -443,7 +457,7 @@ function aiCard(ai) {
     head.append(site);
   }
   const model = ai.model ? ai.model.split("/").pop() : "";
-  top.append(head, el("h3", "credit-name", name), el("p", "credit-sub", state === "ok" ? model : state === "key" ? "Add its key to switch it on" : "Pick a provider to suggest, score and tailor"));
+  top.append(head, meta ? creditTitle(ai.provider, name) : el("h3", "credit-name", name), el("p", "credit-sub", state === "ok" ? model : state === "key" ? "Add its key to switch it on" : "Pick a provider to suggest, score and tailor"));
 
   const middle = el("div", "credit-gauge");
   const body = el("div", "credit-ai");

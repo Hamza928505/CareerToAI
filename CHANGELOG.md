@@ -15,6 +15,9 @@ per-file diff commands.
 
 ### Changed
 
+- **The service cards show each service's logo.** Firecrawl, Tavily, TinyFish, Apify, Exa, Adzuna, Jooble, Careerjet and the AI provider
+  card now carry the service's own logo (`src/assets/service-logos/`, bundled with the page, so the page asks no other site for it). The
+  logos belong to their owners and are used only to identify the service.
 - **An Apify card shows the monthly usage left.** With `APIFY_TOKEN` in `.env`, the workspace's Search & AI services cards show how
   much of the Apify plan's monthly usage limit is left, in dollars, and when the cycle resets. The StepStone and Arbeitsagentur Actors run
   through Claude's connector but are billed to the same account. The token is only used for this read and only sent to api.apify.com.
