@@ -97,6 +97,8 @@ linkedin_Profile.pdf
 *.jpeg
 *.png
 !**/cover_letters/OpenFonts/fonts/**
+# The service logos on the workspace page: brand icons, not personal photos.
+!src/assets/service-logos/*.png
 
 # OS files
 .DS_Store

@@ -536,6 +536,9 @@
 .credit-head { display: flex; align-items: center; justify-content: space-between; gap: .5rem; font-size: .7rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
 .credit-site { flex: none; white-space: nowrap; padding: .15rem .6rem; border-radius: 999px; background: rgba(0, 0, 0, .2); color: #fff; text-decoration: none; text-transform: none; letter-spacing: 0; transition: background 120ms ease; }
 .credit-site:hover, .credit-site:focus-visible { background: rgba(0, 0, 0, .38); }
+.credit-title { display: flex; align-items: center; gap: .6rem; min-width: 0; margin: .8rem 0 .15rem; }
+.credit-title .credit-name { margin: 0; min-width: 0; font-size: 1.15rem; letter-spacing: .02em; overflow-wrap: break-word; }
+.credit-logo { flex: none; width: 2.3rem; height: 2.3rem; object-fit: cover; border-radius: .7rem; background: #fff; box-shadow: 0 2px 8px rgba(0, 0, 0, .3), 0 0 0 1px rgba(255, 255, 255, .22); }
 .credit-name { margin: .8rem 0 .15rem; color: #fff; font-size: 1.4rem; letter-spacing: .03em; text-transform: uppercase; }
 .credit-sub { margin: 0; color: rgba(255, 255, 255, .92); font-size: .88rem; max-width: none; }
 .credit-gauge { position: relative; flex: 1; min-height: 140px; padding: .6rem 1rem 0; background: #232228; }
