@@ -119,7 +119,7 @@ test("it says who it is, sends the public key, and never calls faster than four 
   assert.ok(fake.calls.length >= 3);
   for (const { headers } of fake.calls) {
     assert.equal(headers["X-API-Key"], "jobboerse-jobsuche");
-    assert.match(headers["User-Agent"], /GJUInternshipBoard.*github\.com\/Hamza928505\/GJUInternshipBoard/);
+    assert.match(headers["User-Agent"], /GJUYearKit.*github\.com\/Hamza928505\/GJUYearKit/);
   }
   assert.equal(run.waits.length, fake.calls.length - 1); // a pause before every call but the first
   assert.ok(run.waits.every((ms) => ms >= 250), JSON.stringify(run.waits));

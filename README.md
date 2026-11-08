@@ -5,7 +5,7 @@ LinkedIn blocks bot traffic; this does the opposite. Every page is pre-rendered 
 HTML, robots.txt welcomes every crawler by name, and the whole profile is also published
 as one dense plain-text file and as raw JSON.
 
-You fill it in through a LinkedIn-style editor at `/editor/` — name, education, about,
+You fill it in through the [standalone GJUBoard editor](https://hamza928505.github.io/GJUYearKit/editor.html) — name, education, about,
 experience, licenses and certifications — and it autosaves in your browser as you type.
 Certificates can also be read by a vision-capable Claude model, which drafts the title,
 issuer, dates, description and skill tags for you to edit before publishing.
@@ -38,33 +38,14 @@ the handful of Anthropic API tokens spent when you add a certificate, on your ow
 There are two completely separate halves, and keeping them separate is what makes the
 zero-cost, no-backend constraint hold:
 
-```
-  AUTHORING (three ways in, one way out)         PUBLISHING (GitHub)
-  ──────────────────────────────────────         ───────────────────
-  /editor/ in your browser                       git push
-    autosaves to localStorage + IndexedDB            │
-    ├─ published site → Download .json               ▼
-    │                   npm run import-data      GitHub Actions
-    ├─ npm run editor → Save to data/  ──┐           │
-    │                                    │           ├─► npm ci
-  npm run add-cert -- certs-source/x.jpg │           ├─► npm run build (Eleventy)
-    Claude reads it, you edit, it saves ─┤           └─► deploy _site/ to Pages
-                                         │                │
-  hand-editing data/*.json ──────────────┤                ▼
-                                         ▼      https://you.github.io/CareerToAI
-                        data/profile.json
-                        data/experience.json
-                        data/projects.json
-                        data/certificates.json
-                        src/certs/*.jpg  src/media/*.jpg
-                                         │
-                                  git commit
-```
+The GJUBoard editor exports a complete JSON profile, including attachments. Import
+it here with `npm run import-data -- <file>`. You can also edit `data/*.json` directly
+or add a certificate with `npm run add-cert`. All three paths feed the same data
+files, which Eleventy builds into the public site after you commit and push.
 
 The deployed site is nothing but static files. There is no server and no database — a
-static host cannot accept writes, so publishing is always a commit. The editor is the one
-page with JavaScript on it, it is marked `noindex`, and it only ever writes to your own
-browser; every profile page is still pre-rendered HTML. The Anthropic API is called
+static host cannot accept writes, so publishing is always a commit. The GJUBoard editor is
+marked `noindex` and only writes to your own browser; every profile page is still pre-rendered HTML. The Anthropic API is called
 **only** from your machine, never at build time and never by a visitor.
 
 ---
@@ -74,11 +55,11 @@ browser; every profile page is still pre-rendered HTML. The Anthropic API is cal
 ```bash
 npm install          # installs Eleventy + the local authoring tools
 npm run make-samples # draws placeholder images for the two sample certificates
-npm run editor       # http://localhost:8081/CareerToAI/editor/
+npm run editor       # http://localhost:8081/CareerToAI/workspace/
 ```
 
-`npm run editor` is the one to start with: it builds the site, serves it, and opens the
-editor in a mode that can write straight into the repository. If you only want to look at
+`npm run editor` builds the site and serves the local application workspace. Profile
+authoring now lives in GJUBoard; import its JSON export into this repository. If you only want to look at
 the site, `npm run serve` runs the plain Eleventy dev server with live reload on port 8080.
 
 You will see a site built from the two sample certificates in `data/certificates.json`
@@ -88,66 +69,25 @@ every field still holding a `TODO:` value.
 Then:
 
 1. Open the editor and fill in your name, about, education, experience and certifications.
-2. Press **Save to data/** (or **Download .json** and run `npm run import-data`).
+2. Press **Download .json** in GJUBoard and run `npm run import-data -- <file>` here.
 3. Delete anything left over from the samples, then commit and push.
 
 ---
 
 ## The editor
 
-`/editor/` is a LinkedIn-style form for everything the site publishes: your name,
-headline, location, email and working languages; an About paragraph; Education;
-Experience; Projects; Licenses & certifications; links; and any extra skills.
-Repeatable sections have **+ Add** buttons, and skills are entered as chips — type one
-and press <kbd>Enter</kbd>.
+The profile editor has moved to [GJUBoard](https://hamza928505.github.io/GJUYearKit/editor.html) (source: sibling project `../GJUBoard/editor.html`). It is a standalone static page: text stays in browser localStorage, attachments in IndexedDB, and **Download .json** includes both. It has no repository-save or AI-service connection.
 
-Every section heading collapses, and carries a count of what is inside it so a closed
-section still tells you something. Rows reorder by dragging their handle, or by focusing
-the handle and pressing <kbd>↑</kbd>/<kbd>↓</kbd> — and that order is what gets published.
+Use **Load .json** in GJUBoard to restore a backup. Drafts belong to their browser and origin. The old CareerToAI `/editor/` page offers **Download old browser draft**, including attachments, without deleting the old data.
 
-**Nothing is ever lost to a refresh.** Every keystroke is saved to this browser's
-`localStorage` after a short pause, and uploaded images go into its `IndexedDB` (which,
-unlike `localStorage`'s ~5MB ceiling, can hold certificate scans). The status in the
-toolbar tells you when the last save landed. Both stores are private to that browser on
-that device — the page uploads nothing on its own.
-
-It runs in one of two modes, and the note under the heading tells you which:
-
-### Local mode — `npm run editor`
-
-The recommended way to work. A small Node server (`scripts/editor-server.mjs`, bound to
-`127.0.0.1` only) builds the site, serves it on port 8081, and adds two buttons:
-
-- **Save to data/** writes `data/profile.json`, `data/experience.json`,
-  `data/projects.json`, `data/certificates.json` and every uploaded image into
-  `src/certs/` and `src/media/`,
-  then rebuilds. No download, no copying files around — just commit and push afterwards.
-- **Extract with AI** appears on a certificate once you attach an image. It sends that
-  image to Claude and fills in *only the fields you have left blank*, so it never
-  overwrites something you typed. This button exists only in local mode, because the
-  API key is read from `.env` by the Node server and must never be shipped to a browser.
-
-### Published mode — `/editor/` on the live site
-
-The same page, deployed so you can edit from your phone. It cannot write to the
-repository (no static host can), so it gives you **Download .json** instead — one file
-containing all your text *and* your images. Feed it back in with:
+To publish changes to the profile site:
 
 ```bash
-npm run import-data -- ./careertoai-data.json
-git add -A && git commit -m "Update profile" && git push
+npm run import-data -- ./gju-profile.json
+npm run build
 ```
 
-**Load .json** restores an export into the editor, which is also how you move your
-work-in-progress between devices.
-
-> The editor is marked `noindex, nofollow` and is left out of `sitemap.xml`. It is the
-> only page on the site that runs JavaScript; every profile page is still pre-rendered
-> static HTML, so nothing about AI readability changes.
-
-> **Publishing is still a git push.** The editor writes to your browser, and in local mode
-> to your working tree. Neither one deploys anything. Until you commit and push, the live
-> site shows the last version you pushed.
+Review the imported files, then commit and push when ready. Candidate JSON and the local workspace remain in CareerToAI. CLI certificate extraction is still available through `npm run add-cert`.
 
 ---
 
@@ -162,13 +102,17 @@ work-in-progress between devices.
 - **Ask Claude Code** — copy-ready `/apply`, `/rank`, `/outcome`, `/interview` and
   `/upskill` commands. These read postings and write German, so they need Claude
   Code; a web page cannot run them.
-- **Check a posting** — the GJU eligibility checker. Enter duration, country, pay
-  and working language and it scores against `data/gju-rules.json`, the same file
-  the workbook's Fit % formula uses, and names the rule behind every flag.
-- **Your tracker** — your rows, read live from `data/applications.csv`, plus a form to
-  add one by hand.
+- **Search** — one button finds new IT internships anywhere in Germany, in German and
+  English, from free job sources and from Indeed (through your Claude account's Indeed
+  connector), and checks each against the GJU rules in `data/gju-rules.json`. Werkstudent
+  and other non-IT jobs are left out.
+- **Your internship board** — your rows, read live from `data/applications.csv`, with the
+  board's hero, filters (skills, status, city, kind, GJU rules, Apply?, who applies,
+  languages, duration, pay, dates) and a table or card list with each row's status and an
+  ⓘ for every field. The same filters drive the spreadsheet views; rows can be ticked and
+  downloaded as Excel, or added by hand.
 
-Everything except the checker needs `npm run editor`: a static host cannot write
+Everything needs `npm run editor`: a static host cannot write
 your files or run a command. Opened on the published site, the page says so and
 disables those controls rather than failing when you press them.
 
@@ -236,12 +180,12 @@ Installing poppler: `brew install poppler` (macOS), `apt install poppler-utils` 
 
 ### Editing or removing a certificate
 
-Easiest in `/editor/`. Otherwise `data/certificates.json` is a plain array — edit it by
+Use the GJUBoard editor and import its JSON export. Otherwise `data/certificates.json` is a plain array — edit it by
 hand any time. Re-running `add-cert` with `--id <existing-id>` re-extracts and overwrites
 that entry. To remove a certificate, delete its object from the array and its image from
 `src/certs/`.
 
-> `npm run import-data` and the editor's **Save to data/** button both **replace**
+> `npm run import-data` **replaces**
 > `data/profile.json`, `data/experience.json`, `data/projects.json` and
 > `data/certificates.json` wholesale — an
 > export is the complete picture, not a patch. If you added a certificate with
@@ -278,7 +222,7 @@ ANTHROPIC_API_KEY=sk-ant-...
 
 ## Customizing your profile by hand
 
-`/editor/` is the easy path; this is what it writes. Everything about you lives in
+The GJUBoard editor exports the JSON that `npm run import-data` writes here. Everything about you lives in
 `data/profile.json`:
 
 | Field       | Notes |
@@ -327,7 +271,7 @@ the thing itself, not the role, is what a reader wants the link to.
 
 **Array order is publication order.** Education, experience, projects, certificates and
 links are all published in the order they appear in the JSON — nothing is re-sorted on
-load. Put what you most want read at the top. In `/editor/` you arrange that by dragging a
+load. Put what you most want read at the top. In the GJUBoard editor you arrange that by dragging a
 row's handle, or by focusing the handle and pressing <kbd>↑</kbd>/<kbd>↓</kbd>;
 **Sort by date** restores newest-first for any dated list. If you want date order in your
 own code, `lib/content.mjs` exports a `byDateDesc` comparator for it.
@@ -516,7 +460,7 @@ lib/
   apply-data.mjs        Turns an editor export into data files + images.
   extract-certificate.mjs  Claude vision extraction, shared by CLI and editor.
 scripts/
-  editor-server.mjs     Local helper: serves /editor/, saves, AI extraction.
+  editor-server.mjs     Local workspace server and existing application APIs.
   import-data.mjs       Imports a downloaded careertoai-data.json.
   add-cert.mjs          Terminal path for adding one certificate.
   make-sample-images.mjs  Draws placeholder images for the sample data.
@@ -525,14 +469,13 @@ src/
   _includes/base.njk    The HTML shell: meta, Open Graph, JSON-LD, nav, footer.
   src.11tydata.js       Computes each page's title/description/OG image.
   index.njk             The profile. The entire public site is this one page.
-  editor.njk            /editor/ — noindex authoring form.
+  editor.njk            /editor/ — relocation notice and old-draft download.
   llms.11ty.js          /llms.txt
   about.11ty.js         /about.txt
   robots.11ty.js        /robots.txt
   sitemap.11ty.js       /sitemap.xml
   assets/style.css      Site presentation.
-  assets/editor.css     Editor presentation.
-  assets/editor.js      The editor. The only JavaScript on the site.
+  assets/editor-migration.js  Download drafts saved before the move to GJUBoard.
   certs/                Published certificate images. Committed.
   media/                Published experience attachments. Committed.
 eleventy.config.mjs     Build config, filters, passthrough copies.
@@ -580,7 +523,7 @@ one profile, one tracker, one status vocabulary — described in [CLAUDE.md](CLA
 | `data/applications.csv` | Every application, one row each | `job_search_tracker.xlsx` (`npm run tracker`) |
 | `data/tracker-schema.json` | Tracker columns, and the only status vocabulary | the workbook's columns and validation |
 
-So the editor at `/editor/` is where you keep your profile current, and `/apply`,
+So the GJUBoard editor and `npm run import-data` keep your profile current, and `/apply`,
 `/rank`, `/interview` and `/upskill` all argue from what it wrote.
 
 The repository keeps **one** of each project file at the root — `README.md`,
@@ -701,15 +644,14 @@ with `package.json`. Run `npm install` locally and commit the lockfile.
 private window, or the quota is full. Press **Download .json** straight away so nothing is
 lost, then fix the browser setting and use **Load .json** to restore.
 
-**Edits in the editor are not on the live site** — the editor writes to your browser, and
-in local mode to your working tree. Publishing is still `git add -A && git commit && git push`.
+**Edits in the editor are not on the live site** — download JSON from GJUBoard, import it
+with `npm run import-data -- <file>`, then review, commit and push the changes.
 
-**"Save to data/" is missing** — you are on the published site, or the local helper is not
-running. Start it with `npm run editor` and open the URL it prints.
+**"Save to data/" is missing** — GJUBoard is a standalone static editor. Use its JSON
+export and `npm run import-data -- <file>` in CareerToAI instead.
 
-**"Extract with AI" is missing** — it only appears in local mode, on a certification that
-already has an image attached, and only when `ANTHROPIC_API_KEY` is set in `.env`. The
-server prints which of those is true at startup.
+**"Extract with AI" is missing** — the standalone editor has no AI-service connection.
+Use CareerToAI's `npm run add-cert` CLI for certificate extraction.
 
 **A certificate added with `add-cert` disappeared after saving from the editor** — the
 editor saves its whole state, replacing the data files. Load the current data into the

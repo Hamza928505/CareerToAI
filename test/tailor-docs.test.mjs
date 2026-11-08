@@ -3,7 +3,7 @@ import test from "node:test";
 import JSZip from "jszip";
 
 import { chatJson, extractJson, llmConfig } from "../lib/llm.mjs";
-import { scoreJobs, suggestRoles } from "../lib/profile-ai.mjs";
+import { scoreJobs } from "../lib/profile-ai.mjs";
 import { applyParagraphEdits, docxParagraphs, loadDocx, pruneStudent } from "../lib/student-files.mjs";
 import { fillPlaceholders, slug, tailorDocuments } from "../lib/tailor-docs.mjs";
 import { z } from "zod";
@@ -142,16 +142,6 @@ test("chatJson retries once on a bad reply, then gives up", async () => {
 });
 
 // ------------------------------------------------------------ search with files
-
-test("suggestRoles returns only roles the form can show, and never cities or types", async () => {
-  const options = { roles: [{ name: "Software developer", de: "Softwareentwickler/in" }, { name: "Data analyst", de: "" }], cities: [{ name: "München", value: "München" }] };
-  const out = await suggestRoles({
-    options,
-    context: async () => ({}),
-    chat: async () => ({ roles: ["software developer", "Astronaut", "Softwareentwickler", "data analyst"], cities: ["München"], types: ["Internship"] }),
-  });
-  assert.deepEqual(out, { roles: ["Software developer", "Data analyst"] });
-});
 
 test("scoreJobs clamps scores, maps them to postings and survives a failed batch", async () => {
   const jobs = Array.from({ length: 7 }, (_, n) => ({ url: `https://x.test/${n}`, title: `Job ${n}` }));

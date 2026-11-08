@@ -24,9 +24,8 @@ const dialog = {
  *
  *   local     — `npm run editor` is serving the page, so /__editor/* exists.
  *               Tasks run, the tracker loads, rows can be added.
- *   published — the static site on Pages. Nothing can run; the page says so
- *               plainly and the eligibility checker still works, because it is
- *               pure arithmetic in the browser.
+ *   published — the static site on Pages. Nothing can run, and the page says
+ *               so plainly.
  *
  * Every threshold comes from data/gju-rules.json, embedded in the page — this
  * file states no rule of its own.
@@ -56,18 +55,13 @@ let local = false;
 // ---------------------------------------------------------------- mode probe
 
 async function detectMode() {
-  const pill = $("#mode-pill");
   try {
     const res = await fetch(api("status"), { cache: "no-store" });
     if (!res.ok) throw new Error("no helper");
     await res.json();
     local = true;
-    pill.className = "pill pill--ok";
-    pill.textContent = "Ready — your tasks can run";
   } catch {
     local = false;
-    pill.className = "pill pill--idle";
-    pill.textContent = "Preview — try the eligibility checker";
     $("#published-notice").hidden = false;
     $$("[data-run]").forEach((b) => {
       b.disabled = true;
@@ -75,7 +69,6 @@ async function detectMode() {
     });
 
   }
-  $("#mode").dataset.state = local ? "local" : "published";
 }
 
 // --------------------------------------------------------------- run a task
@@ -210,181 +203,7 @@ $$("[data-copy]").forEach((btn) => {
   });
 });
 
-// ------------------------------------------------------- eligibility checker
-
-/**
- * The same five weighted dimensions the workbook's Fit % formula uses, minus
- * the skills term — that one needs the advert text, which this form does not
- * ask for. The maximum is scaled accordingly so a percentage still means
- * something.
- */
-function score({ weeks, werkstudent, country, paid, pay, language, german }) {
-  const weight = Object.fromEntries(GJU.score.map(([name, points]) => [name, points]));
-  const countryRow = GJU.countries.find((c) => c[0] === country);
-  const parts = [];
-  const flags = [];
-
-  // Duration
-  let duration = 0;
-  if (weeks >= RULES.minWeeks) duration = weight.Duration;
-  else if (weeks >= 15) duration = weight.Duration / 2;
-  // A Werkstudent role is part-time hours, not weeks: Duration drops out of the score and the minimum does not apply.
-  if (!werkstudent) parts.push({ name: "Duration", got: duration, max: weight.Duration });
-  if (werkstudent) {
-    flags.push({ level: "warn", text: `Werkstudent: the ${RULES.minWeeks}-week duration rule is not applied. Expect about ${RULES.werkstudentHoursPerMonth} hours a month (roughly 4 hours a day), and confirm GJU will recognise a Werkstudent contract before you apply.` });
-  } else if (weeks && weeks < RULES.minWeeks) {
-    flags.push({
-      level: "fail",
-      text: `Under the ${RULES.minWeeks}-week minimum — GJU will not recognise it as the German Year placement.`,
-    });
-  }
-
-  // Country
-  const countryPoints = countryRow ? countryRow[1] : 0;
-  parts.push({ name: "Country", got: countryPoints, max: weight.Country });
-  if (countryRow && countryRow[0] !== "Germany") {
-    flags.push({
-      level: countryPoints === 0 ? "fail" : "warn",
-      text: `${countryRow[0]}: ${countryRow[2]}.`,
-    });
-  }
-
-  // Pay
-  let paidPoints = 5;
-  if (paid === "Yes") paidPoints = pay >= RULES.minMonthlySalary ? weight.Paid : 10;
-  else if (paid === "No") paidPoints = 0;
-  parts.push({ name: "Paid", got: paidPoints, max: weight.Paid });
-  if (paid === "Yes" && pay && pay < RULES.minMonthlySalary) {
-    flags.push({
-      level: "warn",
-      text: `${pay} EUR/month is below the ${RULES.minMonthlySalary} EUR/month a visa extension asks you to prove.`,
-    });
-  }
-  if (paid === "No") {
-    flags.push({ level: "warn", text: `Unpaid is allowed, and it does not fail the GJU rules. Plan your living costs, and if you may stay longer, refill your blocked account, because ${RULES.minMonthlySalary} EUR/month of salary is the other way to show funds.` });
-  }
-
-  // Language
-  const goodGerman = ["B2", "C1", "C2"].includes(german);
-  let langPoints = 0;
-  if (language === "English" || language === "Both") langPoints = weight.Language;
-  else if (language === "German") langPoints = goodGerman ? weight.Language : weight.Language / 2;
-  parts.push({ name: "Language", got: langPoints, max: weight.Language });
-  if (language === "German" && !goodGerman) {
-    flags.push({
-      level: "warn",
-      text: `A German-only workplace at ${german}. Doable, but the Anschreiben and the interview will be the hard part.`,
-    });
-  }
-
-  const got = parts.reduce((sum, p) => sum + p.got, 0);
-  const max = parts.reduce((sum, p) => sum + p.max, 0);
-  return { parts, flags, percent: Math.round((got / max) * 100) };
-}
-
-function renderVerdict(result, weeks, werkstudent) {
-  const box = $("#verdict");
-  const hardFail = result.flags.some((f) => f.level === "fail");
-  const level = hardFail ? "fail" : result.flags.length ? "warn" : "pass";
-
-  const heading = {
-    fail: "Not eligible as it stands",
-    warn: "Eligible, with things to check",
-    pass: "Eligible on every rule checked",
-  }[level];
-
-  const lead = {
-    fail: "One of the hard GJU rules fails. Fix it with the employer before you spend an evening on the Anschreiben.",
-    warn: "Nothing here disqualifies it, but these need an answer before you apply.",
-    pass: `Nothing in the ${RULES.minWeeks}-week, country, pay or language rules stands against it.`,
-  }[level];
-
-  box.dataset.verdict = level;
-  box.hidden = false;
-  box.innerHTML = `
-    <div class="verdict-head">
-      <h3>${heading}</h3>
-      <span class="pill pill--${level === "fail" ? "no" : level === "warn" ? "warn" : "ok"}">
-        ${werkstudent ? "Werkstudent" : `${weeks} weeks`}
-      </span>
-      <span class="score">${result.percent}%</span>
-    </div>
-    <p>${lead}</p>
-    ${
-      result.flags.length
-        ? `<ul>${result.flags
-            .map((f) => `<li><strong>${f.level === "fail" ? "Blocks it" : "Check"}:</strong> ${f.text}</li>`)
-            .join("")}</ul>`
-        : ""
-    }
-    <ul class="breakdown">
-      ${result.parts
-        .map(
-          (p) => `<li>
-            <span>${p.name}</span>
-            <span class="bar"><span style="width:${(p.got / p.max) * 100}%"></span></span>
-            <span class="pts">${p.got} / ${p.max}</span>
-          </li>`,
-        )
-        .join("")}
-    </ul>
-    <p class="help">
-      Skills matching is left out here — it needs the advert text. Run
-      <code>/apply</code> for the full score.
-    </p>`;
-  box.scrollIntoView({ behavior: "smooth", block: "nearest" });
-}
-
-$("#checker")?.addEventListener("submit", (event) => {
-  event.preventDefault();
-  const form = event.currentTarget;
-
-  // Validate on submit, and put the message next to the field that failed.
-  form.querySelectorAll(".error").forEach((el) => el.remove());
-  let firstBad = null;
-
-    let missing = [];
-  for (const id of ["f-weeks", "f-country"]) {
-    const input = document.getElementById(id);
-    if (id === "f-weeks" && $("#f-werkstudent").checked) { input.removeAttribute("aria-invalid"); continue; }
-    input.removeAttribute("aria-invalid");
-    if (!input.value) {
-      input.setAttribute("aria-invalid", "true");
-      missing.push(id === "f-weeks" ? "Duration (weeks)" : "Country");
-      firstBad = firstBad || input;
-    }
-  }
-  if (firstBad) {
-    Swal.fire({ ...dialog, icon: "warning", title: "Missing fields", html: `Please provide: <strong>${missing.join(", ")}</strong>`, confirmButtonText: "OK" });
-    firstBad.focus();
-    return;
-  }
-
-  const werkstudent = $("#f-werkstudent").checked;
-  const weeks = Number($("#f-weeks").value);
-  renderVerdict(
-    score({
-      weeks,
-      werkstudent,
-      country: $("#f-country").value,
-      paid: $("#f-paid").value,
-      pay: Number($("#f-pay").value) || 0,
-      language: $("#f-language").value,
-      german: $("#f-german").value,
-    }),
-    weeks,
-    werkstudent,
-  );
-});
-
-$("#checker")?.addEventListener("reset", () => {
-  $("#verdict").hidden = true;
-  $("#checker").querySelectorAll(".error").forEach((el) => el.remove());
-});
-
 // ---------------------------------------------------------------- tracker
-
-const OPEN = new Set(SCHEMA.statuses.filter((s) => s.open).map((s) => s.value));
 
 /** Where the student is on the path, and the one thing worth doing next. */
 function renderJourney(c) {
@@ -395,19 +214,17 @@ function renderJourney(c) {
   };
   $$("#journey-steps li").forEach((li) => { li.dataset.state = done[li.dataset.stage] ? "done" : "todo"; });
   const [title, body] =
-    c.offer ? ["You have an offer.", "Check it against the GJU rules before you say yes: 20+ weeks, an approved country, and 861 EUR a month or more."]
+    c.offer ? ["You have an offer.", "Check it against the GJU rules before you say yes: a full-time internship of 20 weeks to 6 months, in Germany."]
     : c.interview ? [`${c.interview} interview${c.interview > 1 ? "s" : ""} on the way.`, "Someone wants to meet you. Run /interview to prepare."]
     : c.applied ? [`${c.applied} application${c.applied > 1 ? "s" : ""} sent.`, "That took courage. Follow up after a week, and keep the next one moving."]
     : c.toapply ? [`${c.toapply} on your shortlist.`, "Set Apply? to Yes on the strongest one and send it today."]
-    : ["Start with one posting.", "Check it against the GJU rules below, then add it to your list. One is enough to begin."];
+    : ["Start with a search.", "On the Shortlist, one search finds new IT internships all over Germany and checks each against the GJU rules for you."];
   const el = $("#journey-next");
   el.replaceChildren(Object.assign(document.createElement("strong"), { textContent: title }), " ", Object.assign(document.createElement("span"), { textContent: body }));
 }
 
 function renderStats(rows) {
   const count = (fn) => rows.filter(fn).length;
-  const chartCard = document.querySelector(".overview-chart");
-  if (chartCard) chartCard.hidden = rows.length === 0; // an empty chart discourages; the journey above says what to do
   const has = (...v) => count((r) => v.includes((r.status || "").trim()));
   renderJourney({
     toapply: has("To apply"),
@@ -415,15 +232,6 @@ function renderStats(rows) {
     interview: has("Interview scheduled"),
     offer: has("Offer"),
   });
-  $("#stat-total").textContent = rows.length;
-  const openCount = count((r) => OPEN.has((r.status || "").trim()));
-  const toApplyCount = count((r) => r.apply === "Yes" && r.status === "To apply");
-  const interviewCount = count(
-    (r) => ["Interview scheduled", "Interview done"].includes(r.status),
-  );
-  $("#stat-open").textContent = openCount;
-  $("#stat-toapply").textContent = toApplyCount;
-  $("#stat-interview").textContent = interviewCount;
 
   renderCharts(rows, {
     rules: RULES,
@@ -432,343 +240,8 @@ function renderStats(rows) {
   });
 }
 
-// -------------------------------------------------------------------- Search Strategy
-const strategyForm = document.getElementById("strategy-form");
-const strategyStatus = document.getElementById("strategy-save-status");
-const strategyKeys = ["roles", "cities", "types"];
-
-function strategyValues(key) {
-  return Array.from(strategyForm.querySelectorAll(`input[name="${key}"]:checked`), (input) => input.value);
-}
-
-// One call keeps the whole card honest: the total, each tab's badge and the "Your search" strip.
-function updateStrategyCount() {
-  const count = strategyKeys.reduce((sum, key) => sum + strategyValues(key).length, 0);
-  document.getElementById("strategy-count").textContent = `${count} search preference${count === 1 ? "" : "s"} selected`;
-  const chips = document.getElementById("sx-chips");
-  if (!chips) return;
-  chips.replaceChildren();
-  for (const key of strategyKeys) {
-    const values = strategyValues(key);
-    const badge = document.querySelector(`[data-sx-count="${key}"]`);
-    if (badge) { badge.textContent = values.length; badge.dataset.empty = String(!values.length); }
-    for (const value of values) {
-      const chip = document.createElement("li");
-      chip.className = "sx-chip";
-      chip.dataset.group = key;
-      chip.textContent = value;
-      chips.append(chip);
-    }
-  }
-  if (!chips.children.length) {
-    const empty = document.createElement("li");
-    empty.className = "sx-empty";
-    empty.textContent = "Nothing chosen yet.";
-    chips.append(empty);
-  }
-}
-
-// Tabs, as in the services card: one group shows at a time, arrow keys move between them.
-const sxTabs = [...document.querySelectorAll(".sx-tab")];
-function showStrategyTab(key) {
-  for (const tab of sxTabs) {
-    const on = tab.dataset.sxTab === key;
-    tab.setAttribute("aria-selected", String(on));
-    tab.tabIndex = on ? 0 : -1;
-    document.getElementById(tab.getAttribute("aria-controls")).hidden = !on;
-  }
-}
-sxTabs.forEach((tab) => {
-  tab.addEventListener("click", () => showStrategyTab(tab.dataset.sxTab));
-  tab.addEventListener("keydown", (event) => {
-    const step = { ArrowRight: 1, ArrowLeft: -1 }[event.key];
-    if (!step) return;
-    const next = sxTabs[(sxTabs.indexOf(tab) + step + sxTabs.length) % sxTabs.length];
-    showStrategyTab(next.dataset.sxTab);
-    next.focus();
-    event.preventDefault();
-  });
-});
-
-function selectStrategyOption(key, value) {
-  const options = strategyForm.querySelector(`[data-strategy-options="${key}"]`);
-  const text = String(value).trim();
-  if (!options || !text) return;
-  let input = Array.from(options.querySelectorAll("input"))
-    .find((item) => item.value.toLocaleLowerCase() === text.toLocaleLowerCase());
-  if (!input) {
-    const label = document.createElement("label");
-    label.className = "strategy-choice";
-    input = document.createElement("input");
-    input.type = "checkbox";
-    input.name = key;
-    input.value = text;
-    const caption = document.createElement("span");
-    caption.textContent = text;
-    const check = document.createElement("i");
-    check.className = "fa-solid fa-check";
-    check.setAttribute("aria-hidden", "true");
-    caption.append(check);
-    label.append(input, caption);
-    options.append(label);
-  }
-  input.checked = true;
-  updateStrategyCount();
-}
-
-function markStrategyDirty() {
-  updateStrategyCount();
-  strategyStatus.textContent = local ? "Unsaved changes" : "Open the local editor to save these choices.";
-  strategyStatus.dataset.state = "";
-}
-
-strategyForm?.addEventListener("change", (event) => {
-  if (event.target.matches('input[type="checkbox"]')) markStrategyDirty();
-});
-
-let strategyCatalogPromise;
-function loadStrategyCatalog() {
-  strategyCatalogPromise ||= fetch(new URL("../assets/search-options.json", location.href), { cache: "force-cache" })
-    .then((res) => { if (!res.ok) throw new Error("Search catalog unavailable"); return res.json(); })
-    .catch((error) => { strategyCatalogPromise = null; throw error; });
-  return strategyCatalogPromise;
-}
-
-const searchText = (value) => String(value).toLocaleLowerCase().normalize("NFD").replace(/\p{M}/gu, "");
-
-async function showStrategyMatches(input, browse = false) {
-  const key = input.dataset.strategySearch;
-  const panel = strategyForm.querySelector(`[data-strategy-results="${key}"]`);
-  const query = searchText(input.value.trim());
-  panel.dataset.browse = browse ? "true" : "false";
-  panel.replaceChildren();
-  panel.hidden = !query && !browse;
-  if (key === "roles") strategyForm.querySelector("[data-strategy-browse]")?.setAttribute("aria-expanded", String(!panel.hidden && browse));
-  if (panel.hidden) return;
-  if (!browse && query.length < 2) {
-    panel.textContent = "Type at least two letters to search the catalog.";
-    return;
-  }
-  panel.textContent = "Loading catalog…";
-  try {
-    const catalog = await loadStrategyCatalog();
-    if (searchText(input.value.trim()) !== query || panel.dataset.browse !== String(browse)) return;
-    const letter = browse ? panel.dataset.letter || "" : "";
-    const matches = catalog[key].filter((item) => browse
-      ? !letter || (letter === "#" ? /^\d/.test(item.name) : item.name.toLocaleUpperCase().startsWith(letter))
-      : searchText(`${item.name} ${item.de || item.state || ""}`).includes(query)
-    );
-    if (!browse) matches.sort((a, b) => Number(searchText(b.name).startsWith(query)) - Number(searchText(a.name).startsWith(query)));
-    const limit = browse ? Number(panel.dataset.limit || 20) : 8;
-    panel.replaceChildren();
-    if (browse) {
-      const toolbar = document.createElement("div");
-      toolbar.className = "strategy-browse-toolbar";
-      const label = document.createElement("label");
-      label.textContent = "Jump to letter";
-      const letters = document.createElement("select");
-      letters.setAttribute("aria-label", "Role starting letter");
-      for (const value of ["", "#", ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"]) {
-        const option = document.createElement("option");
-        option.value = value;
-        option.textContent = value || "All roles";
-        letters.append(option);
-      }
-      letters.value = letter;
-      letters.addEventListener("change", async () => {
-        panel.dataset.letter = letters.value;
-        panel.dataset.limit = "20";
-        await showStrategyMatches(input, true);
-        panel.scrollTop = 0;
-        panel.querySelector("select")?.focus();
-      });
-      label.append(letters);
-      toolbar.append(label);
-      panel.append(toolbar);
-    }
-    const summary = document.createElement("p");
-    summary.textContent = matches.length
-      ? browse
-        ? `Showing ${Math.min(limit, matches.length)} of ${matches.length.toLocaleString("en-US")} roles. Select a role to add it.`
-        : `${matches.length.toLocaleString("en-US")} matches in ${catalog[key].length.toLocaleString("en-US")} ${key === "roles" ? "ESCO roles" : "German cities"}. Select one, or keep typing to narrow.`
-      : "No catalog match. Use Add custom to keep this search term.";
-    panel.append(summary);
-    for (const item of matches.slice(0, limit)) {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = "strategy-result";
-      button.textContent = item.name;
-      const detail = document.createElement("small");
-      detail.textContent = item.de || item.state || "";
-      button.append(detail);
-      button.addEventListener("click", () => {
-        selectStrategyOption(key, item.value || item.name);
-        input.value = "";
-        panel.hidden = true;
-        strategyForm.querySelector("[data-strategy-browse]")?.setAttribute("aria-expanded", "false");
-        markStrategyDirty();
-      });
-      panel.append(button);
-    }
-    if (browse && matches.length > limit) {
-      const more = document.createElement("button");
-      more.type = "button";
-      more.className = "strategy-more";
-      more.textContent = "Show more roles";
-      more.addEventListener("click", async () => {
-        panel.dataset.limit = String(limit + 20);
-        await showStrategyMatches(input, true);
-        panel.querySelectorAll(".strategy-result")[limit]?.focus();
-      });
-      panel.append(more);
-    }
-  } catch {
-    panel.textContent = "Catalog unavailable. You can still add a custom search term.";
-  }
-}
-
-strategyForm?.querySelectorAll("[data-strategy-search]").forEach((input) => {
-  input.addEventListener("input", () => {
-    strategyForm.querySelector("[data-strategy-browse]")?.setAttribute("aria-expanded", "false");
-    showStrategyMatches(input);
-  });
-  input.addEventListener("keydown", (event) => {
-    if (event.key === "Escape") {
-      strategyForm.querySelector(`[data-strategy-results="${input.dataset.strategySearch}"]`).hidden = true;
-      strategyForm.querySelector("[data-strategy-browse]")?.setAttribute("aria-expanded", "false");
-    }
-  });
-});
-
-strategyForm?.querySelector("[data-strategy-browse]")?.addEventListener("click", (event) => {
-  const button = event.currentTarget;
-  const panel = strategyForm.querySelector('[data-strategy-results="roles"]');
-  if (!panel.hidden && panel.dataset.browse === "true") {
-    panel.hidden = true;
-    button.setAttribute("aria-expanded", "false");
-    return;
-  }
-  const input = document.getElementById("strat-custom-roles");
-  input.value = "";
-  panel.dataset.letter = "";
-  panel.dataset.limit = "20";
-  button.setAttribute("aria-expanded", "true");
-  showStrategyMatches(input, true);
-});
-
-strategyForm?.querySelectorAll("[data-strategy-add]").forEach((button) => {
-  button.addEventListener("click", () => {
-    const input = document.getElementById(`strat-custom-${button.dataset.strategyAdd}`);
-    if (!input.value.trim()) return input.focus();
-    selectStrategyOption(button.dataset.strategyAdd, input.value);
-    input.value = "";
-    const panel = strategyForm.querySelector(`[data-strategy-results="${button.dataset.strategyAdd}"]`);
-    if (panel) panel.hidden = true;
-    if (button.dataset.strategyAdd === "roles") strategyForm.querySelector("[data-strategy-browse]")?.setAttribute("aria-expanded", "false");
-    markStrategyDirty();
-  });
-});
-
-strategyForm?.querySelectorAll("[data-strategy-custom]").forEach((input) => {
-  input.addEventListener("keydown", (event) => {
-    if (event.key === "Enter") {
-      event.preventDefault();
-      const firstMatch = strategyForm.querySelector(`[data-strategy-results="${input.dataset.strategyCustom}"]:not([hidden]) button`);
-      (firstMatch || strategyForm.querySelector(`[data-strategy-add="${input.dataset.strategyCustom}"]`)).click();
-    }
-  });
-});
-
-async function loadSearchStrategy() {
-  if (!local) return;
-  try {
-    const res = await fetch("/__editor/search-strategy");
-    if (!res.ok) throw new Error("Could not load saved strategy");
-    const data = await res.json();
-    strategyKeys.forEach((key) => {
-      if (Array.isArray(data[key])) data[key].forEach((value) => selectStrategyOption(key, value));
-    });
-    strategyStatus.textContent = "Saved preferences loaded. Change any choice and save again.";
-  } catch (err) {
-    console.error("Failed to load search strategy:", err);
-    strategyStatus.textContent = "Saved preferences could not load. Check the local editor and try again.";
-  }
-}
-
-strategyForm?.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  if (!local) {
-    strategyStatus.textContent = "Run npm run editor locally to save these choices.";
-    return;
-  }
-  strategyForm.querySelectorAll("[data-strategy-custom]").forEach((input) => {
-    if (input.value.trim()) {
-      selectStrategyOption(input.dataset.strategyCustom, input.value);
-      input.value = "";
-    }
-  });
-  const [roles, cities, types] = strategyKeys.map(strategyValues);
-  if (!roles.length || !cities.length || !types.length) {
-    strategyStatus.textContent = "Choose at least one role, location, and opportunity type.";
-    strategyStatus.dataset.state = "error";
-    return;
-  }
-  const btn = document.getElementById('btn-save-strategy');
-  btn.disabled = true;
-  btn.textContent = 'Saving…';
-  strategyStatus.textContent = "Saving your search preferences…";
-  strategyStatus.dataset.state = "";
-
-  try {
-    const res = await fetch("/__editor/search-strategy", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ roles, cities, types })
-    });
-
-    if (!res.ok) throw new Error("Failed to save strategy");
-
-    strategyStatus.textContent = "Strategy saved. Your next scrape will use these choices.";
-  } catch (err) {
-    strategyStatus.textContent = "Could not save your strategy. Try again in the local editor.";
-    strategyStatus.dataset.state = "error";
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = 'Save strategy <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>';
-  }
-});
-
 await detectMode();
-flowApp = await initWorkspaceFlows({
-  local, api, Swal, dialog, onRows: renderStats,
-  applyStrategy: (suggestion) => {
-    showStrategyTab("roles");
-    (suggestion.roles || []).forEach((value) => selectStrategyOption("roles", value));
-    markStrategyDirty();
-  },
-  readStrategy: () => {
-    strategyForm.querySelectorAll("[data-strategy-custom]").forEach((input) => {
-      if (input.value.trim()) { selectStrategyOption(input.dataset.strategyCustom, input.value); input.value = ""; }
-    });
-    return Object.fromEntries(strategyKeys.map((key) => [key, strategyValues(key)]));
-  },
-});
-if (local) await loadSearchStrategy();
-else {
-  strategyStatus.textContent = "Open the local editor to save these choices.";
-  document.getElementById("btn-save-strategy").disabled = true;
-}
-
-// The form is novalidate, so `min` alone does not hold the line: never let duration drop below the GJU minimum.
-{
-  const weeksInput = document.getElementById("f-weeks");
-  const clamp = () => { if (weeksInput && !document.getElementById("f-werkstudent")?.checked && Number(weeksInput.value) < RULES.minWeeks) weeksInput.value = RULES.minWeeks; };
-  const toggle = () => { weeksInput.disabled = document.getElementById("f-werkstudent").checked; };
-  document.getElementById("f-werkstudent")?.addEventListener("change", toggle);
-  weeksInput?.addEventListener("change", clamp);
-  weeksInput?.addEventListener("blur", clamp);
-  document.getElementById("checker")?.addEventListener("submit", clamp, true);
-}
+flowApp = await initWorkspaceFlows({ local, api, Swal, dialog, onRows: renderStats });
 
 // ------------------------------------------------------------ Search credits
 
@@ -793,7 +266,7 @@ const el = (tag, cls, text) => {
 };
 
 // One orb per search service, its animation matched to what the service does.
-const CREDIT_ORB = { firecrawl: "weaving", tavily: "searching", tinyfish: "working", exa: "connecting" };
+const CREDIT_ORB = { firecrawl: "weaving", tavily: "searching", tinyfish: "working", exa: "connecting", adzuna: "searching", jooble: "searching", careerjet: "connecting" };
 function creditOrb(id, name) {
   const canvas = document.createElement("canvas");
   canvas.setAttribute("role", "img");
@@ -804,7 +277,7 @@ function creditOrb(id, name) {
 
 // Each service is a colour-graded card (coloured top, dark gauge, dark footer). The gauge is a half doughnut
 // (Chart.js, loaded for the charts below): the share of the plan or wallet that is left.
-const CREDIT_KIND = { firecrawl: "Crawler", tavily: "Search API", tinyfish: "Web agent", exa: "Search" };
+const CREDIT_KIND = { firecrawl: "Crawler", tavily: "Search API", tinyfish: "Web agent", exa: "Search", adzuna: "Job postings", jooble: "Job postings", careerjet: "Job postings" };
 const creditGauges = [];
 const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
 
@@ -866,7 +339,7 @@ function creditCard(p, { loading = false } = {}) {
   const li = el("li", loading ? "credit credit--loading" : "credit");
   li.dataset.provider = p.id;
   if (loading) li.setAttribute("aria-busy", "true");
-  const accent = { firecrawl: "#ffb741", tavily: "#1890ff", tinyfish: "#01c3a8", exa: "#a78bfa" }[p.id] || "#01c3a8";
+  const accent = { firecrawl: "#ffb741", tavily: "#1890ff", tinyfish: "#01c3a8", exa: "#a78bfa", adzuna: "#34d399", jooble: "#fb923c", careerjet: "#38bdf8" }[p.id] || "#01c3a8";
 
   // What this card has to say.
   const hasNumber = p.status === "ok" && p.remaining != null;
@@ -879,7 +352,7 @@ function creditCard(p, { loading = false } = {}) {
       : p.status === "ok" ? "Key saved" : "Unavailable";
   const desc = loading ? `Asking ${p.name} for your balance…`
     : hasNumber ? (p.total ? `of ${fmt(p.total)} ${p.unit === "USD" ? "" : p.unit}`.trim() : "wallet balance")
-      : p.status === "no-key" ? "Add a key to see your balance" : p.status === "ok" ? "Your balance is on its dashboard" : p.message || "No number came back.";
+      : p.status === "no-key" ? "Add a key to see your balance" : p.status === "ok" ? p.note || "Your balance is on its dashboard" : p.message || "No number came back.";
 
   // Coloured top: kind, link to the service, name, description.
   const top = el("div", "credit-top");
@@ -1036,6 +509,9 @@ const SERVICES = [
   { id: "tavily", name: "Tavily", envName: "TAVILY_API_KEY", getKey: "https://app.tavily.com/home" },
   { id: "tinyfish", name: "TinyFish", envName: "TINYFISH_API_KEY", getKey: "https://agent.tinyfish.ai" },
   { id: "exa", name: "Exa", envName: "EXA_API_KEY", getKey: "https://dashboard.exa.ai/api-keys" },
+  { id: "adzuna", name: "Adzuna", envName: "ADZUNA_APP_KEY", getKey: "https://developer.adzuna.com/signup" },
+  { id: "jooble", name: "Jooble", envName: "JOOBLE_API_KEY_DE", getKey: "https://de.jooble.org/api/about" },
+  { id: "careerjet", name: "Careerjet", envName: "CAREERJET_API_KEY", getKey: "https://www.careerjet.com/partners/api/" },
 ];
 
 function updateOverview(providers) {
@@ -1161,7 +637,7 @@ function settingRow(field) {
 function renderSettings(fields) {
   settingsFields = fields;
   removing.clear();
-  for (const [group, id] of [["ai", "settings-ai"], ["search", "settings-search"], ["custom", "settings-custom"]]) {
+  for (const [group, id] of [["ai", "settings-ai"], ["search", "settings-search"], ["jobapis", "settings-jobapis"], ["email", "settings-email"], ["custom", "settings-custom"]]) {
     const rows = fields.filter((f) => f.group === group).map(settingRow);
     const box = document.getElementById(id);
     if (group === "custom" && !rows.length) rows.push(el("p", "settings-empty", "No other keys yet."));

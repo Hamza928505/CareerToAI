@@ -26,7 +26,7 @@ export default () => {
   if ((raw.education || []).some((e) => isPlaceholder(e.school))) todos.push("education");
 
   if (todos.length) {
-    console.warn(`[profile] Still using placeholder values for: ${todos.join(", ")} — edit data/profile.json or use /editor/.`);
+    console.warn(`[profile] Still using placeholder values for: ${todos.join(", ")} — edit data/profile.json or import a JSON export from the GJUBoard editor.`);
   }
 
   return { ...profile, hasPlaceholders: todos.length > 0 };

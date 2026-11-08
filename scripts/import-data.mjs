@@ -1,13 +1,12 @@
 #!/usr/bin/env node
 /**
- * Import a careertoai-data.json exported from /editor/ on the published site.
+ * Import a profile JSON exported from the standalone GJUBoard editor.
  *
- *   npm run import-data -- ./careertoai-data.json
+ *   npm run import-data -- ./gju-profile.json
  *
  * Writes data/profile.json, data/experience.json, data/projects.json,
- * data/certificates.json and the images into src/certs/ and src/media/. This is the published-mode
- * counterpart of the editor's "Save to data/" button, and both go through the
- * same lib/apply-data.mjs so they cannot drift apart.
+ * data/certificates.json and the images into src/certs/ and src/media/ through
+ * lib/apply-data.mjs. Older CareerToAI exports use the same format.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -20,9 +19,9 @@ if (!file || file === "--help" || file === "-h") {
   console.log(`
 Import an editor export into the repository.
 
-  npm run import-data -- <careertoai-data.json>
+  npm run import-data -- <gju-profile.json>
 
-Get the file from /editor/ using the "Download .json" button. Importing
+Get the file from the GJUBoard editor using the "Download .json" button. Importing
 replaces data/profile.json, data/experience.json, data/projects.json and
 data/certificates.json entirely — the export is the full picture, not a patch.
 `);

@@ -20,6 +20,7 @@
         "search:import": "node scripts/import-search-options.mjs",
         "profile": "node scripts/build-profile-md.mjs",
         "profile:check": "node scripts/build-profile-md.mjs --check",
+        "gmail:auth": "node scripts/gmail-auth.mjs",
         "board:search": "node scripts/board-search.mjs",
         "board:demo": "node scripts/board-demo.mjs",
         "board:vendor": "node scripts/build-board-vendor.mjs"
@@ -30,6 +31,7 @@
         "esbuild": "^0.28.2",
         "exceljs": "^4.4.0",
         "jszip": "^3.10.2",
+        "nodemailer": "^10.0.16",
         "playwright": "^1.64.0",
         "sharp": "^0.35.5",
         "sweetalert2": "^11.26.25",

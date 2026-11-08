@@ -1,7 +1,7 @@
 ---
 layout: base.njk
-title: Workspace - search, review, apply
-description: Search for jobs, edit your workbook, and decide who applies from one workspace.
+title: Workspace - shortlist, apply
+description: Search for internships, edit your workbook, and decide who applies from one workspace.
 permalink: /workspace/
 noindex: true
 pageStyles: /assets/workspace.css
@@ -10,60 +10,40 @@ eleventyExcludeFromCollections: true
 ---
 
 <div class="workspace">
-<div class="ws-head hero">
-  <div>
-    <span class="eyebrow">Your German Year</span>
-    <h1>Your German Year <span class="hero-accent">starts here.</span></h1>
-    <p class="lede">Every application you send is one step closer. Pick where to begin, and we'll show you what to do next.</p>
-  </div>
-  <p class="mode" id="mode" data-state="checking">
-    <span class="pill pill--idle" id="mode-pill">Checking connection...</span>
-  </p>
-</div>
+<h1 class="visually-hidden">Workspace</h1>
 
 <div class="notice" id="published-notice" hidden>
   <p>
-    <strong>You're in preview mode.</strong> You can explore everything, and the
-    eligibility checker works right now. Saving needs your own copy.
+    <strong>You're in preview mode.</strong> You can explore everything. Searching
+    and saving need your own copy.
   </p>
   <p>
     To track your applications, run <code>npm run editor</code> on your computer.
   </p>
 </div>
 
-<!-- ---------------------------------------------------------------- Overview -->
-<section class="workspace-overview" aria-labelledby="overview-h">
-  <h2 id="overview-h" class="visually-hidden">Your application progress</h2>
-
-  <div class="stat-row" id="stats">
-    <div class="stat">
-      <span class="stat-label">Tracked</span>
-      <span class="stat-value" id="stat-total">—</span>
-      <span class="stat-note">applications in <code>job_search_tracker.xlsx</code></span>
-    </div>
-    <div class="stat">
-      <span class="stat-label">Still open</span>
-      <span class="stat-value" id="stat-open">—</span>
-      <span class="stat-note">not yet accepted, rejected or withdrawn</span>
-    </div>
-    <div class="stat">
-      <span class="stat-label">To apply</span>
-      <span class="stat-value" id="stat-toapply">—</span>
-      <span class="stat-note">decided, not sent</span>
-    </div>
-    <div class="stat">
-      <span class="stat-label">Interviews</span>
-      <span class="stat-value" id="stat-interview">—</span>
-      <span class="stat-note">invited or already sat</span>
-    </div>
+<!-- ------------------------------------------------------------------- Hero -->
+<div class="gb gb-hero">
+  <div class="gb-hero-bg" aria-hidden="true"><span class="gb-blob b1"></span><span class="gb-blob b2"></span><span class="gb-blob b3"></span>
+    <span class="gb-orb o1"><i class="fa-solid fa-graduation-cap"></i></span><span class="gb-orb o2"><i class="fa-solid fa-scale-balanced"></i></span>
+    <span class="gb-orb o3"><i class="fa-solid fa-laptop-code"></i></span><span class="gb-orb o4"><i class="fa-solid fa-language"></i></span>
   </div>
-  <div class="chart-card overview-chart" hidden>
-    <h3>How far your applications got</h3>
-    <p id="summary-chart-note" class="muted">Each stage counts everything that got that far, so the numbers only ever shrink. Every offer starts as a tracked posting.</p>
-    <p id="funnel-empty" class="notice-empty" hidden>Nothing sent yet, and that is fine. Your first application starts this chart, and every stage after it fills in as you go.</p>
-    <div id="chart-funnel" class="chart-container" aria-describedby="summary-chart-note"></div>
+  <div class="gb-hero-inner">
+    <p class="gb-eyebrow"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i> Your German Year · private, on this computer only</p>
+    <h2 id="tracker-ui-h">Your <span class="gb-grad-text">internship</span> board</h2>
+    <p class="gb-lead">Every IT internship your searches found, checked against the German Year rules. It is your <code>job_search_tracker.xlsx</code>, so edits here are edits there.</p>
+    <div class="gb-hero-cta">
+      <a class="gb-btn gb-btn-light" href="#board-results"><i class="fa-solid fa-arrow-down" aria-hidden="true"></i> Browse internships</a>
+      <button type="button" class="gb-btn gb-btn-glass" data-board-help><i class="fa-solid fa-scale-balanced" aria-hidden="true"></i> How the check works</button>
+    </div>
+    <ul class="gb-stats" aria-label="Your board at a glance">
+      <li class="gb-stat-tile"><i class="fa-solid fa-briefcase" aria-hidden="true"></i><strong data-stat="total">0</strong><span>internships</span></li>
+      <li class="gb-stat-tile"><i class="fa-solid fa-circle-check" aria-hidden="true"></i><strong data-stat="meets">0</strong><span>meet the rules</span></li>
+      <li class="gb-stat-tile"><i class="fa-solid fa-bolt" aria-hidden="true"></i><strong data-stat="fresh">0</strong><span>posted this week</span></li>
+      <li class="gb-stat-tile"><i class="fa-solid fa-building" aria-hidden="true"></i><strong data-stat="companies">0</strong><span>companies</span></li>
+    </ul>
   </div>
-</section>
+</div>
 
 <form class="svc-card" id="settings-form" autocomplete="off" aria-labelledby="credits-h">
   <header class="svc-head">
@@ -100,6 +80,27 @@ eleventyExcludeFromCollections: true
       <p class="muted">Keys are saved to <code>.env</code> on this computer. They are never shown again, and never sent to your browser or to GitHub. Type a new key to replace one, or remove it.</p>
       <h3 class="svc-sub">Search services</h3>
       <div id="settings-search" class="settings-rows"></div>
+      <h3 class="svc-sub">Free job APIs (real postings in Germany)</h3>
+      <p class="muted">The search asks these for internships in Germany. Each is free; without its key it is skipped. Saved keys apply to the next search.</p>
+      <details class="settings-how">
+        <summary>How to get each key</summary>
+        <ol>
+          <li><strong>Adzuna</strong> (250 searches a day): <a href="https://developer.adzuna.com/signup" target="_blank" rel="noopener noreferrer">sign up</a>, create an application, then copy its <em>app ID</em> and <em>app key</em> into the two Adzuna rows.</li>
+          <li><strong>Jooble</strong> (500 requests per key, ever): <a href="https://de.jooble.org/api/about" target="_blank" rel="noopener noreferrer">fill the request form on the Germany site</a>. The key arrives by e-mail. A key from jooble.org covers US listings only. A search uses about 6 requests, so search when you need to.</li>
+          <li><strong>Careerjet</strong>: <a href="https://www.careerjet.com/partners/api/" target="_blank" rel="noopener noreferrer">open a publisher account</a> and copy the key from its API page. Then fill <em>Your IP address</em> with your public IP (search "what is my IP"); Careerjet refuses searches without it.</li>
+        </ol>
+        <p class="muted">Adzuna, Jooble and Careerjet answer with their own listings; nothing is read from other sites.</p>
+      </details>
+      <div id="settings-jobapis" class="settings-rows"></div>
+      <h3 class="svc-sub">Connectors (MCP, no key)</h3>
+      <p class="muted">These come through your Claude account, so there is nothing to paste here. Connect them in Claude under Settings, Connectors.</p>
+      <div class="settings-rows">
+        <div class="settings-row"><label>Indeed</label><span>Connected through Claude. Searched by the workspace search.</span></div>
+        <div class="settings-row"><label>Apify</label><span>Connected through Claude. Searched by the workspace search for StepStone and Arbeitsagentur, through community Actors billed per result on your Apify account. Private tracker only.</span></div>
+        <div class="settings-row"><label>NVIDIA NIM</label><span>Searches LinkedIn and other boards through search APIs (Tavily, Exa, Firecrawl, Arbeitnow) with an NVIDIA model, so Claude spends no tokens there. Needs <code>NVIDIA_API_KEY</code> in <code>.env</code>. Search leads only, never opened. Private tracker only.</span></div>
+      </div>
+      <h3 class="svc-sub">Email sending (applications by email)</h3>
+      <div id="settings-email" class="settings-rows"></div>
       <h3 class="svc-sub">Other API keys</h3>
       <div id="settings-custom" class="settings-rows"></div>
       <div class="settings-add">
@@ -129,219 +130,89 @@ eleventyExcludeFromCollections: true
 <section class="journey" aria-labelledby="journey-h">
   <h2 id="journey-h" class="visually-hidden">Your journey and workspace sections</h2>
   <ol class="journey-steps" id="journey-steps">
-    <li data-stage="check" data-state="todo"><a href="#flow-check"><span class="journey-dot">1</span><strong>Check</strong><small>GJU rules</small></a></li>
-    <li data-stage="search" data-state="todo"><a href="#flow-search"><span class="journey-dot">2</span><strong>Search</strong><small>Roles and locations</small></a></li>
-    <li data-stage="toapply" data-state="todo"><a href="#flow-review"><span class="journey-dot">3</span><strong>Shortlist</strong><small>Your workbook</small></a></li>
-    <li data-stage="applied" data-state="todo"><a href="#flow-apply"><span class="journey-dot">4</span><strong>Apply</strong><small>You or your assistant</small></a></li>
-    <li data-stage="insights" data-state="todo"><a href="#flow-insights"><span class="journey-dot">5</span><strong>Insights</strong><small>Charts</small></a></li>
-    <li data-stage="tools" data-state="todo"><a href="#flow-tools"><span class="journey-dot">6</span><strong>Tools</strong><small>Commands</small></a></li>
+    <li data-stage="toapply" data-state="todo"><a href="#flow-review"><span class="journey-dot">1</span><strong>Shortlist</strong><small>Search and your board</small></a></li>
+    <li data-stage="applied" data-state="todo"><a href="#flow-apply"><span class="journey-dot">2</span><strong>Apply</strong><small>You or your assistant</small></a></li>
+    <li data-stage="insights" data-state="todo"><a href="#flow-insights"><span class="journey-dot">3</span><strong>Insights</strong><small>Charts</small></a></li>
+    <li data-stage="tools" data-state="todo"><a href="#flow-tools"><span class="journey-dot">4</span><strong>Tools</strong><small>Commands</small></a></li>
   </ol>
-  <p class="journey-next" id="journey-next" role="status" aria-live="polite"><strong>Start with one posting.</strong> <span>Check it against the GJU rules below, then add it to your list. One is enough to begin.</span></p>
-</section>
-
-<!-- ------------------------------------------------------ Eligibility check -->
-<section class="workspace-utility workspace-check workspace-panel" id="flow-check" aria-labelledby="check-h">
-<details class="workspace-tools" open>
-  <summary><span>GJU eligibility checker</span><small>Check duration, location, pay, and language</small></summary>
-  <div class="utility-content">
-  <h2 id="check-h">Check a posting against the GJU rules</h2>
-  <p class="lede">
-    The same thresholds the tracker scores with, read from
-    <code>data/gju-rules.json</code>. This runs in your browser and sends nothing
-    anywhere.
-  </p>
-
-  <form class="card checker" id="checker" novalidate>
-    <div class="field-row">
-      <p class="field">
-        <label><input type="checkbox" id="f-werkstudent" name="werkstudent"> Werkstudent (part-time, about {{ gju.rules.werkstudentHoursPerMonth }} hours a month)</label>
-        <span class="help">Ticking this ignores the duration rule: a Werkstudent role is not measured in weeks.</span>
-      </p>
-      <p class="field">
-        <label for="f-weeks">Duration in weeks <span aria-hidden="true">*</span></label>
-        <input type="number" id="f-weeks" name="weeks" value="{{ gju.rules.minWeeks }}" min="{{ gju.rules.minWeeks }}" max="52" inputmode="numeric" required>
-        <span class="help">GJU requires at least {{ gju.rules.minWeeks }} weeks.</span>
-      </p>
-
-      <p class="field">
-        <label for="f-country">Country <span aria-hidden="true">*</span></label>
-        <select id="f-country" name="country" required>
-          {% for c in gju.countries %}<option value="{{ c[0] }}"{% if c[0] == "Germany" %} selected{% endif %}>{{ c[0] }}</option>{% endfor %}
-        </select>
-        <span class="help">Anywhere outside the German-speaking countries needs approval.</span>
-      </p>
-    </div>
-
-    <div class="field-row">
-      <p class="field">
-        <label for="f-paid">Paid?</label>
-        <select id="f-paid" name="paid">
-          <option value="">Not stated</option>
-          <option value="Yes">Yes</option>
-          <option value="No">No — unpaid</option>
-        </select>
-      </p>
-
-      <p class="field">
-        <label for="f-pay">Pay, EUR per month</label>
-        <input type="number" id="f-pay" name="pay" min="0" step="10" inputmode="numeric">
-        <span class="help">Unpaid is allowed. The {{ gju.rules.minMonthlySalary }} EUR/month only matters if you stay beyond the year (visa extension) and your blocked account is not refilled. Leave this blank if you don't know.</span>
-      </p>
-
-      <p class="field">
-        <label for="f-language">Working language</label>
-        <select id="f-language" name="language">
-          <option value="">Not stated</option>
-          <option value="English">English</option>
-          <option value="Both" selected>Both</option>
-          <option value="German">German only</option>
-        </select>
-      </p>
-    </div>
-
-    <p class="field">
-      <label for="f-german">Your German level</label>
-      <select id="f-german" name="german">
-        <option value="A1">A1</option><option value="A2">A2</option>
-        <option value="B1">B1</option><option value="B2" selected>B2</option>
-        <option value="C1">C1</option><option value="C2">C2</option>
-      </select>
-      <span class="help">German-only postings score full marks from B2 upward.</span>
-    </p>
-
-    <div class="checker-actions">
-      <button class="btn btn--primary" type="submit"><i class="fa-solid fa-check-double btn-icon-spacing"></i>Check it</button>
-      <button class="btn" type="reset"><i class="fa-solid fa-eraser btn-icon-spacing"></i>Clear</button>
-    </div>
-  </form>
-
-  <div id="verdict" class="verdict" hidden aria-live="polite"></div>
-  </div>
-</details>
-</section>
-
-<!-- -------------------------------------------------------- Search Strategy -->
-<section class="strategy workspace-flow workspace-panel" id="flow-search" aria-labelledby="strategy-ui-h">
-  <div class="flow-heading strategy-heading">
-    <div class="flow-heading-copy">
-      <span class="flow-step">01 / Search</span>
-      <h2 id="strategy-ui-h">Job search strategy</h2>
-      <p class="lede">Pick the work you want and where you want to do it. Start your search right here.</p>
-    </div>
-    <a class="flow-next-link" href="#flow-review">Go to your workbook <i class="fa-solid fa-arrow-down" aria-hidden="true"></i></a>
-  </div>
-
-  {% set strategyGroups = [
-    { key: 'roles', tab: 'Roles', title: 'Roles to look for', help: 'Choose the fields that match your work and interests.', options: ['Software Engineering', 'Backend', 'Full-Stack .NET', 'Computer Vision', 'Machine Learning', 'Frontend', 'Data Engineering', 'Cloud / DevOps'] },
-    { key: 'cities', tab: 'Places', title: 'Where to search', help: 'Select cities or a wider search area.', options: ['Berlin', 'Remote', 'Germany-wide', 'München', 'Hamburg', 'Frankfurt am Main', 'Köln', 'Stuttgart', 'Düsseldorf', 'Leipzig'] },
-    { key: 'types', tab: 'Types', title: 'Opportunity type', help: 'Choose the kinds of positions you want.', options: tracker.opportunityTypes }
-  ] %}
-  <form id="strategy-form" class="strategy-form sx-card">
-    <header class="sx-head">
-      <div class="sx-tabs" role="tablist" aria-label="What to search for">
-        {% for group in strategyGroups %}
-        <button type="button" role="tab" id="sx-tab-{{ group.key }}" class="sx-tab" data-sx-tab="{{ group.key }}" data-group="{{ group.key }}" aria-controls="sx-panel-{{ group.key }}" aria-selected="{{ 'true' if loop.first else 'false' }}"{% if not loop.first %} tabindex="-1"{% endif %}>{{ group.tab }}<span class="sx-count" data-sx-count="{{ group.key }}">0</span></button>
-        {% endfor %}
-      </div>
-      <div class="sx-total">
-        <strong id="strategy-count">0 search preferences selected</strong>
-        <p id="strategy-save-status" role="status" aria-live="polite">Your preferences are saved when you start a search.</p>
-      </div>
-    </header>
-
-    <div class="sx-body">
-      {% for group in strategyGroups %}
-      <div class="strategy-group sx-panel" id="sx-panel-{{ group.key }}" data-group="{{ group.key }}" role="tabpanel" aria-labelledby="strategy-{{ group.key }}-h" aria-describedby="strategy-{{ group.key }}-help"{% if not loop.first %} hidden{% endif %}>
-        <div class="strategy-group-copy">
-          <h3 id="strategy-{{ group.key }}-h">{{ group.title }}</h3>
-          <p id="strategy-{{ group.key }}-help">{{ group.help }}</p>
-        </div>
-        <div class="strategy-group-controls">
-          <div class="strategy-options" data-strategy-options="{{ group.key }}">
-            {% for option in group.options %}
-            <label class="strategy-choice"><input type="checkbox" name="{{ group.key }}" value="{{ option }}"><span>{{ option }}<i class="fa-solid fa-check" aria-hidden="true"></i></span></label>
-            {% endfor %}
-          </div>
-          <div class="strategy-add">
-            <label for="strat-custom-{{ group.key }}">{% if group.key == 'roles' %}Search all roles or add your own{% elif group.key == 'cities' %}Search all German cities or add a location{% else %}Add another opportunity type{% endif %}</label>
-            <div class="strategy-add-controls">
-              <input id="strat-custom-{{ group.key }}" type="search" maxlength="80" autocomplete="off" placeholder="{% if group.key == 'roles' %}Search a job title{% elif group.key == 'cities' %}Search a city{% else %}Type an opportunity type{% endif %}" data-strategy-custom="{{ group.key }}"{% if group.key != 'types' %} data-strategy-search="{{ group.key }}" aria-controls="strat-results-{{ group.key }}"{% endif %}>
-              <button class="btn" type="button" data-strategy-add="{{ group.key }}">{{ 'Add custom' if group.key != 'types' else 'Add' }}</button>
-              {% if group.key == 'roles' %}<button type="button" class="btn strategy-suggest" id="btn-suggest-strategy" disabled><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i> Suggest from my files</button>{% endif %}
-            </div>
-            {% if group.key == 'roles' %}<button class="strategy-browse" type="button" data-strategy-browse="roles" aria-controls="strat-results-roles" aria-expanded="false">Browse all roles <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></button>{% endif %}
-            {% if group.key != 'types' %}<div class="strategy-results" id="strat-results-{{ group.key }}" data-strategy-results="{{ group.key }}" hidden></div>{% endif %}
-          </div>
-        </div>
-      </div>
-      {% endfor %}
-    </div>
-
-    <div class="sx-summary">
-      <span class="sx-summary-label">Your search</span>
-      <ul class="sx-chips" id="sx-chips" aria-label="Everything you chose so far"><li class="sx-empty">Nothing chosen yet.</li></ul>
-    </div>
-
-    <footer class="sx-foot">
-      <label class="search-profile"><input type="checkbox" id="search-use-profile" disabled> Score new jobs against my profile files <small id="search-ai-hint">Needs an AI provider in .env and your uploaded student files.</small></label>
-      <div class="sx-actions">
-        <button type="submit" class="btn" id="btn-save-strategy">Save strategy</button>
-        <button class="btn btn--primary" id="btn-start-search" type="button"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i> Search today's postings</button>
-      </div>
-    </footer>
-
-    <div class="sx-run">
-      <p id="search-run-status" role="status" aria-live="polite">Searches the 20 listed platforms. Only live individual postings with a verified publication date of today are added. Your notes and decisions stay with each job.</p>
-      <details class="search-sources"><summary>Show platforms included</summary><ul>
-        <li>Indeed · Jobmensa · Monster · StepStone · Arbeitsagentur Jobbörse · Stellenanzeigen · academics · Kimeta · Jobworld · meinestadt.de</li>
-        <li>meinpraktikum.de · Praktikumsstellen · praktika.de · praktikum.info · praktikum.de · connecticum · Jobware · UNICUM · bonding · Absolventa</li>
-      </ul></details>
-    </div>
-  </form>
+  <p class="journey-next" id="journey-next" role="status" aria-live="polite"><strong>Start with a search.</strong> <span>On the Shortlist, one search finds new IT internships all over Germany and checks each against the GJU rules for you.</span></p>
 </section>
 
 <!-- ----------------------------------------------------------- Review workspace -->
 <section class="workspace-flow review-flow workspace-panel" id="flow-review" aria-labelledby="tracker-ui-h">
-  <div class="flow-heading">
-    <div class="flow-heading-copy">
-      <span class="flow-step">02 / Review & edit</span>
-      <h2 id="tracker-ui-h">Make your shortlist</h2>
-      <p class="lede">Your <code>job_search_tracker.xlsx</code> workbook opens here. Edit cells, add notes, and decide who applies to each job.</p>
+
+  <div class="sx-card shortlist-search">
+    <footer class="sx-foot">
+      <label class="search-profile"><input type="checkbox" id="search-use-profile" disabled> Score new jobs against my profile files <small id="search-ai-hint">Needs an AI provider in .env and your uploaded student files.</small></label>
+      <div class="sx-actions">
+        <button class="btn btn--primary" id="btn-start-search" type="button"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i> Search new postings</button>
+      </div>
+    </footer>
+    <div class="sx-run">
+      <p id="search-run-status" role="status" aria-live="polite">One search covers every IT internship in Germany, in German and English, from free job sources, from LinkedIn and other boards through an NVIDIA NIM model (search APIs only, no Claude tokens), and from Indeed, StepStone and Arbeitsagentur through your Claude account's connectors. Each internship shows which of them found it, and you can filter by it. It adds only internships posted in the last 7 days that the GJU rules do not rule out: 20 weeks to 6 months, in Germany. Pay and language level do not count against a posting. With AI scoring on, it also leaves out what scores under 10. Your notes and decisions stay with each job.</p>
     </div>
-    <span class="workbook-label"><i class="fa-regular fa-file-excel" aria-hidden="true"></i> Excel workbook</span>
   </div>
 
-  <div class="tracker-guidance"><i class="fa-regular fa-lightbulb" aria-hidden="true"></i><p>Set <strong>Apply? = Yes</strong> for jobs you want. Under <strong>Who applies</strong>, choose <strong>Me</strong> or <strong>Assistant</strong>. Open a row's details for longer notes and every field.</p></div>
+  <div class="tracker-guidance"><i class="fa-regular fa-lightbulb" aria-hidden="true"></i><p>Open a job's <i class="fa-solid fa-circle-info" aria-hidden="true"></i> <strong>information</strong> to see every field. There, set <strong>Apply? = Yes</strong> for jobs you want, and under <strong>Who applies</strong> choose <strong>Me</strong> or <strong>Assistant</strong>.</p></div>
 
-  <div class="tracker-toolbar">
-    <label class="tracker-filter">Find a job<input id="tracker-filter" type="search" placeholder="Company, role, city, keyword" /></label>
-    <label>Opportunity type<select id="tracker-opportunity-filter"><option value="">Any type</option>{% for type in tracker.opportunityTypes %}<option value="{{ type }}">{{ type }}</option>{% endfor %}<option value="_unspecified">Unspecified</option></select></label>
-    <label>City<select id="tracker-city-filter"><option value="">Any city</option></select></label>
-    <label>Minimum match<select id="tracker-score-filter"><option value="">Any score</option><option value="50">50+</option><option value="60">60+</option><option value="70">70+</option><option value="80">80+</option><option value="90">90+</option><option value="_unknown">Not scored</option></select></label>
-    <label>Status<select id="tracker-status-filter"><option value="">Any status</option></select></label>
-  </div>
-  <details class="tracker-more-filters" id="tracker-more-filters">
-    <summary>More filters <span id="tracker-filter-count"></span></summary>
-    <div class="tracker-toolbar tracker-toolbar--more">
-      <label>Date field<select id="tracker-date-field"><option value="date_posted">Date posted</option><option value="date_found">Date found</option><option value="deadline">Deadline</option><option value="date_applied">Date sent</option><option value="follow_up">Follow-up date</option><option value="last_contact_date">Last contact date</option><option value="start_date">Start date</option><option value="next_action_date">Next action date</option><option value="interview_date">Interview date</option><option value="response_date">Response date</option></select></label>
-      <label>From<input id="tracker-date-from" type="date" /></label>
-      <label>To<input id="tracker-date-to" type="date" /></label>
-      <label>Date available<select id="tracker-date-status-filter"><option value="">Any</option><option value="yes">Known date</option><option value="no">Missing date</option></select></label>
-      <label>Decision<select id="tracker-decision-filter"><option value="">Any decision</option><option>Yes</option><option>No</option><option>Maybe</option></select></label>
-      <label>Who applies<select id="tracker-applicant-filter"><option value="">Anyone</option><option>Me</option><option>Assistant</option></select></label>
-      <label>Work mode<select id="tracker-work-mode-filter"><option value="">Any mode</option><option>On-site</option><option>Hybrid</option><option>Remote</option><option value="_unspecified">Unspecified</option></select></label>
-      <label>Source<select id="tracker-source-filter"><option value="">Any source</option><option>LinkedIn</option><option>Company site</option><option>Referral</option><option>Job fair</option><option>Other</option></select></label>
-      <label>Posting link<select id="tracker-link-filter"><option value="">Any</option><option value="yes">Available</option><option value="no">Missing</option></select></label>
-      <label>Any other column<select id="tracker-field-filter"><option value="">Choose a column</option></select></label>
-      <label>Contains<input id="tracker-value-filter" type="search" placeholder="Value in chosen column" /></label>
-      <button class="btn tracker-clear-filters" id="tracker-clear-filters" type="button">Clear filters</button>
+  <details class="gb gb-panel" id="board-filter-panel" open>
+    <summary class="gb-panel-head">
+      <span class="gb-chip-icon"><i class="fa-solid fa-sliders" aria-hidden="true"></i></span>
+      <h3>Filters</h3>
+      <span class="gb-count-badge" id="board-active-count" hidden>0</span>
+      <span class="gb-hint">Search, pick from the lists, or set a range</span>
+      <i class="fa-solid fa-chevron-down gb-caret" aria-hidden="true"></i>
+    </summary>
+    <div class="gb-panel-body">
+      <div class="gb-filter-grid">
+        <div class="gb-field s4"><label class="gb-field-label" for="board-q"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>Search</label>
+          <input id="board-q" class="gb-control" type="search" placeholder="Title, company, city or skill" autocomplete="off" enterkeyhint="search"></div>
+        <div class="gb-field s4" id="board-f-skills"></div>
+        <div class="gb-field s4" id="board-f-status"></div>
+        <div class="gb-field" id="board-f-city"></div>
+        <div class="gb-field" id="board-f-kind"></div>
+        <div class="gb-field" id="board-f-gju"></div>
+        <div class="gb-field" id="board-f-apply"></div>
+        <div class="gb-field" id="board-f-german"></div>
+        <div class="gb-field" id="board-f-english"></div>
+        <div class="gb-field" id="board-f-applicant"></div>
+        <div class="gb-field" id="board-f-recent"></div>
+        <div class="gb-field" id="board-f-by"></div>
+        <div class="gb-field" id="board-f-sites"></div>
+        <div class="gb-field"><label class="gb-field-label" for="board-min-weeks"><i class="fa-solid fa-hourglass-half" aria-hidden="true"></i>At least (weeks)</label>
+          <input id="board-min-weeks" class="gb-control" type="number" inputmode="numeric" min="1" max="104" step="1" placeholder="e.g. 20"></div>
+        <div class="gb-field"><label class="gb-field-label" for="board-min-pay"><i class="fa-solid fa-euro-sign" aria-hidden="true"></i>Pay from (€/month)</label>
+          <input id="board-min-pay" class="gb-control" type="number" inputmode="numeric" min="0" max="20000" step="50" placeholder="e.g. 800"></div>
+        <div class="gb-field"><label class="gb-field-label" for="board-max-pay"><i class="fa-solid fa-euro-sign" aria-hidden="true"></i>Pay up to (€/month)</label>
+          <input id="board-max-pay" class="gb-control" type="number" inputmode="numeric" min="0" max="20000" step="50" placeholder="e.g. 1500"></div>
+        <div class="gb-field"><label class="gb-field-label" for="board-from"><i class="fa-solid fa-calendar-days" aria-hidden="true"></i>Posted from</label>
+          <input id="board-from" class="gb-control" type="date"></div>
+        <div class="gb-field"><label class="gb-field-label" for="board-to"><i class="fa-solid fa-calendar-check" aria-hidden="true"></i>Posted until</label>
+          <input id="board-to" class="gb-control" type="date"></div>
+      </div>
+      <div class="gb-active-row" id="board-active-row" aria-label="Active filters"></div>
     </div>
   </details>
-  <div class="tracker-view-bar">
-    <label for="tracker-column-view">Columns to show <select id="tracker-column-view"><option value="review">Shortlist essentials</option><option value="all">All columns</option><option value="contact">Company & contact</option><option value="requirements">Job requirements</option><option value="application">Application details</option></select></label>
-    <span id="tracker-total-count" class="tracker-count">Loading tracker...</span>
-    <button class="btn tracker-expand" id="tracker-expand" type="button" aria-pressed="false" title="Open the shortlist as a full-screen window (Esc closes it)"><i class="fa-solid fa-expand" aria-hidden="true"></i> <span>Open as window</span></button>
+
+  <div class="gb gb-toolbar" id="board-results">
+    <div class="gb-toolbar-title">
+      <span class="gb-chip-icon"><i class="fa-solid fa-briefcase" aria-hidden="true"></i></span>
+      <div><h3>Internships</h3><p class="gb-result-count" id="board-result-count" aria-live="polite">Loading…</p></div>
+    </div>
+    <div class="gb-toolbar-tools">
+      <label class="gb-view-select" for="tracker-column-view"><span>Show</span> <select id="tracker-column-view" class="gb-control"><option value="results">Board</option><option value="review">Shortlist essentials</option><option value="all">All columns</option><option value="contact">Company &amp; contact</option><option value="requirements">Job requirements</option><option value="application">Application details</option></select></label>
+      <div class="gb-field gb-compact" id="board-f-sort"></div>
+      <div class="gb-view-toggle" id="board-view-toggle" role="group" aria-label="Board layout">
+        <button type="button" id="board-view-table" aria-pressed="true" aria-label="Table view" title="Table view"><i class="fa-solid fa-table-list" aria-hidden="true"></i></button>
+        <button type="button" id="board-view-cards" aria-pressed="false" aria-label="Card view" title="Card view"><i class="fa-solid fa-table-cells-large" aria-hidden="true"></i></button>
+      </div>
+      <label class="gb-pick-all" id="board-pick-label"><input type="checkbox" class="gb-check" id="board-pick-all"> <span>Tick all shown</span> <span class="gb-ticked" id="board-ticked" hidden>0</span></label>
+      <button type="button" class="gb-btn gb-btn-primary" id="board-dl" aria-haspopup="menu" aria-expanded="false"><i class="fa-solid fa-file-excel" aria-hidden="true"></i> Download Excel <i class="fa-solid fa-chevron-down" aria-hidden="true"></i></button>
+      <button class="gb-btn tracker-expand" id="tracker-expand" type="button" aria-pressed="false" title="Open the shortlist as a full-screen window (Esc closes it)"><i class="fa-solid fa-expand" aria-hidden="true"></i> <span>Open as window</span></button>
+    </div>
   </div>
+  <div class="gb gb-results" id="board-list" aria-live="off"></div>
+  <div class="gb gb-more"><button type="button" class="gb-btn" id="board-more" hidden><i class="fa-solid fa-angles-down" aria-hidden="true"></i> Show more</button></div>
 
   <div class="shadcn-table-wrap" id="tracker-table-wrap" hidden>
     <div class="shadcn-table-scroll" tabindex="0" role="region" aria-label="Editable workbook. Scroll horizontally to see more columns.">
@@ -363,7 +234,8 @@ eleventyExcludeFromCollections: true
       <button class="btn btn--primary" id="btn-save-tracker" type="button"><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> Save changes</button>
       <button class="btn" id="btn-add-row" type="button"><i class="fa-solid fa-plus" aria-hidden="true"></i> Add row</button>
       <button class="btn" id="btn-reload-tracker" type="button"><i class="fa-solid fa-rotate" aria-hidden="true"></i> Reload workbook</button>
-      <a class="btn" id="btn-download-tracker" href="/__editor/excel" download="job_search_tracker.xlsx"><i class="fa-solid fa-download" aria-hidden="true"></i> Download Excel</a>
+      <button class="btn" id="btn-clear-tracker" type="button"><i class="fa-solid fa-trash" aria-hidden="true"></i> Delete all applications</button>
+      <a class="btn" id="btn-download-tracker" href="/__editor/excel" download="job_search_tracker.xlsx"><i class="fa-solid fa-download" aria-hidden="true"></i> Download workbook</a>
     </div>
     <p id="tracker-status" role="status" aria-live="polite">Loading your workbook...</p>
   </div>
@@ -373,7 +245,7 @@ eleventyExcludeFromCollections: true
 <section class="workspace-flow apply-flow workspace-panel" id="flow-apply" aria-labelledby="apply-ui-h">
   <div class="flow-heading">
     <div class="flow-heading-copy">
-      <span class="flow-step">03 / Apply</span>
+      <span class="flow-step">02 / Apply</span>
       <h2 id="apply-ui-h">Take the next step</h2>
       <p class="lede">Review the jobs assigned to you and to your assistant. You confirm before the assistant starts submitting.</p>
     </div>
@@ -385,6 +257,8 @@ eleventyExcludeFromCollections: true
       <h3>Assistant's queue</h3>
       <p id="apply-summary" role="status" aria-live="polite">Loading selected applications...</p>
       <p class="apply-criteria">Jobs assigned to <strong>Assistant</strong>, with <strong>Apply? = Yes</strong> and <strong>To apply</strong>, appear here.</p>
+      <button class="btn" id="btn-assign-applicant" type="button"><i class="fa-solid fa-user-check" aria-hidden="true"></i> Let the assistant take what it can</button>
+      <p class="apply-criteria">Reads the jobs shown in the tracker that are yours (<strong>Me</strong>, <strong>Apply? = Yes</strong>, <strong>To apply</strong>) and changes <strong>Applicant</strong> to Assistant where it can apply. Nothing is sent.</p>
       <button class="btn btn--primary" id="btn-apply-selected" type="button"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i> Review & apply</button>
       <p id="apply-status" role="status" aria-live="polite">Your first application is previewed before submission.</p>
     </div>
@@ -393,7 +267,7 @@ eleventyExcludeFromCollections: true
       <p id="apply-contact">Loading the contact details saved in your profile...</p>
       <p id="apply-tools" role="status">Checking your application connection...</p>
       <p>Web forms use your saved contact details and application documents. Email applications need a connected email account and sending tool; until then, they are marked <strong>Needs input</strong>.</p>
-      <a href="{{ '/editor/' | url }}" class="flow-next-link">Update profile details <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+      <a href="https://hamza928505.github.io/GJUYearKit/editor.html" class="flow-next-link">Edit profile in GJUBoard <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
     </aside>
   </div>
   <div id="apply-queue" class="apply-queue" aria-label="Selected applications"></div>

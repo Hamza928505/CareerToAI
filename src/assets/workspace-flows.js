@@ -1,5 +1,7 @@
+import { createBoard } from './workspace-board.js';
+
 // The three local workspace flows share one workbook snapshot and revision.
-export async function initWorkspaceFlows({ local, api, Swal, dialog, readStrategy, applyStrategy, onRows }) {
+export async function initWorkspaceFlows({ local, api, Swal, dialog, onRows }) {
   const $ = (id) => document.getElementById(id);
   let rows = [], columns = [], enums = {}, revision = null;
   let page = 0, dirty = false, loaded = false, busy = false;
@@ -8,14 +10,15 @@ export async function initWorkspaceFlows({ local, api, Swal, dialog, readStrateg
   const pageSize = 12;
   const status = $('tracker-status');
   const groups = {
-    review: ['company', 'position', 'job_id', 'date_posted', 'match_score', 'job_url', 'city', 'deadline', 'date_found', 'opportunity_type', 'priority', 'role_fit', 'apply', 'applicant', 'status', 'assistant_state', 'next_action', 'notes'],
+    review: ['company', 'position', 'job_id', 'date_posted', 'match_score', 'gju_check', 'job_url', 'city', 'deadline', 'date_found', 'opportunity_type', 'priority', 'role_fit', 'apply', 'applicant', 'status', 'assistant_state', 'next_action', 'notes'],
     contact: ['company', 'position', 'website', 'address', 'maps_link', 'commute', 'contact_person', 'contact_email', 'referral', 'phone'],
-    requirements: ['company', 'position', 'opportunity_type', 'work_model', 'duration', 'start_date', 'deadline', 'full_part', 'internship_type', 'paid', 'salary', 'req_german', 'req_english', 'req_skills', 'missing_reqs', 'visa_req', 'match_score', 'why_match'],
+    requirements: ['company', 'position', 'opportunity_type', 'work_model', 'duration', 'start_date', 'deadline', 'full_part', 'internship_type', 'paid', 'salary', 'req_german', 'req_english', 'req_skills', 'missing_reqs', 'visa_req', 'match_score', 'why_match', 'gju_check'],
     application: ['company', 'position', 'apply', 'applicant', 'tailored', 'documents_used', 'app_method', 'app_url', 'date_applied', 'follow_up', 'status', 'answer', 'interview_date', 'next_action', 'notes'],
   };
   const longFields = new Set(['position', 'notes', 'reason', 'req_skills', 'missing_reqs', 'why_match', 'benefits', 'response_summary']);
-  const mutationIds = ['btn-add-row', 'btn-save-tracker', 'btn-reload-tracker', 'btn-apply-selected'];
-  const filterIds = ['tracker-filter', 'tracker-opportunity-filter', 'tracker-city-filter', 'tracker-score-filter', 'tracker-status-filter', 'tracker-date-field', 'tracker-date-from', 'tracker-date-to', 'tracker-date-status-filter', 'tracker-decision-filter', 'tracker-applicant-filter', 'tracker-work-mode-filter', 'tracker-source-filter', 'tracker-link-filter', 'tracker-field-filter', 'tracker-value-filter'];
+  const mutationIds = ['btn-clear-tracker', 'btn-add-row','btn-save-tracker', 'btn-reload-tracker', 'btn-apply-selected', 'btn-assign-applicant'];
+  // The rows the board's filters let through, in its order: the spreadsheet views and "Who applies" use the same ones.
+  let shown = [];
 
   function postingId(value) {
     try {
@@ -41,11 +44,9 @@ export async function initWorkspaceFlows({ local, api, Swal, dialog, readStrateg
   function controls() {
     mutationIds.forEach((id) => { if ($(id)) $(id).disabled = !local || busy || (!loaded && id !== 'btn-reload-tracker'); });
     $('btn-start-search').disabled = !local || busy;
-    $('btn-suggest-strategy').disabled = !local || busy || !aiReady;
     $('search-use-profile').disabled = !local || busy || !aiReady;
     document.querySelectorAll('.apply-tailor').forEach((button) => { button.disabled = !local || busy || !aiReady; });
-    $('btn-save-strategy').disabled = !local || busy;
-    document.querySelectorAll('#tracker-table input, #tracker-table select, #tracker-table textarea, #tracker-table button').forEach((input) => { input.disabled = busy; });
+    document.querySelectorAll('#tracker-table input, #tracker-table select, #tracker-table textarea, #tracker-table button, #board-list select, #board-list button').forEach((input) => { input.disabled = busy; });
     $('tracker-table-wrap').setAttribute('aria-busy', String(busy));
     $('btn-download-tracker').setAttribute('aria-disabled', String(!local || busy));
   }
@@ -133,45 +134,23 @@ export async function initWorkspaceFlows({ local, api, Swal, dialog, readStrateg
     modal.addEventListener('close', () => modal.remove()); modal.showModal();
   }
 
-  function matchingRows() {
-    const query = $('tracker-filter').value.trim().toLowerCase();
-    const type = $('tracker-opportunity-filter').value;
-    const city = $('tracker-city-filter').value;
-    const minimum = $('tracker-score-filter').value;
-    const dateField = $('tracker-date-field').value;
-    const from = $('tracker-date-from').value;
-    const to = $('tracker-date-to').value;
-    const dateStatus = $('tracker-date-status-filter').value;
-    const workMode = $('tracker-work-mode-filter').value;
-    const source = $('tracker-source-filter').value;
-    const link = $('tracker-link-filter').value;
-    const field = $('tracker-field-filter').value;
-    const value = $('tracker-value-filter').value.trim().toLowerCase();
-    return rows.filter((row) =>
-      (!query || Object.values(row).some((value) => String(value || '').toLowerCase().includes(query))) &&
-      (!type || (type === '_unspecified' ? !row.opportunity_type : row.opportunity_type === type)) &&
-      (!city || row.city === city) &&
-      (!minimum || (minimum === '_unknown' ? row.match_score === '' || row.match_score == null : row.match_score !== '' && Number(row.match_score) >= Number(minimum))) &&
-      (!from || Boolean(row[dateField]) && row[dateField] >= from) &&
-      (!to || Boolean(row[dateField]) && row[dateField] <= to) &&
-      (!dateStatus || (dateStatus === 'yes' ? Boolean(row[dateField]) : !row[dateField])) &&
-      (!workMode || (workMode === '_unspecified' ? !row.work_model : row.work_model === workMode)) &&
-      (!source || row.source === source) &&
-      (!link || (link === 'yes' ? Boolean(row.job_url) : !row.job_url)) &&
-      (!field || !value || String(row[field] || '').toLowerCase().includes(value)) &&
-      (!$('tracker-decision-filter').value || row.apply === $('tracker-decision-filter').value) &&
-      (!$('tracker-status-filter').value || row.status === $('tracker-status-filter').value) &&
-      (!$('tracker-applicant-filter').value || (row.applicant || 'Me') === $('tracker-applicant-filter').value));
+  function render() {
+    board.load(rows, enums);
+    renderQueue(); onRows(rows); controls();
   }
 
-  function render() {
+  /** The spreadsheet views: the board's rows as editable cells, a page at a time. The Board view is drawn by workspace-board.js. */
+  function renderGrid(matches, reset) {
+    shown = matches;
+    if (reset) page = 0;
     const choice = $('tracker-column-view').value;
+    $('tracker-table-wrap').hidden = choice === 'results';
+    if (choice === 'results') return;
     const visible = choice === 'all' ? columns : (groups[choice] || groups.review).map((key) => columns.find((col) => col.key === key)).filter(Boolean);
     const head = $('tracker-thead-tr'); head.replaceChildren();
     for (const label of [...visible.map((col) => col.header), 'Row actions']) {
       const th = document.createElement('th'); th.scope = 'col'; th.textContent = label; head.append(th);
     }
-    const matches = matchingRows();
     const pageCount = Math.max(1, Math.ceil(matches.length / pageSize)); page = Math.max(0, Math.min(page, pageCount - 1));
     const body = $('tracker-tbody'); body.replaceChildren();
     matches.slice(page * pageSize, (page + 1) * pageSize).forEach((row) => {
@@ -212,7 +191,8 @@ export async function initWorkspaceFlows({ local, api, Swal, dialog, readStrateg
         td.append(field(column, row, (value) => { row[column.key] = value; if (column.key === 'match_score') row.why_match = 'Manually adjusted in tracker.'; updateSupplement(); markDirty(); }), supplement);
         updateSupplement();
         const note = button(row._cellNotes?.[column.key] ? 'Edit note' : '+ Note', () => editNote(row, column, note), 'tracker-cell-note');
-        note.setAttribute('aria-label', `Note on ${column.header}, ${row.company || 'new job'}`); td.append(note); tr.append(td);
+        note.setAttribute('aria-label', `Note on ${column.header}, ${row.company || 'new job'}`); td.append(note);
+        tr.append(td);
       });
       const actions = document.createElement('td'); actions.className = 'tracker-row-actions';
       actions.append(button('All fields', () => editRow(row)), button('Duplicate', () => {
@@ -228,12 +208,9 @@ export async function initWorkspaceFlows({ local, api, Swal, dialog, readStrateg
       const tr = document.createElement('tr'), td = document.createElement('td'); td.colSpan = visible.length + 1;
       td.textContent = rows.length ? 'No jobs match these filters.' : 'Your workbook is empty. Search for jobs or add a row to begin.'; tr.append(td); body.append(tr);
     }
-    $('tracker-table-wrap').hidden = false;
-    $('tracker-total-count').textContent = `${matches.length} of ${rows.length} jobs`;
-    $('tracker-filter-count').textContent = `${filterIds.filter(id => !['tracker-date-field', 'tracker-field-filter', 'tracker-value-filter'].includes(id) && $(id).value).length + ($('tracker-field-filter').value && $('tracker-value-filter').value ? 1 : 0)} active`;
     $('tracker-page').textContent = `Page ${page + 1} of ${pageCount}`;
     $('tracker-prev').disabled = page === 0; $('tracker-next').disabled = page === pageCount - 1;
-    renderQueue(); onRows(rows); controls();
+    controls();
   }
 
   function renderQueue() {
@@ -316,17 +293,7 @@ export async function initWorkspaceFlows({ local, api, Swal, dialog, readStrateg
     rows = data.rows; columns = data.columns; enums = data.enums || {};
     enums.statuses ||= data.statuses; enums.applyDecisions ||= data.decisions;
     revision = data.revision; loaded = true; dirty = false;
-    const cityFilter = $('tracker-city-filter');
-    const chosenCity = cityFilter.value;
-    cityFilter.replaceChildren(new Option('Any city', ''), ...[...new Set(rows.map(row => row.city).filter(Boolean))].sort((a, b) => a.localeCompare(b)).map(city => new Option(city, city)));
-    cityFilter.value = chosenCity;
-    const fieldFilter = $('tracker-field-filter');
-    const chosenField = fieldFilter.value;
-    fieldFilter.replaceChildren(new Option('Choose a column', ''), ...columns.map(column => new Option(column.header, column.key)));
-    fieldFilter.value = chosenField;
-    const selected = $('tracker-status-filter').value;
-    $('tracker-status-filter').replaceChildren(new Option('Any status', ''), ...optionsFor({ enum: 'statuses' }).map((value) => new Option(value, value)));
-    $('tracker-status-filter').value = selected; render();
+    render();
   }
 
   async function reload() {
@@ -350,7 +317,10 @@ export async function initWorkspaceFlows({ local, api, Swal, dialog, readStrateg
     finally { busy = false; controls(); }
   }
 
-  for (const id of [...filterIds, 'tracker-column-view']) $(id).addEventListener('input', () => { page = 0; if (loaded) render(); });
+  const board = createBoard({
+    Swal, dialog, rules: JSON.parse($('gju-rules').textContent).rules || {}, info: (row) => editRow(row), onFiltered: renderGrid,
+    statusField: (row) => field(columns.find((column) => column.key === 'status'), row, (value) => { row.status = value; markDirty(); }),
+  });
   // Full-window editing: the same table, filters and Save button, laid out compactly so every column fits.
   const expandButton = $('tracker-expand'), reviewSection = $('flow-review');
   function setExpanded(on) {
@@ -363,17 +333,22 @@ export async function initWorkspaceFlows({ local, api, Swal, dialog, readStrateg
   }
   expandButton.addEventListener('click', () => setExpanded(!reviewSection.classList.contains('tracker-fullscreen')));
   document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && reviewSection.classList.contains('tracker-fullscreen') && !document.querySelector('dialog[open], .swal2-container')) setExpanded(false); });
-  $('tracker-clear-filters').addEventListener('click', () => { filterIds.forEach(id => { $(id).value = id === 'tracker-date-field' ? 'date_posted' : ''; }); page = 0; if (loaded) render(); });
-  $('tracker-prev').addEventListener('click', () => { page--; render(); });
-  $('tracker-next').addEventListener('click', () => { page++; render(); });
+  $('tracker-prev').addEventListener('click', () => { page--; renderGrid(shown); });
+  $('tracker-next').addEventListener('click', () => { page++; renderGrid(shown); });
   $('btn-add-row').addEventListener('click', () => {
     const row = Object.fromEntries(columns.map((column) => [column.key, '']));
     Object.assign(row, { id: `job-${crypto.randomUUID()}`, applicant: 'Me', status: 'To apply' });
-    page = 0;
-    filterIds.forEach((id) => { $(id).value = id === 'tracker-date-field' ? 'date_posted' : ''; });
-    render(); editRow(row, true);
+    board.clear(); editRow(row, true);
   });
   $('btn-save-tracker').addEventListener('click', () => run('tracker-status', async () => { status.textContent = 'Saving workbook…'; await save(); }));
+  $('btn-clear-tracker').addEventListener('click', () => run('tracker-status', async () => {
+    const answer = await Swal.fire({ ...dialog, icon: 'warning', title: 'Delete all applications?', input: 'text', showCancelButton: true, confirmButtonText: 'Delete everything',
+      text: `This removes all ${rows.length} rows, including unsaved edits. The previous files are kept in .cache/tracker-backups. Type DELETE to confirm.`,
+      inputValidator: (value) => (value.trim() === 'DELETE' ? null : 'Type DELETE in capitals to confirm.') });
+    if (!answer.isConfirmed) return;
+    accept(await request('applications', { rows: [], revision }));
+    status.textContent = 'All applications deleted. The next search starts from an empty workbook.';
+  }));
   $('btn-reload-tracker').addEventListener('click', () => run('tracker-status', async () => {
     if (dirty) { const result = await Swal.fire({ ...dialog, title: 'Reload the Excel file?', text: 'This replaces your unsaved changes with the current workbook.', showCancelButton: true, confirmButtonText: 'Reload workbook' }); if (!result.isConfirmed) return; }
     await reload();
@@ -383,26 +358,35 @@ export async function initWorkspaceFlows({ local, api, Swal, dialog, readStrateg
     run('tracker-status', async () => { await save(); const link = document.createElement('a'); link.href = api('excel'); link.download = 'job_search_tracker.xlsx'; link.click(); });
   });
   $('btn-start-search').addEventListener('click', () => run('search-run-status', async () => {
-    const strategy = readStrategy();
-    if (Object.values(strategy).some((values) => !values.length)) throw new Error('Choose at least one role, location, and opportunity type.');
-    const loader = AiStatus.overlay({ state: 'searching', label: 'Searching for postings published today and checking each live page. This can take a few minutes…' });
+    const loader = AiStatus.overlay({ state: 'searching', label: 'Searching free job sources, Indeed, StepStone and the Arbeitsagentur for IT internships. This can take a few minutes…' });
     let result;
     try {
       if (dirty) await save();
-      await request('search-strategy', strategy);
       result = await request('search', { useProfile: $('search-use-profile').checked });
       await reload();
     } finally { loader.close(); }
     const warnings = (result.warnings || []).join(' ');
-    $('search-run-status').textContent = `${result.found ? `Verified ${result.found} postings published today. Added ${result.added} jobs` : 'No individual postings with a verified publication date of today were found'}. Your existing choices are preserved.${warnings ? ` ${warnings}` : result.unavailableServers?.length ? ' Some search connections were unavailable.' : ''}`;
+    const leads = result.unverified || 0;
+    $('search-run-status').textContent = `${result.found ? `Found ${result.found} postings. Added ${result.added} new internship${result.added === 1 ? '' : 's'}${leads ? `, ${leads} of them search-engine leads to open and check` : ''}` : 'No postings were found for this search'}. Your existing choices are preserved.${warnings ? ` ${warnings}` : ''}`;
   }));
-  $('btn-suggest-strategy').addEventListener('click', () => run('search-run-status', async () => {
-    const loader = AiStatus.overlay({ state: 'shaping', label: 'Reading your files to suggest roles…' });
-    let suggestion;
-    try { suggestion = await request('search-suggest', {}); } finally { loader.close(); }
-    applyStrategy(suggestion);
-    const count = suggestion.roles.length;
-    $('search-run-status').textContent = count ? `Added ${count} role${count === 1 ? '' : 's'} to "Roles to look for". Review them, then save your strategy.` : 'No suggested role matched the list here. Pick your roles by hand.';
+  $('btn-assign-applicant').addEventListener('click', () => run('apply-status', async () => {
+    await save();
+    // Only what the tracker is showing right now, and only the student's own picks: the server checks this again.
+    const ids = shown.filter((row) => (row.applicant || 'Me') === 'Me' && row.apply === 'Yes' && row.status === 'To apply').map((row) => row.id);
+    if (!ids.length) { $('apply-status').textContent = 'Filter the tracker to jobs with Applicant = Me, Apply? = Yes and status To apply first.'; return; }
+    const loader = AiStatus.overlay({ state: 'working', label: `Reading ${ids.length} application${ids.length === 1 ? '' : 's'}…` });
+    let result;
+    try { result = await request('assign-applicant', { ids }); await reload(); } finally { loader.close(); }
+    $('apply-status').textContent = `${result.assigned.length} job${result.assigned.length === 1 ? '' : 's'} given to the Assistant, ${result.kept.length} kept with you. Nothing was sent.`;
+    const body = document.createElement('div');
+    for (const [heading, items] of [['Given to the Assistant', result.assigned], ['Kept with you', result.kept]]) {
+      if (!items.length) continue;
+      const title = document.createElement('p'); title.textContent = heading; title.style.fontWeight = '600'; body.append(title);
+      const list = document.createElement('ul');
+      items.forEach((item) => { const li = document.createElement('li'); li.textContent = `${item.company || 'Company'} — ${item.position}: ${item.reason}`; list.append(li); });
+      body.append(list);
+    }
+    await Swal.fire({ ...dialog, title: 'Who applies', html: body, confirmButtonText: 'Close' });
   }));
   $('btn-apply-selected').addEventListener('click', () => run('apply-status', async () => {
     await save();
@@ -410,13 +394,38 @@ export async function initWorkspaceFlows({ local, api, Swal, dialog, readStrateg
     if (!preview.count) { $('apply-status').textContent = 'Assign a job to Assistant and choose Yes with status To apply first.'; return; }
     const body = document.createElement('div');
     const intro = document.createElement('p'); intro.textContent = `Review these ${preview.count} applications before starting. The assistant will use your saved candidate details. Jobs assigned to Me stay with you.`; body.append(intro);
+    const fillLabel = document.createElement('label'); fillLabel.style.display = 'block'; fillLabel.style.margin = '8px 0';
+    const fillOnly = document.createElement('input'); fillOnly.type = 'checkbox'; fillOnly.id = 'apply-fill-only'; fillOnly.checked = true;
+    fillLabel.append(fillOnly, ' Fill and upload only: open each web form in a browser window with your details and documents filled in, but do not submit, and do not send emails. You review and click Submit yourself.');
+    body.append(fillLabel);
     const list = document.createElement('ul');
-    (preview.rows || [preview.first]).forEach((row) => { const item = document.createElement('li'); item.textContent = `${row.company || 'Company to review'} — ${row.position} (${row.url || 'application URL missing'})`; list.append(item); }); body.append(list);
+    const emailEdits = new Map();
+    const ROUTES = { email: 'sent by email', upload: 'filled in a browser here, documents uploaded', remote: 'filled by the remote browser (documents cannot be uploaded)', missing: 'no application link' };
+    (preview.rows || [preview.first]).forEach((row) => {
+      const item = document.createElement('li');
+      item.textContent = `${row.company || 'Company to review'} — ${row.position} (${row.url || 'application URL missing'}) · ${ROUTES[row.route] || row.route}${row.attachments?.length ? ` · attaches ${row.attachments.join(', ')}` : ''}`;
+      if (row.email) {
+        const to = document.createElement('p'); to.textContent = `To: ${row.email.to || 'no address — add the employer e-mail to the row'} · ${row.email.ai ? 'AI-written draft, check the facts before sending' : 'standard template'}`;
+        const subject = document.createElement('input'); subject.type = 'text'; subject.value = row.email.subject; subject.setAttribute('aria-label', `Subject for ${row.company || 'this job'}`); subject.style.width = '100%';
+        const text = document.createElement('textarea'); text.value = row.email.body; text.rows = 7; text.setAttribute('aria-label', `Email text for ${row.company || 'this job'}`); text.style.width = '100%';
+        emailEdits.set(row.id, { subject, text });
+        item.append(to, subject, text);
+      }
+      list.append(item);
+    });
+    body.append(list);
     const answer = await Swal.fire({ ...dialog, title: 'Confirm assistant applications', html: body, showCancelButton: true, confirmButtonText: 'Start applications' });
     if (!answer.isConfirmed) return;
     const loader = AiStatus.overlay({ state: 'working', label: 'Processing your assistant queue. Each result will be saved to the workbook…' });
     let result;
-    try { result = await request('apply', { confirmation: preview.confirmation }); await reload(); } finally { loader.close(); }
+    try {
+      const edits = Object.fromEntries([...emailEdits].map(([id, f]) => [id, { subject: f.subject.value, body: f.text.value }]));
+      result = await request('apply', { confirmation: preview.confirmation, edits, fillOnly: fillOnly.checked }); await reload();
+    } finally { loader.close(); }
+    if (fillOnly.checked) {
+      $('apply-status').textContent = `${result.filled} form${result.filled === 1 ? '' : 's'} filled in an open browser window, nothing submitted. Review each one and click Submit yourself, then set the row to Applied.${result.notRun ? ` ${result.notRun} email or remote-browser job${result.notRun === 1 ? ' was' : 's were'} not run.` : ''}${result.blocked || result.needsInput > result.filled ? ' Some jobs stopped before filling; read their row notes.' : ''}`;
+      return;
+    }
     $('apply-status').textContent = `Submitted: ${result.submitted}. Needs input: ${result.needsInput}. Blocked: ${result.blocked}.${result.skipped ? ` ${result.skipped} changed after confirmation and need a fresh review.` : ''} Review row notes for the next steps.`;
   }));
   window.addEventListener('beforeunload', (event) => { if (dirty || busy) { event.preventDefault(); event.returnValue = ''; } });
@@ -430,17 +439,21 @@ export async function initWorkspaceFlows({ local, api, Swal, dialog, readStrateg
     refreshAi();
     window.addEventListener('settings-saved', refreshAi);
     request('application-capabilities').then((capabilities) => {
-      $('apply-tools').textContent = capabilities.browser?.available
-        ? `Web forms are connected through ${capabilities.browser.server}. If a required document cannot be uploaded, the row will ask for your input.`
-        : 'Browser submission is unavailable. Check your application tool connection; you can still open job links and apply yourself.';
+      const how = [
+        'Tailored jobs are filled in a browser on this computer and your CV and cover letter are uploaded.',
+        capabilities.email?.available ? 'Jobs with an employer e-mail are sent with both documents attached.' : 'Jobs with an employer e-mail need email sending set up (npm run gmail:auth, or SMTP under API keys & email).',
+        capabilities.browser?.available ? `Jobs without tailored documents go through ${capabilities.browser.server}; a required upload will ask for your input.` : '',
+      ].filter(Boolean);
+      $('apply-tools').textContent = how.join(' ');
     }).catch(() => { $('apply-tools').textContent = 'The application connection could not be checked. The assistant will stop if the browser tool is unavailable.'; });
     await Promise.allSettled([
       run('tracker-status', reload),
       request('application-settings').then((settings) => {
-        $('apply-contact').textContent = settings.candidateEmail ? `Web forms use your saved contact email: ${settings.candidateEmail}. Sending email applications requires a connected email account.` : 'Add your contact email in the profile editor before submitting web forms. Sending email applications also requires a connected email account.';
-      }).catch(() => { $('apply-contact').textContent = 'Check your contact email in the profile editor. Email sending is not connected.'; }),
+        $('apply-contact').textContent = settings.candidateEmail ? `Web forms use your saved contact email: ${settings.candidateEmail}. Email applications are sent from your connected mail account.` : 'Add your contact email in the profile editor before applying.';
+      }).catch(() => { $('apply-contact').textContent = 'Check your contact email in the profile editor.'; }),
     ]);
   } else {
+    board.load([], JSON.parse($('tracker-schema').textContent));
     status.textContent = 'Run npm run editor to load and edit your local Excel workbook.';
     $('search-run-status').textContent = 'Open the local editor to search from this page.';
     $('apply-status').textContent = 'Open the local editor to prepare and submit applications.';

@@ -425,6 +425,16 @@
       "key": "job_id",
       "header": "Job ID",
       "width": 22
+    },
+    {
+      "key": "gju_check",
+      "header": "GJU check",
+      "width": 30
+    },
+    {
+      "key": "company_logo",
+      "header": "Company logo",
+      "width": 24
     }
   ],
   "opportunityTypes": [

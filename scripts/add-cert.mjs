@@ -98,7 +98,7 @@ Options:
 The API key is read from .env (ANTHROPIC_API_KEY). Originals are never copied
 into the repo — only a ${PUBLISH_MAX_WIDTH}px-wide, metadata-stripped copy in src/certs/.
 
-Prefer a form? Run ${c.cyan("npm run editor")} and use the browser editor instead.
+Prefer a form? Use the GJUBoard editor, then ${c.cyan("npm run import-data -- <file>")}.
 `;
 
 // ---------------------------------------------------------------------------
