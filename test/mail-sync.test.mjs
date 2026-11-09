@@ -262,6 +262,7 @@ const gmailMessage = (id, subject, body) => ({ id, internalDate: String(Date.UTC
 test("message text is the plain part, else the HTML with its tags removed", () => {
   assert.equal(messageText(gmailMessage("m", "s", "Hello there").payload), "Hello there");
   assert.equal(messageText({ mimeType: "text/html", body: { data: b64("<style>a{}</style><p>Hi&nbsp;<b>there</b></p>") } }), "Hi there");
+  assert.equal(messageText({ mimeType: "text/html", body: { data: b64("<p>Q&amp;A: write &amp;lt;b&amp;gt; &lt;3</p>") } }), "Q&A: write &lt;b&gt; <3"); // decoded once, never twice
   assert.equal(messageText({ mimeType: "image/png" }), "");
 });
 
