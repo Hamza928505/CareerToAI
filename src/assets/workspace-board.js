@@ -91,6 +91,8 @@ export function toPosting(row) {
     germanLevel: level(row.req_german), englishLevel: level(row.req_english),
     // Never dated by the day it was found: an old advert would look new (the board rule, `absorb` in lib/board-run.mjs).
     gju: gjuOf(row.gju_check), posted: day(row.date_posted),
+    // A site lead: the one undated posting the NIM site sweep keeps for a site with no dated one. `found` is when the search found it.
+    lead: !day(row.date_posted) && /site sweep/i.test(row.data_source || ""), found: day(row.date_found),
     // 0-100 fit with the profile, written by the search (AI-scored when asked, else the built-in comparison); null when never scored.
     score: String(row.match_score ?? "").trim() !== "" && Number.isFinite(Number(row.match_score)) ? Math.max(0, Math.min(100, Number(row.match_score))) : null, scoreWhy: row.why_match || "",
     status: row.status || "", apply: row.apply || "", applicant: row.applicant || "Me",
@@ -163,8 +165,9 @@ export function applyFilters(postings, f, skip) {
     if (skip !== "applicant" && f.applicant && p.applicant !== f.applicant) return false;
     if (skip !== "by" && f.by && p.by !== f.by) return false;
     if (skip !== "sites" && sites && !sites.has(p.site)) return false;
-    // "Last 7 days" keeps only postings with a known posting date that recent; an undated row is never counted as new.
-    if (oldest && !(p.posted && p.posted >= oldest)) return false;
+    // "Last 7 days" keeps postings with a known posting date that recent, plus a site lead for the week after the search found it
+    // (it shows "Date unknown"); any other undated row is never counted as new.
+    if (oldest && !((p.posted && p.posted >= oldest) || (p.lead && p.found >= oldest))) return false;
     if (!levelOk(p.germanLevel, f.german) || !levelOk(p.englishLevel, f.english)) return false;
     // A pay range or a minimum duration only keeps postings that state them.
     if (minPay != null || maxPay != null) {

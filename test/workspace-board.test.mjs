@@ -56,3 +56,18 @@ test("the board starts on the last 7 days and filters by AI and by site", () => 
   assert.equal(ids({ ...defaultFilters(), by: "NVIDIA NIM" }), "a");
   assert.equal(ids({ ...defaultFilters(), recent: "", sites: ["Indeed"] }), "bcd");
 });
+
+// The NIM site sweep keeps one undated lead for a site with no dated posting. It is "new" for the week after the search found it.
+test("a site lead shows in the last 7 days for a week after it was found, any other undated row does not", () => {
+  const ago = (n) => new Date(Date.now() - n * 86400000).toLocaleDateString("en-CA", { timeZone: "Europe/Berlin" });
+  const sweep = "NVIDIA NIM (site sweep: tavily_search, unverified, no posting date)";
+  const rows = [
+    { id: "a", date_found: ago(2), data_source: sweep },
+    { id: "b", date_found: ago(20), data_source: sweep }, // found long ago
+    { id: "c", date_found: ago(2), data_source: "NVIDIA NIM (exa_search, unverified)" }, // undated, not a lead
+    { id: "d", date_posted: ago(2), date_found: ago(1), data_source: "NVIDIA NIM (site sweep: exa_search, unverified)" }, // dated: an ordinary posting
+  ].map(toPosting);
+  assert.deepEqual(rows.map((p) => p.lead), [true, true, false, false]);
+  assert.equal(applyFilters(rows, defaultFilters()).map((p) => p.id).join(""), "ad");
+  assert.equal(applyFilters(rows, { ...defaultFilters(), recent: "" }).map((p) => p.id).join(""), "abcd");
+});

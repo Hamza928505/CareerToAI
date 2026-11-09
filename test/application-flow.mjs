@@ -132,6 +132,22 @@ test("a search keeps only new postings from the last 7 days that the GJU rules d
   assert.deepEqual(skipped, { known: 3, undated: 1, old: 1, ineligible: 2, notIT: 1 });
 });
 
+test("a site lead is taken with its blank date, a plain undated posting is not", () => {
+  const hit = (n, extra) => ({ url: `https://example.org/job/${n}-12345`, company: `Firma ${n}`, title: "Praktikum Softwareentwicklung", date_posted: "", ...extra });
+  const rows = [{ company: "Known GmbH", position: "Praktikum Backend", job_url: "https://example.org/job/known-1" }];
+  const { jobs, skipped } = newEligible([
+    hit(1, { site_lead: true }),
+    hit(2), // undated and not a lead: never dated by the day it was found
+    hit(3, { site_lead: true, url: "https://example.org/job/known-1" }), // a lead the workbook already has
+    hit(4, { site_lead: true, title: "Werkstudent Softwareentwicklung" }), // a lead is still held to the GJU rules
+    hit(5, { site_lead: true, date_posted: "2026-10-01" }), // a lead that has a date is an ordinary posting: too old
+  ], rows, { now: Date.parse("2026-10-24T08:00:00Z"), days: 7 });
+  assert.deepEqual(jobs.map((job) => job.url), ["https://example.org/job/1-12345"]);
+  assert.deepEqual(skipped, { known: 1, undated: 1, old: 1, ineligible: 1, notIT: 0 });
+  const [row] = mergeSearchResults([], jobs).rows;
+  assert.equal(row.date_posted, ""); // saved without a date, not with the day it was found
+});
+
 test("a search names an IT field only from the title", () => {
   for (const title of ["Praktikum Softwareentwicklung", "Internship Data & AI", "Praktikum IT-Sicherheit", "Pflichtpraktikum Webentwicklung", "Intern Cloud Engineering"]) assert.ok(isIT(title), title);
   for (const title of ["Praktikum Marketing", "Praktikum Personalwesen", "Internship Finance", "Praktikum Vertrieb (it's fun)"]) assert.ok(!isIT(title), title);
@@ -172,4 +188,27 @@ test("an unverified search result is added with a note saying nothing was read f
   assert.equal(result.rows[0].data_source, "exa search, unverified");
   assert.equal(result.rows[0].status, "To apply"); // the status vocabulary is unchanged
   assert.equal(result.rows[1].notes, "Read from the page");
+});
+
+test("a search for any major takes every field in the title, and keeps a low Fit instead of dropping it", () => {
+  const hit = (n, title) => ({ url: `https://example.org/job/${n}-12345`, company: `Firma ${n}`, title, date_posted: "2026-10-20" });
+  const hits = [hit(1, "Praktikum Pflege"), hit(2, "Praktikum Maschinenbau"), hit(3, "Werkstudent Pflege")];
+  const opts = { now: Date.parse("2026-10-24T08:00:00Z"), days: 7 };
+  assert.equal(newEligible(hits, [], opts).jobs.length, 0); // the default is still the IT search
+  const { jobs, skipped } = newEligible(hits, [], { ...opts, field: null });
+  assert.deepEqual(jobs.map((job) => job.title), ["Praktikum Pflege", "Praktikum Maschinenbau"]);
+  assert.equal(skipped.notIT, 0);
+  assert.equal(skipped.ineligible, 1); // Werkstudent is not an internship
+});
+
+test("a posting that names nothing from the student's major still gets a low score when asked to keep it", () => {
+  assert.equal(scoreJobMatch({ position: "Praktikum Pflege" }), null); // the IT default stays
+  const kept = scoreJobMatch({ position: "Praktikum Pflege", description: "Hygiene und Dokumentation auf der Station, viele Patienten." }, { keepLow: true });
+  assert.ok(kept.score > 0 && kept.score <= 30, String(kept.score));
+  assert.match(kept.reason, /Kept for you to judge/);
+  const nursing = scoreJobMatch({ position: "Praktikum Pflege", req_skills: "Hygiene, Dokumentation, Patientenversorgung" }, { keepLow: true, words: ["Pflege"], skills: ["Hygiene", "Dokumentation", "Patientenversorgung"] });
+  assert.ok(nursing.score >= 45, String(nursing.score));
+  assert.match(nursing.missing, /Hygiene/); // the profile text of an IT student names none of them
+  const [row] = mergeSearchResults([], [{ url: "https://example.org/job/55555", company: "Klinik", title: "Praktikum Pflege" }], { scoring: { keepLow: true, words: ["Pflege"] } }).rows;
+  assert.ok(Number(row.match_score) >= 45);
 });

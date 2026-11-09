@@ -1,0 +1,47 @@
+{
+  "_comment": "The sites each search source covers, for the logos under 'Search with' on the workspace page. logo is a file in src/assets/service-logos (omit when there is none). nim must list exactly the boards of NIM_SITES in lib/nim-agent.mjs (test/search-sources.test.mjs checks it); apis lists the engine's `api permitted` sources in ../JobSearchEngine/config/sources.json.",
+  "claude": [
+    { "name": "Indeed", "logo": "indeed" },
+    { "name": "StepStone", "logo": "stepstone" },
+    { "name": "Arbeitsagentur", "logo": "arbeitsagentur" }
+  ],
+  "nim": [
+    { "name": "LinkedIn", "logo": "linkedin" },
+    { "name": "Monster", "logo": "monster" },
+    { "name": "jobmensa", "logo": "jobmensa" },
+    { "name": "stellenanzeigen.de", "logo": "stellenanzeigen" },
+    { "name": "academics", "logo": "academics" },
+    { "name": "Kimeta", "logo": "kimeta" },
+    { "name": "JOBworld", "logo": "jobworld" },
+    { "name": "meinestadt", "logo": "meinestadt" },
+    { "name": "MeinPraktikum", "logo": "meinpraktikum" },
+    { "name": "praktikumsstellen", "logo": "praktikumsstellen" },
+    { "name": "praktika.de", "logo": "praktika" },
+    { "name": "praktikum.info", "logo": "praktikum-info" },
+    { "name": "praktikum.de", "logo": "praktikum-de" },
+    { "name": "connecticum", "logo": "connecticum" },
+    { "name": "Jobware" },
+    { "name": "Unicum", "logo": "unicum" },
+    { "name": "bonding", "logo": "bonding" },
+    { "name": "Absolventa", "logo": "absolventa" },
+    { "name": "joboter", "logo": "joboter" },
+    { "name": "Neuvoo", "logo": "neuvoo" },
+    { "name": "KULTweet", "logo": "kultweet" },
+    { "name": "StepStone", "logo": "stepstone" },
+    { "name": "Arbeitsagentur", "logo": "arbeitsagentur" },
+    { "name": "Arbeitnow", "logo": "arbeitnow" }
+  ],
+  "apis": [
+    { "name": "Arbeitnow", "logo": "arbeitnow" },
+    { "name": "Remotive", "logo": "remotive" },
+    { "name": "Remote OK", "logo": "remoteok" },
+    { "name": "Himalayas", "logo": "himalayas" },
+    { "name": "Jobicy", "logo": "jobicy" },
+    { "name": "The Muse", "logo": "themuse" },
+    { "name": "Adzuna", "logo": "adzuna" },
+    { "name": "Jooble", "logo": "jooble" },
+    { "name": "Careerjet", "logo": "careerjet" },
+    { "name": "Reed", "logo": "reed" },
+    { "name": "USAJOBS", "logo": "usajobs" }
+  ]
+}

@@ -41,10 +41,45 @@ export async function initWorkspaceFlows({ local, api, Swal, dialog, onRows }) {
     return data;
   }
 
+  // What the next search will do: the major (or every field) it looks for, and the sources that can run.
+  let searchOk = false;
+  let planLabel = '';
+  const sourceOff = new Set();
+  const SOURCE_NAMES = { claude: 'Claude', nim: 'NVIDIA NIM', apis: 'Free job sources' };
+  const searchMode = () => document.querySelector('input[name="search-mode"]:checked').value;
+  const searchSources = () => Object.fromEntries([...document.querySelectorAll('input[name="search-source"]')].map((input) => [input.value, input.checked && !sourceOff.has(input.value)]));
+  function syncSearch() {
+    const anySource = Object.values(searchSources()).some(Boolean);
+    searchOk = Boolean(planLabel) && anySource;
+    if (planLabel && !anySource) { $('search-plan').textContent = 'Choose at least one source to search with.'; $('search-plan').dataset.state = 'error'; }
+    controls();
+  }
+  async function refreshPlan() {
+    const mode = searchMode();
+    try {
+      const data = await request(`search-plan?mode=${mode}`);
+      sourceOff.clear();
+      for (const [name, ready] of Object.entries(data.available || {})) {
+        const box = document.querySelector(`input[name="search-source"][value="${name}"]`);
+        const hint = document.querySelector(`[data-source-hint="${name}"]`);
+        if (!ready) { sourceOff.add(name); box.checked = false; if (name === 'nim') hint.textContent = 'Add NVIDIA_API_KEY under API keys & AI provider to use it.'; if (name === 'apis') hint.textContent = 'The JobSearchEngine is not set up (see the README).'; }
+      }
+      $('search-field').textContent = data.field ? data.field : 'No field of study in your profile: import your profile or use the global search';
+      planLabel = data.plan?.label || '';
+      $('search-plan').dataset.state = data.plan ? '' : 'error';
+      $('search-plan').textContent = data.plan
+        ? `${data.plan.label}. Free sources ask for: ${data.plan.keywords.join(', ')}. Claude and NVIDIA NIM start from ${data.plan.searches.length} searches such as ${data.plan.searches.slice(0, 3).join(', ')}${data.plan.matched || mode === 'global' ? '' : '. Your AI provider adds more title words when you search'}.`
+        : 'Your profile has no field of study, so there is nothing to search for yet.';
+    } catch (error) { planLabel = ''; $('search-plan').dataset.state = 'error'; $('search-plan').textContent = error.message; }
+    syncSearch();
+  }
+
   function controls() {
     mutationIds.forEach((id) => { if ($(id)) $(id).disabled = !local || busy || (!loaded && id !== 'btn-reload-tracker'); });
-    $('btn-start-search').disabled = !local || busy;
+    $('btn-start-search').disabled = !local || busy || !searchOk;
     $('search-use-profile').disabled = !local || busy || !aiReady;
+    document.querySelectorAll('input[name="search-mode"]').forEach((input) => { input.disabled = !local || busy; });
+    document.querySelectorAll('input[name="search-source"]').forEach((input) => { input.disabled = !local || busy || sourceOff.has(input.value); });
     document.querySelectorAll('.apply-tailor').forEach((button) => { button.disabled = !local || busy || !aiReady; });
     document.querySelectorAll('#tracker-table input, #tracker-table select, #tracker-table textarea, #tracker-table button, #board-list select, #board-list button').forEach((input) => { input.disabled = busy; });
     $('tracker-table-wrap').setAttribute('aria-busy', String(busy));
@@ -358,16 +393,19 @@ export async function initWorkspaceFlows({ local, api, Swal, dialog, onRows }) {
     run('tracker-status', async () => { await save(); const link = document.createElement('a'); link.href = api('excel'); link.download = 'job_search_tracker.xlsx'; link.click(); });
   });
   $('btn-start-search').addEventListener('click', () => run('search-run-status', async () => {
-    const loader = AiStatus.overlay({ state: 'searching', label: 'Searching free job sources, Indeed, StepStone and the Arbeitsagentur for IT internships. This can take a few minutes…' });
+    const sources = searchSources();
+    const using = Object.keys(sources).filter((name) => sources[name]).map((name) => SOURCE_NAMES[name]).join(', ');
+    const loader = AiStatus.overlay({ state: 'searching', label: `Searching for ${planLabel.toLowerCase() || 'internships'} with ${using}. This can take a few minutes…` });
     let result;
     try {
       if (dirty) await save();
-      result = await request('search', { useProfile: $('search-use-profile').checked });
+      result = await request('search', { useProfile: $('search-use-profile').checked, mode: searchMode(), sources });
       await reload();
     } finally { loader.close(); }
     const warnings = (result.warnings || []).join(' ');
     const leads = result.unverified || 0;
-    $('search-run-status').textContent = `${result.found ? `Found ${result.found} postings. Added ${result.added} new internship${result.added === 1 ? '' : 's'}${leads ? `, ${leads} of them search-engine leads to open and check` : ''}` : 'No postings were found for this search'}. Your existing choices are preserved.${warnings ? ` ${warnings}` : ''}`;
+    const counts = Object.entries(result.bySource || {}).map(([name, count]) => `${SOURCE_NAMES[name]} ${count}`).join(', ');
+    $('search-run-status').textContent = `${result.found ? `Found ${result.found} postings${counts ? ` (${counts})` : ''}. Added ${result.added} new internship${result.added === 1 ? '' : 's'}${leads ? `, ${leads} of them search-engine leads to open and check` : ''}` : 'No postings were found for this search'}. Your existing choices are preserved.${warnings ? ` ${warnings}` : ''}`;
   }));
   $('btn-assign-applicant').addEventListener('click', () => run('apply-status', async () => {
     await save();
@@ -437,7 +475,10 @@ export async function initWorkspaceFlows({ local, api, Swal, dialog, onRows }) {
       controls(); renderQueue();
     }).catch(() => {});
     refreshAi();
-    window.addEventListener('settings-saved', refreshAi);
+    refreshPlan();
+    document.querySelectorAll('input[name="search-mode"]').forEach((input) => input.addEventListener('change', refreshPlan));
+    document.querySelectorAll('input[name="search-source"]').forEach((input) => input.addEventListener('change', syncSearch));
+    window.addEventListener('settings-saved', () => { refreshAi(); refreshPlan(); });
     request('application-capabilities').then((capabilities) => {
       const how = [
         'Tailored jobs are filled in a browser on this computer and your CV and cover letter are uploaded.',
@@ -456,6 +497,8 @@ export async function initWorkspaceFlows({ local, api, Swal, dialog, onRows }) {
     board.load([], JSON.parse($('tracker-schema').textContent));
     status.textContent = 'Run npm run editor to load and edit your local Excel workbook.';
     $('search-run-status').textContent = 'Open the local editor to search from this page.';
+    $('search-field').textContent = 'Needs the local editor to read your profile';
+    $('search-plan').textContent = '';
     $('apply-status').textContent = 'Open the local editor to prepare and submit applications.';
     $('apply-contact').textContent = 'Your contact details are available in the local editor.';
     $('apply-tools').textContent = 'Application tools connect in the local editor.';
