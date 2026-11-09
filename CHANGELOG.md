@@ -13,6 +13,67 @@ per-file diff commands.
 
 ## [Unreleased]
 
+### Added
+
+- **A "Check my email" button on the board's hero, and Gemini as a second reader.** The button reads the student's Gmail and *proposes* status
+  changes (application received, interview or assessment, offer, rejection); each one shows the e-mail it comes from and the sentence that
+  triggered it, and nothing reaches the tracker until the student ticks and applies it. The dialog lets the student choose who reads:
+  **Claude** (`claude -p` with only the claude.ai Gmail connector's `search_threads` and `get_thread` allowed, like the Indeed run) or
+  **Gemini** (`GEMINI_API_KEY`; our own read-only Gmail token fetches the mail, Gemini only classifies it, with no tools). Gemini is also a
+  normal `LLM_PROVIDER` now (`gemini`, default model `gemini-3.6-flash`, `GEMINI_MODEL` to change it). Setup for Gemini: add the key, then run
+  `node scripts/gmail-auth.mjs --read` once. That is a second token (`GMAIL_READ_REFRESH_TOKEN`, scope `gmail.readonly`), separate from the
+  send-only one, so the token that can send can never read and the one that reads can never send.
+  - A reader's answer is untrusted. `validate` (`lib/mail-sync.mjs`) keeps a finding only if the message was really read (Claude: a full
+    `get_thread` result, not a search snippet), the quoted sentence is in it, the tracked company is named in it, and `transition` allows the
+    move: forward only, never *Ghosted*, and a rejection on an *Offer* row or an offer and a rejection in one run go to "needs your decision".
+  - The server keeps the proposals; the browser sends back only the confirmation token and the ticked row ids, and a changed workbook voids the check
+    (the same shape as the application preview). Approval writes `status`, a dated note per e-mail and, for a first acknowledgement, `date_applied`, plus the two things below.
+  - **The dialog says what the mail contained, and a new kind of mail, a request, is recognised.** The review screen opens with a count ("2 interviews, 1 test,
+    1 rejection, 1 request for files or information"); each item shows what is asked and by when (`detail`, `due`). A *request* (the employer asks for a CV,
+    certificates, references or a form) changes no status. Approval writes it into the row's **Notes**, and into **Next action** and **Next action date**,
+    and an interview's day into **Interview date**, but only into cells that are empty, so what the student wrote is never overwritten. A request that
+    arrives together with an interview is kept beside it. After applying, the hero note repeats the counts. Sending the files by e-mail is not built: the check only reminds.
+  - **The text of the e-mails that mattered is kept, and can be read again.** The review shows how many e-mails were read ("12 e-mails read, 4 applications
+    with news") and, under each proposal, a fold-out with the e-mail's own text. After you apply, every proposal (applied, skipped, or left alone because the row
+    changed) is written with its text, cut to 3,000 characters, to `job-search/gmail_sync/mail-log.json`: gitignored like the tracker, the newest 500 kept, local
+    only. E-mails that produced no finding are never stored. This replaces the earlier rule of never keeping e-mail text, at the student's request.
+    `test/mail-sync.test.mjs` now has 25 tests.
+  - **A Mail page, `/mail/`, opened from the new **Mail** step of the journey strip, next to Tools.** It reads the log from the local editor server when opened (`GET /__editor/mail/log`), so
+    the published site has only an empty shell: the page is `noindex`, out of the sitemap, and says so when no editor is running. It has the board's hero, whose five
+    tiles count interviews, tests, requests for files, offers and rejections and double as filters; a **What employers are waiting for** strip with every deadline
+    (a request or test to send or do, an interview still to come), soonest first, overdue ones in red; and a two-pane inbox: a searchable list with a kind filter, and a
+    reader that shows the e-mail's own text with the sentence the check relied on highlighted, what was asked and by when, the sender and date, and what you decided
+    about it. It follows the light and dark theme, works on a phone, and shows the text with `textContent` only. Its *Check my email* button runs the whole check on the page (choose the reader, review, apply) and refreshes the
+    inbox afterwards, the same code as on the board (`initMailCheck`); the dialog's styles moved to `mail-dialog.css`, shared by both pages.
+    Files: `src/mail.njk`, `src/assets/mail.js`, `mail.css`, `mail-dialog.css`.
+  - **The search and the email check no longer freeze the page.** Each shows a card in the top-right corner with its stage, the e-mails
+    read so far and what the reader has spotted (rejections, interviews, …), or each search source's count, while the student keeps
+    applying, editing and saving. The finished email check waits there with a Review button for an hour. Results that land while there
+    are unsaved edits are merged in without losing them. The Pro-subscription (agy) reader no longer asks for a notice to be ticked.
+    Files: `src/assets/task-tray.js`, `GET /__editor/progress`.
+  - **The check reads mail about applications that are not in the tracker too.** Before, it looked only for open tracked applications, so with
+    nothing marked Applied it stopped without opening Gmail and said so in a small note. Now the Gmail search also matches application words in the
+    subject (application, Bewerbung, interview, Praktikum, Absage, …), and an e-mail about another application, whose employer is named in it, can be
+    kept on the Mail page as *Not in your tracker*. It never changes a row. When nothing is found, a dialog says so.
+  - Gemini's mail goes to Google's endpoint only (`geminiConfig` ignores `LLM_BASE_URL` and `LLM_MODEL`), and the dialog makes the student confirm a
+    paid-plan key, because Google may read what the free tier receives. E-mail text is shown with `textContent` only and is never logged.
+  - Checked message ids are remembered in `job-search/gmail_sync/state.json`, shared with `/gmail-sync`, so an e-mail is never proposed twice.
+  - `lib/gmail-read.mjs`, `lib/mail-sync.mjs`, `lib/mail-readers.mjs`, `src/assets/workspace-mail.js`, `test/mail-sync.test.mjs` (25 tests).
+- **Gemini through a Pro subscription, run in a terminal with `agy`, and a Gemini card on the Overview.** The Overview shows a Gemini card beside the
+  AI-provider card: whether `agy` (the Antigravity CLI) is installed and signed in (`agy models`, about a second), the model it will ask for, whether
+  the read-only mail permission is saved, and a *Test connection* button that runs one real `agy` call (about 25 s). The "Check my email" dialog has a third
+  reader, *Gemini · Pro subscription (agy)*, which needs no API key: our read-only Gmail token fetches the mail and `agy` classifies it, a few e-mails per run
+  because the prompt travels as a command-line argument (`lib/agy.mjs`, `readWithAgy`). `AGY_MODEL` picks the model (default `gemini-3.8-flash-medium`; only a
+  Gemini id is accepted, because agy's own default model can be another vendor's). The Gemini logo is a drawn placeholder: replace `assets/service-logos/gemini.png`.
+  - Each run is locked down: `--mode plan` and `--sandbox`, an empty temporary working folder, and none of this project's keys or tokens in agy's environment.
+    Probed on 2026-11-09: headless agy auto-denies tools, but the student's own allow-rules in `~/.gemini` also apply headless (a pre-approved `npm run check`
+    really ran), and plan mode denies even those. If agy tries a tool anyway, the dialog says so (an e-mail may contain instructions).
+  - agy saves a full transcript of every run under `~/.gemini/antigravity-cli` (`brain/<id>`, `conversations/<id>.db`), e-mail text included, so each run's own
+    transcript is deleted right after it, by its conversation id only. agy's one-line summary database is not touched.
+  - A personal Pro account is not a paid API key: Google's Antigravity terms say interactions can be used to improve its products, and sources disagree on whether
+    turning telemetry off in agy fully stops training use. The dialog makes the student tick a notice saying so before this reader runs.
+  - `test/agy.test.mjs` (7 tests, fake `execFile`); a real run was also checked once with a made-up e-mail that contained an injected instruction.
+
 ### Changed
 
 - **NVIDIA NIM now brings at least one post from each of its 24 sites, where a search can reach one.** The model picks what it likes, so

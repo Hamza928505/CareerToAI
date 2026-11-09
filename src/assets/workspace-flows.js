@@ -1,10 +1,16 @@
 import { createBoard } from './workspace-board.js';
+import { initMailCheck } from './workspace-mail.js';
+import { startTask } from './task-tray.js';
 
 // The three local workspace flows share one workbook snapshot and revision.
 export async function initWorkspaceFlows({ local, api, Swal, dialog, onRows }) {
   const $ = (id) => document.getElementById(id);
   let rows = [], columns = [], enums = {}, revision = null;
   let page = 0, dirty = false, loaded = false, busy = false;
+  // A search runs in the background (its card is in the top-right corner), so it has its own flag instead of `busy`.
+  let searching = false;
+  // The rows as last loaded or saved, by id: what refresh() compares against to keep unsaved edits.
+  let baseline = new Map();
   // Whether an AI provider and the student files are ready (set from the local server).
   let aiReady = false;
   const pageSize = 12;
@@ -76,10 +82,13 @@ export async function initWorkspaceFlows({ local, api, Swal, dialog, onRows }) {
 
   function controls() {
     mutationIds.forEach((id) => { if ($(id)) $(id).disabled = !local || busy || (!loaded && id !== 'btn-reload-tracker'); });
-    $('btn-start-search').disabled = !local || busy || !searchOk;
-    $('search-use-profile').disabled = !local || busy || !aiReady;
-    document.querySelectorAll('input[name="search-mode"]').forEach((input) => { input.disabled = !local || busy; });
-    document.querySelectorAll('input[name="search-source"]').forEach((input) => { input.disabled = !local || busy || sourceOff.has(input.value); });
+    // The email check and the search run beside everything else; each blocks only its own button while it runs.
+    const mail = $('btn-check-mail');
+    if (mail) mail.disabled = !local || !loaded || mail.getAttribute('aria-busy') === 'true';
+    $('btn-start-search').disabled = !local || searching || !searchOk;
+    $('search-use-profile').disabled = !local || searching || !aiReady;
+    document.querySelectorAll('input[name="search-mode"]').forEach((input) => { input.disabled = !local || searching; });
+    document.querySelectorAll('input[name="search-source"]').forEach((input) => { input.disabled = !local || searching || sourceOff.has(input.value); });
     document.querySelectorAll('.apply-tailor').forEach((button) => { button.disabled = !local || busy || !aiReady; });
     document.querySelectorAll('#tracker-table input, #tracker-table select, #tracker-table textarea, #tracker-table button, #board-list select, #board-list button').forEach((input) => { input.disabled = busy; });
     $('tracker-table-wrap').setAttribute('aria-busy', String(busy));
@@ -328,7 +337,30 @@ export async function initWorkspaceFlows({ local, api, Swal, dialog, onRows }) {
     rows = data.rows; columns = data.columns; enums = data.enums || {};
     enums.statuses ||= data.statuses; enums.applyDecisions ||= data.decisions;
     revision = data.revision; loaded = true; dirty = false;
+    baseline = new Map(rows.map((row) => [row.id, { ...row }]));
     render();
+  }
+
+  // After a background task wrote to the workbook (new search rows, approved mail changes): take the server's rows without
+  // losing what was edited here and not saved yet. Field by field, a value changed here wins; every other value comes from the
+  // server. Rows added here stay, rows deleted here stay deleted, rows the server added appear.
+  async function refresh() {
+    if (!local) return;
+    const fresh = await request('applications');
+    if (!dirty) { accept(fresh); return; }
+    const mine = new Map(rows.map((row) => [row.id, row]));
+    const merged = fresh.rows.flatMap((server) => {
+      const own = mine.get(server.id), base = baseline.get(server.id);
+      if (!own) return base ? [] : [server];
+      if (!base) return [own];
+      return [Object.fromEntries(Object.keys({ ...server, ...own }).map((key) => [key, own[key] !== base[key] ? own[key] : server[key]]))];
+    });
+    const known = new Set(fresh.rows.map((row) => row.id));
+    merged.push(...rows.filter((row) => !baseline.has(row.id) && !known.has(row.id)));
+    accept({ ...fresh, rows: merged });
+    baseline = new Map(fresh.rows.map((row) => [row.id, { ...row }]));
+    dirty = true;
+    status.textContent = 'The workbook was updated in the background. Your unsaved edits are kept; save to keep both.';
   }
 
   async function reload() {
@@ -392,21 +424,34 @@ export async function initWorkspaceFlows({ local, api, Swal, dialog, onRows }) {
     event.preventDefault();
     run('tracker-status', async () => { await save(); const link = document.createElement('a'); link.href = api('excel'); link.download = 'job_search_tracker.xlsx'; link.click(); });
   });
-  $('btn-start-search').addEventListener('click', () => run('search-run-status', async () => {
+  // The search runs in the background: its progress is a card in the top-right corner, and the page stays usable meanwhile.
+  const searchLines = (p) => (p ? [p.stage, ...Object.entries(p.sources || {}).map(([name, state]) => `${name}: ${state}`)] : []);
+  $('btn-start-search').addEventListener('click', async () => {
+    if (!local || searching) return;
+    const note = $('search-run-status');
     const sources = searchSources();
     const using = Object.keys(sources).filter((name) => sources[name]).map((name) => SOURCE_NAMES[name]).join(', ');
-    const loader = AiStatus.overlay({ state: 'searching', label: `Searching for ${planLabel.toLowerCase() || 'internships'} with ${using}. This can take a few minutes…` });
-    let result;
+    let task;
+    searching = true; note.dataset.state = ''; controls();
     try {
       if (dirty) await save();
-      result = await request('search', { useProfile: $('search-use-profile').checked, mode: searchMode(), sources });
-      await reload();
-    } finally { loader.close(); }
-    const warnings = (result.warnings || []).join(' ');
-    const leads = result.unverified || 0;
-    const counts = Object.entries(result.bySource || {}).map(([name, count]) => `${SOURCE_NAMES[name]} ${count}`).join(', ');
-    $('search-run-status').textContent = `${result.found ? `Found ${result.found} postings${counts ? ` (${counts})` : ''}. Added ${result.added} new internship${result.added === 1 ? '' : 's'}${leads ? `, ${leads} of them search-engine leads to open and check` : ''}` : 'No postings were found for this search'}. Your existing choices are preserved.${warnings ? ` ${warnings}` : ''}`;
-  }));
+      task = startTask({ title: `Searching for ${planLabel.toLowerCase() || 'internships'}`, state: 'searching', poll: async () => searchLines((await request('progress')).search) });
+      note.textContent = `Searching with ${using}. Follow it in the top-right corner; you can keep working meanwhile.`;
+      const result = await request('search', { useProfile: $('search-use-profile').checked, mode: searchMode(), sources });
+      await refresh();
+      const warnings = (result.warnings || []).join(' ');
+      const leads = result.unverified || 0;
+      const counts = Object.entries(result.bySource || {}).map(([name, count]) => `${SOURCE_NAMES[name]} ${count}`).join(', ');
+      note.textContent = `${result.found ? `Found ${result.found} postings${counts ? ` (${counts})` : ''}. Added ${result.added} new internship${result.added === 1 ? '' : 's'}${leads ? `, ${leads} of them search-engine leads to open and check` : ''}` : 'No postings were found for this search'}. Your existing choices are preserved.${warnings ? ` ${warnings}` : ''}`;
+      task.done(result.found ? `Found ${result.found}, added ${result.added} new internship${result.added === 1 ? '' : 's'}.` : 'No postings were found for this search.', {
+        lines: counts ? [counts] : [],
+        action: result.added ? { label: 'Show them', run: () => { task.remove(); $('flow-review')?.scrollIntoView({ behavior: 'smooth' }); } } : undefined,
+      });
+    } catch (error) {
+      note.textContent = error.message; note.dataset.state = 'error';
+      task?.fail(error.message);
+    } finally { searching = false; controls(); }
+  });
   $('btn-assign-applicant').addEventListener('click', () => run('apply-status', async () => {
     await save();
     // Only what the tracker is showing right now, and only the student's own picks: the server checks this again.
@@ -466,7 +511,8 @@ export async function initWorkspaceFlows({ local, api, Swal, dialog, onRows }) {
     }
     $('apply-status').textContent = `Submitted: ${result.submitted}. Needs input: ${result.needsInput}. Blocked: ${result.blocked}.${result.skipped ? ` ${result.skipped} changed after confirmation and need a fresh review.` : ''} Review row notes for the next steps.`;
   }));
-  window.addEventListener('beforeunload', (event) => { if (dirty || busy) { event.preventDefault(); event.returnValue = ''; } });
+  initMailCheck({ request, save, reload: refresh, Swal, dialog });
+  window.addEventListener('beforeunload', (event) => { if (dirty || busy || searching) { event.preventDefault(); event.returnValue = ''; } });
   controls();
   if (local) {
     const refreshAi = () => request('status').then((state) => {

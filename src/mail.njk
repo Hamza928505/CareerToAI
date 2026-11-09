@@ -1,0 +1,83 @@
+---
+layout: base.njk
+pageTitle: Mail - what employers wrote
+pageDescription: The e-mails from employers that mattered to your German Year applications, read from your own computer.
+permalink: /mail/
+noindex: true
+pageStyles: /assets/mail.css
+pageScript: /assets/mail.js
+eleventyExcludeFromCollections: true
+---
+
+{# Private page. The e-mails are never part of the built site: mail.js asks the local editor server for them (GET /__editor/mail/log), so on the published site this page is an empty shell. #}
+<div class="mailbox" data-workspace="{{ '/workspace/' | url }}">
+<h1 class="visually-hidden">Mail</h1>
+
+<div class="notice" id="mail-offline" hidden>
+  <p>
+    <strong>You're in preview mode.</strong> This page shows e-mails kept on your own computer, so there is nothing to show here.
+  </p>
+  <p>
+    To see yours, run <code>npm run editor</code> and open this page from there.
+  </p>
+</div>
+
+<!-- ------------------------------------------------------------------- Hero -->
+<section class="gb gb-hero mb-hero" aria-labelledby="mail-h">
+  <div class="gb-hero-bg" aria-hidden="true"><span class="gb-blob b1"></span><span class="gb-blob b2"></span><span class="gb-blob b3"></span>
+    <span class="gb-orb o1"><i class="fa-solid fa-envelope-open-text"></i></span><span class="gb-orb o2"><i class="fa-solid fa-calendar-check"></i></span>
+    <span class="gb-orb o3"><i class="fa-solid fa-paper-plane"></i></span><span class="gb-orb o4"><i class="fa-solid fa-file-signature"></i></span>
+  </div>
+  <div class="gb-hero-inner">
+    <p class="gb-eyebrow"><i class="fa-solid fa-lock" aria-hidden="true"></i> Your German Year · private, on this computer only</p>
+    <h2 id="mail-h">Your internship <span class="gb-grad-text">mail</span></h2>
+    <p class="gb-lead">Every e-mail that invited you, set a test, asked for files or turned you down, kept with its own words, so you never dig through your inbox to find what an employer wanted.</p>
+    <div class="gb-hero-cta">
+      <button type="button" class="gb-btn gb-btn-light" id="btn-check-mail" disabled title="Reads your Gmail (read-only) and proposes status changes for you to approve"><i class="fa-solid fa-envelope-open-text" aria-hidden="true"></i> Check my email</button>
+      <a class="gb-btn gb-btn-glass" href="{{ '/workspace/' | url }}#flow-review"><i class="fa-solid fa-table-list" aria-hidden="true"></i> Back to the board</a>
+    </div>
+    <p class="gb-hero-note" id="mail-status" role="status" aria-live="polite"></p>
+    <p class="gb-hero-note" id="mail-summary" role="status" aria-live="polite"></p>
+    <ul class="mb-tiles" aria-label="What the e-mails were. Pick one to filter the list.">
+      <li><button type="button" class="mb-tile" data-kind="interview"><i class="fa-solid fa-calendar-check" aria-hidden="true"></i><strong data-count="interview">0</strong><span>interviews</span></button></li>
+      <li><button type="button" class="mb-tile" data-kind="assessment"><i class="fa-solid fa-laptop-code" aria-hidden="true"></i><strong data-count="assessment">0</strong><span>tests</span></button></li>
+      <li><button type="button" class="mb-tile" data-kind="request"><i class="fa-solid fa-paperclip" aria-hidden="true"></i><strong data-count="request">0</strong><span>requests for files</span></button></li>
+      <li><button type="button" class="mb-tile" data-kind="offer"><i class="fa-solid fa-trophy" aria-hidden="true"></i><strong data-count="offer">0</strong><span>offers</span></button></li>
+      <li><button type="button" class="mb-tile" data-kind="rejection"><i class="fa-solid fa-ban" aria-hidden="true"></i><strong data-count="rejection">0</strong><span>rejections</span></button></li>
+    </ul>
+  </div>
+</section>
+
+<!-- ----------------------------------------------------------- Waiting for -->
+<section class="mb-todo" id="mail-todo" aria-labelledby="todo-h" hidden>
+  <h3 id="todo-h"><i class="fa-solid fa-hourglass-half" aria-hidden="true"></i> What employers are waiting for</h3>
+  <ul id="todo-list"></ul>
+</section>
+
+<!-- ------------------------------------------------------------------ Inbox -->
+<section class="mb-inbox" aria-label="Kept e-mails">
+  <div class="mb-bar">
+    <label class="mb-search"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><span class="visually-hidden">Search the kept e-mails</span>
+      <input type="search" id="mail-q" placeholder="Search company, subject or text" autocomplete="off"></label>
+    <div class="mb-pills" id="mail-pills" role="group" aria-label="Show only"></div>
+  </div>
+  <div class="mb-split" id="mail-split">
+    <ol class="mb-list" id="mail-list" aria-label="E-mails, newest first"></ol>
+    <article class="mb-reader" id="mail-reader" aria-live="polite" tabindex="-1">
+      <div class="mb-placeholder"><i class="fa-regular fa-envelope-open" aria-hidden="true"></i><p>Loading your e-mails…</p></div>
+    </article>
+  </div>
+  <div class="mb-empty" id="mail-empty" hidden>
+    <span class="mb-empty-icon" aria-hidden="true"><i class="fa-solid fa-inbox"></i></span>
+    <h3 id="mail-empty-title">Nothing kept yet</h3>
+    <p id="mail-empty-text">After you review a check, the e-mails that invited you, set a test, asked for files or turned you down are kept here with their text.</p>
+    <ol class="mb-steps">
+      <li><span>1</span> Press <strong>Check my email</strong> above and choose who reads</li>
+      <li><span>2</span> Tick what is right and apply it</li>
+      <li><span>3</span> Read every e-mail again here, with its deadlines</li>
+    </ol>
+  </div>
+</section>
+</div>
+<script src="{{ '/assets/thinking-orbs.js' | url }}"></script>
+<script src="{{ '/assets/ai-status.js' | url }}"></script>

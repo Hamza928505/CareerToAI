@@ -209,3 +209,5 @@ If this run pushed the count of applications with a **final** `outcome.md` statu
 - Status changes are applied to `data/applications.csv` using only the values in
   `data/tracker-schema.json`. Run `npm run tracker` afterwards so the workbook matches.
 - Sync state stays at `job-search/gmail_sync/state.json`.
+- The workspace's **Check my email** button (Claude or Gemini as reader) does the same read-classify-approve-write loop from the browser and shares this state file, so
+  an e-mail handled by either is not proposed again by the other. The button writes the tracker only; `outcome.md` stays this command's job.

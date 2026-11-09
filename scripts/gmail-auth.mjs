@@ -2,7 +2,8 @@
 /**
  * One-time Gmail permission, so applications can be sent by email.
  *
- *   npm run gmail:auth
+ *   npm run gmail:auth                    send-only, for applications
+ *   node scripts/gmail-auth.mjs --read    read-only, for Check my email with Gemini (a separate token)
  *
  * Needs GMAIL_CLIENT_ID and GMAIL_CLIENT_SECRET in .env (an OAuth client of type "Desktop app").
  * Asks Google for the single permission "send email on your behalf": it cannot read, list or
@@ -15,7 +16,11 @@ import http from "node:http";
 import { saveSettings } from "../lib/env-settings.mjs";
 import { loadEnv } from "../lib/extract-certificate.mjs";
 
-const SCOPE = "https://www.googleapis.com/auth/gmail.send";
+// --read asks for the read-only permission instead: a second, separate token for Check my email with Gemini.
+// The sending token can never read and this one can never send. (PowerShell drops flags after "npm run x --": run node scripts/gmail-auth.mjs --read.)
+const READ = process.argv.includes("--read");
+const SCOPE = READ ? "https://www.googleapis.com/auth/gmail.readonly" : "https://www.googleapis.com/auth/gmail.send";
+const TOKEN_NAME = READ ? "GMAIL_READ_REFRESH_TOKEN" : "GMAIL_REFRESH_TOKEN";
 const WAIT_MS = 5 * 60_000;
 
 loadEnv();
@@ -35,7 +40,7 @@ url.search = new URLSearchParams({
   client_id: id, redirect_uri: redirect, response_type: "code", scope: SCOPE, state,
   access_type: "offline", prompt: "consent", ...(hint ? { login_hint: hint } : {}),
 }).toString();
-console.log(`\nOpen this link, sign in with the Gmail account that should send, and allow "Send email on your behalf":\n\n${url}\n`);
+console.log(`\nOpen this link, sign in with the Gmail account that should ${READ ? 'be checked, and allow "Read your email" (read-only)' : 'send, and allow "Send email on your behalf"'}:\n\n${url}\n`);
 
 const code = await new Promise((resolve, reject) => {
   const timer = setTimeout(() => reject(new Error("No answer within 5 minutes.")), WAIT_MS);
@@ -67,5 +72,5 @@ if (!String(body.scope || "").split(" ").includes(SCOPE) || String(body.scope).s
   console.error(`Unexpected permissions granted (${body.scope}). Nothing was saved.`);
   process.exit(1);
 }
-saveSettings({ GMAIL_REFRESH_TOKEN: body.refresh_token });
-console.log("Connected. The send-only permission is saved to .env. Applications with an employer e-mail can now be sent.");
+saveSettings({ [TOKEN_NAME]: body.refresh_token });
+console.log(READ ? "Connected. The read-only permission is saved to .env. Check my email can now read with Gemini." : "Connected. The send-only permission is saved to .env. Applications with an employer e-mail can now be sent.");
