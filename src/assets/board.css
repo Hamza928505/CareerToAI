@@ -212,6 +212,7 @@ input[type="date"].gb-control { padding-right: 8px; }
 .gb-tick { display: inline-grid; place-items: center; flex: none; width: 18px; height: 18px; border: 1.5px solid var(--gb-border-strong); border-radius: 6px; font-size: 10px; color: transparent; transition: all 0.2s ease; }
 .gb-combo-opt.is-selected .gb-tick { background: var(--gb-grad); border-color: transparent; color: #fff; }
 .gb-opt-icon { flex: none; width: 18px; color: var(--gb-primary); text-align: center; }
+.gb-opt-logo { flex: none; width: 18px; height: 18px; border-radius: 4px; object-fit: contain; }
 .gb-opt-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .gb-combo-opt mark { background: color-mix(in srgb, var(--gb-primary) 24%, transparent); color: inherit; border-radius: 3px; padding: 0 1px; }
 .gb-opt-count { padding: 1px 8px; border-radius: 999px; background: var(--gb-surface-3); font-size: 12px; font-weight: 650; font-variant-numeric: tabular-nums; color: var(--gb-text-2); }

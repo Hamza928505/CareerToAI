@@ -6,7 +6,7 @@
  * at the top of the screen, so the on-screen keyboard never covers it.
  *
  *   new Combo(hostElement, { id, label, icon, multiple, items, value, placeholder, hideZero, compact, onChange, footer })
- *   items: [{ value, label, group?, icon?, count?, keywords? }]   single selects bring their own "any" item with value ""
+ *   items: [{ value, label, group?, icon?, logo?, count?, keywords? }]   logo is an image address and replaces the icon   single selects bring their own "any" item with value ""
  */
 
 /** Lower case with accents removed, for searching: "Zürich" is found by "zurich". */
@@ -20,6 +20,13 @@ const make = (tag, className, text) => {
   return node;
 };
 const icon = (classes) => { const i = make("i", classes); i.setAttribute("aria-hidden", "true"); return i; };
+/** An option's logo (item.logo is an address). It is decoration beside the label, so it removes itself when it cannot load. */
+const logo = (src) => {
+  const img = make("img", "gb-opt-logo");
+  Object.assign(img, { src, alt: "", width: 18, height: 18, loading: "lazy", referrerPolicy: "no-referrer" });
+  img.addEventListener("error", () => img.remove());
+  return img;
+};
 
 export class Combo {
   constructor(host, options) {
@@ -247,7 +254,8 @@ export class Combo {
       li.setAttribute("role", "option");
       li.setAttribute("aria-selected", String(selected));
       if (this.o.multiple) { const tick = make("span", "gb-tick"); tick.append(icon("fa-solid fa-check")); li.append(tick); }
-      else if (item.icon) li.append(icon(`fa-solid ${item.icon} gb-opt-icon`));
+      else if (item.icon && !item.logo) li.append(icon(`fa-solid ${item.icon} gb-opt-icon`));
+      if (item.logo) li.append(logo(item.logo));
       li.append(this.labelNode(item.label, tokens[0]));
       if (count != null) li.append(make("span", "gb-opt-count", String(count)));
       this.list.append(li);

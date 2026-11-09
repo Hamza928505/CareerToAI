@@ -15,6 +15,9 @@ per-file diff commands.
 
 ### Changed
 
+- **Logos in the shortlist filters.** The "Searched by" filter and each row's *Searched by* chip show Claude's and NVIDIA's logos (bundled in
+  `assets/service-logos`), and the "Site" filter shows each site's icon, the one its row chip already shows. A filter option takes an
+  optional `logo` address (`board-combo.js`); a logo that fails to load removes itself so the label stays.
 - **The service cards show each service's logo.** Firecrawl, Tavily, TinyFish, Apify, Exa, Adzuna, Jooble, Careerjet and the AI provider
   card now carry the service's own logo (`src/assets/service-logos/`, bundled with the page, so the page asks no other site for it). The
   logos belong to their owners and are used only to identify the service.
