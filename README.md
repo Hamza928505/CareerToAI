@@ -594,7 +594,7 @@ upstream; adopting a change is a manual port into the root tree.
 | `/add-portal` | Generates a new portal-search CLI for your local market. |
 | `/add-template` | Registers a custom CV or cover-letter template. |
 | `/html-report` | Builds an application tracker dashboard. |
-| `/gmail-sync` | Syncs application status from Gmail. |
+| `/gmail-sync` | Syncs application status from Gmail. The workspace's **Check my email** button does the same with your approval, read by Claude or by Gemini, and the **Mail** page (`/mail/`, from the **Mail** step of the journey strip, next to Tools) keeps the e-mails that mattered so you can read them again. |
 | `/notion-sync` | Pushes ranked jobs to a Notion database. |
 | `/reset` | Clears the candidate profile data. |
 

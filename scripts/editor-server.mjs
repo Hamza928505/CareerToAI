@@ -59,7 +59,11 @@ import { draftEmail, emailRecipient, gmailConfig, sendApplicationEmail, smtpConf
 import { readApplicationWorkbook, saveApplicationWorkbook } from "../lib/application-workbook.mjs";
 import { NEW_DAYS, applicationRoute, applicationTarget, assistantQueue, knownAddress, mergeSearchResults, newEligible } from "../lib/application-flow.mjs";
 import { readSettings, saveSettings } from "../lib/env-settings.mjs";
-import { chatJson, llmConfig, llmOverview, llmStatus } from "../lib/llm.mjs";
+import { chatJson, geminiConfig, llmConfig, llmOverview, llmStatus } from "../lib/llm.mjs";
+import { readConfig as mailReadConfig } from "../lib/gmail-read.mjs";
+import { applyProposals, candidates as mailCandidates, mailQuery, logMail, markProcessed, readLog as readMailLog, readState as readMailState, tally as tallyMail, validate as validateMail } from "../lib/mail-sync.mjs";
+import { readWithAgy, readWithClaude, readWithGemini } from "../lib/mail-readers.mjs";
+import { agyJson, agyModel, agyStatus } from "../lib/agy.mjs";
 import { analyseSkills, scoreJobs } from "../lib/profile-ai.mjs";
 import { hasStudentFiles, readStudent, TAILORED_DIRS, tailoredPaths } from "../lib/student-files.mjs";
 import { slug, tailorDocuments } from "../lib/tailor-docs.mjs";
@@ -247,6 +251,21 @@ async function withWorkflow(name, action) {
   runningFlow = name;
   try { return await action(); } finally { runningFlow = null; }
 }
+// For a long background task's short write at the end (the search's new rows, the approved mail changes): wait for the
+// flow that holds the workbook instead of failing, so the student can keep applying or saving while a search or an email
+// check runs. Leaving the loop and taking the lock happen in one turn of the event loop, so two waiters cannot both get it.
+async function whenFree(name, action, { wait = 15 * 60_000 } = {}) {
+  const until = Date.now() + wait;
+  while (runningFlow) {
+    if (Date.now() > until) throw conflict(`The ${runningFlow} flow is still running. Try again when it has finished.`);
+    await new Promise((resolve) => setTimeout(resolve, 300));
+  }
+  return withWorkflow(name, action);
+}
+
+// What the background tasks are doing, for the page's task tray (GET /__editor/progress). Counts and stages only, never e-mail text.
+const progress = { search: null, mail: null };
+const track = (kind, fields) => { progress[kind] = { ...progress[kind], ...fields, updated: Date.now() }; };
 
 async function handleApplicationsRead(res) {
   sendJson(res, 200, await readApplicationWorkbook());
@@ -277,8 +296,11 @@ async function handleSearch(req, res) {
   if (!Object.values(use).some(Boolean)) return sendJson(res, 400, { error: 'Choose at least one search source.' });
   if (useProfile && !llmConfig()) return sendJson(res, 400, { error: 'Set up an AI provider in .env to score jobs with your profile files.' });
   if (useProfile && !hasStudentFiles()) return sendJson(res, 400, { error: 'Upload student.json and both base documents in the editor first.' });
-  const plan = await searchPlan({ mode }); // the major's words (or every field's); fails with a clear message when the profile has no field of study
-  await withWorkflow('search', async () => {
+  if (progress.search?.running) return sendJson(res, 409, { error: 'A search is already running. Its progress is in the top-right corner.' });
+  track('search', { running: true, started: Date.now(), stage: 'Planning the search', sources: {}, error: '' });
+  try {
+    const plan = await searchPlan({ mode }); // the major's words (or every field's); fails with a clear message when the profile has no field of study
+    track('search', { stage: `Searching for ${plan.label.toLowerCase()}` });
     // The student chooses the sources. The JobSearchEngine decides what each free source permits; this page never searches or
     // opens job sites itself. Indeed comes through the student's Claude connector (lib/indeed-agent.mjs) and
     // StepStone/Arbeitsagentur through Claude's Apify connector: those two are Claude's, they need its connectors.
@@ -290,7 +312,12 @@ async function handleSearch(req, res) {
       use.claude && ['claude', 'Apify', searchApify({ days: NEW_DAYS, searches: plan.apifySearches })],
       use.nim && ['nim', 'NVIDIA NIM', searchNim({ days: NEW_DAYS, plan, isKnown: knownAddress((await readApplicationWorkbook()).rows) })],
     ].filter(Boolean);
-    const settled = await Promise.allSettled(tasks.map((task) => task[2]));
+    const sources = Object.fromEntries(tasks.map(([, name]) => [name, 'searching…']));
+    track('search', { sources });
+    const settled = await Promise.allSettled(tasks.map(([, name, promise]) => promise.then(
+      (value) => { sources[name] = `${value.jobs.length} found`; track('search', { sources }); return value; },
+      (error) => { sources[name] = 'failed'; track('search', { sources }); throw error; },
+    )));
     if (settled.every((r) => r.status === 'rejected')) throw settled[0].reason;
     const result = { jobs: [], warnings: [] };
     const bySource = {};
@@ -304,7 +331,9 @@ async function handleSearch(req, res) {
     // Only what is new and can count for the German Year goes on, so AI scoring is spent on those alone. Every field is taken
     // (the search is already about the student's major or about everything) and no posting is dropped for a low Fit.
     const { jobs, skipped } = newEligible(result.jobs, (await readApplicationWorkbook()).rows, { field: null });
+    track('search', { stage: `${jobs.length} new posting${jobs.length === 1 ? '' : 's'} passed the checks`, found: result.jobs.length, fresh: jobs.length });
     if (useProfile && jobs.length) {
+      track('search', { stage: `AI is scoring ${jobs.length} new posting${jobs.length === 1 ? '' : 's'} against your files` });
       // Optional and best-effort: any failure keeps the built-in score and says so.
       try {
         const { scores, error } = await scoreJobs({ jobs });
@@ -317,6 +346,7 @@ async function handleSearch(req, res) {
     // A company with no logo and no website gets its website looked up by name (Exa), so the table can show its icon.
     const unplaced = jobs.filter((job) => job.company && !job.website && !job.logo_url);
     if (unplaced.length) {
+      track('search', { stage: `Looking up ${unplaced.length} company website${unplaced.length === 1 ? '' : 's'}` });
       const { sites, error } = await findCompanySites(unplaced.map((job) => job.company));
       for (const job of unplaced) if (sites[job.company]) job.website = sites[job.company];
       if (error && error !== 'no Exa key') result.warnings.push(`Company websites were not all looked up: ${error}`);
@@ -324,14 +354,22 @@ async function handleSearch(req, res) {
     const left = [[skipped.known, 'already in your workbook'], [skipped.undated, 'without a posting date'], [skipped.old, `posted more than ${NEW_DAYS} days ago`],
       [skipped.ineligible, 'not internships or failing the GJU rules']].filter(([count]) => count);
     if (left.length) result.warnings.push(`Left out: ${left.map(([count, why]) => `${count} ${why}`).join(', ')}.`);
-    // Read after the network calls so edits made in Excel during the search are retained.
-    const snapshot = await readApplicationWorkbook();
-    const merged = mergeSearchResults(snapshot.rows, jobs, { scoring: { keepLow: true, words: [...plan.de, ...plan.en], skills: plan.skills } });
-    if (jobs.length) await saveApplicationWorkbook(merged.rows, { revision: snapshot.revision });
+    // Read after the network calls, and only once nothing else holds the workbook, so edits saved during the search are kept.
+    track('search', { stage: 'Saving to your workbook' });
+    const merged = await whenFree('search', async () => {
+      const snapshot = await readApplicationWorkbook();
+      const result = mergeSearchResults(snapshot.rows, jobs, { scoring: { keepLow: true, words: [...plan.de, ...plan.en], skills: plan.skills } });
+      if (jobs.length) await saveApplicationWorkbook(result.rows, { revision: snapshot.revision });
+      return result;
+    });
     const { Meets = 0, Check = 0 } = merged.gju;
     if (merged.added) result.warnings.push(`GJU check of the ${merged.added} new jobs: meets the rules ${Meets}, check by hand ${Check}.`);
+    track('search', { running: false, stage: 'Done', added: merged.added });
     sendJson(res, 200, { ok: true, found: result.jobs.length, added: merged.added, unverified: jobs.filter((job) => job.verified === false).length, rows: merged.rows.length, bySource, plan: { mode, label: plan.label }, warnings: result.warnings });
-  });
+  } catch (error) {
+    track('search', { running: false, stage: 'Failed', error: error.message });
+    throw error;
+  }
 }
 
 async function handleSettings(req, res) {
@@ -342,6 +380,16 @@ async function handleSettings(req, res) {
     console.log(`  saved ${count} setting(s) to .env`);
   }
   sendJson(res, 200, { ok: true, fields: readSettings(), llm: llmStatus() });
+}
+
+// The Gemini card's test: one locked-down agy run (about 25 s) that only asks for {"ok": true}. It proves the Pro subscription answers.
+async function handleGeminiTest(res) {
+  const agy = await agyState(true);
+  if (!agy.found) return sendJson(res, 400, { error: 'agy (the Antigravity CLI) was not found. Install it and sign in once by running agy in a terminal.' });
+  if (!agy.signedIn) return sendJson(res, 400, { error: 'agy is not signed in. Run agy in a terminal and sign in with your Google account.' });
+  const started = Date.now();
+  await agyJson({ system: 'You are a connection test.', user: 'Reply with {"ok": true}.', schema: z.object({ ok: z.boolean() }) });
+  sendJson(res, 200, { ok: true, model: agyModel(), seconds: Math.round((Date.now() - started) / 100) / 10 });
 }
 
 async function handleLlmTest(res) {
@@ -446,6 +494,92 @@ async function handleApplyPreview(res) {
     drafts, expires: Date.now() + 10 * 60_000,
   };
   sendJson(res, 200, { count: rows.length, remaining: Math.max(0, eligible.length - rows.length), first: rows[0] || null, rows, confirmation: pendingPreview.token, batchLimit: 15 });
+}
+
+// ---------------------------------------------------------------------------
+// Check my email: a reader (Claude's Gmail connector or Gemini) proposes status changes, the student approves, only then
+// does anything reach the workbook. Same shape as the application preview: the server keeps the proposals, the browser
+// only sends back the token and which ones were approved. The reading runs outside the workbook lock, so the page stays usable.
+// ---------------------------------------------------------------------------
+let pendingMail = null;
+const berlinToday = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Berlin' });
+
+// Is agy (the Antigravity CLI, Gemini through the student's Pro subscription) installed and signed in? Asking Google takes a second, so it is kept for a minute.
+let agyCache = null;
+let agyChecked = 0;
+async function agyState(fresh = false) {
+  if (fresh || !agyCache || Date.now() - agyChecked > 60_000) { agyChecked = Date.now(); agyCache = await agyStatus(); }
+  return agyCache;
+}
+
+// GET /__editor/mail: which readers can run. Only whether a key or token exists, never its value.
+async function handleMailStatus(res) {
+  sendJson(res, 200, { claude: true, gemini: { key: Boolean(geminiConfig()), gmail: Boolean(mailReadConfig()) }, agy: { ...(await agyState()), gmail: Boolean(mailReadConfig()) }, lastSync: readMailState().last_sync });
+}
+
+const NEEDS_MAIL_TOKEN = 'Gemini reads your mail through a read-only Gmail permission. In a terminal run: node scripts/gmail-auth.mjs --read';
+
+async function handleMailScan(req, res) {
+  const { reader, confirmed } = await readBody(req);
+  if (!['claude', 'gemini', 'agy'].includes(reader)) return sendJson(res, 400, { error: 'Choose Claude or Gemini to read your email.' });
+  if (reader === 'gemini') {
+    if (!geminiConfig()) return sendJson(res, 400, { error: 'Add GEMINI_API_KEY under API keys & AI provider first.' });
+    if (!mailReadConfig()) return sendJson(res, 400, { error: NEEDS_MAIL_TOKEN });
+    if (confirmed !== true) return sendJson(res, 400, { error: 'Confirm that your Gemini key is on a paid plan. On the free tier Google may read what it receives, and this sends your e-mails.' });
+  }
+  if (reader === 'agy') {
+    const agy = await agyState(true);
+    if (!agy.found) return sendJson(res, 400, { error: 'agy (the Antigravity CLI) was not found. Install it and sign in once by running agy in a terminal.' });
+    if (!agy.signedIn) return sendJson(res, 400, { error: 'agy is not signed in. Run agy in a terminal, sign in with your Google account, then try again.' });
+    if (!mailReadConfig()) return sendJson(res, 400, { error: NEEDS_MAIL_TOKEN });
+  }
+  if (progress.mail?.running) return sendJson(res, 409, { error: 'An email check is already running. Its progress is in the top-right corner.' });
+  const name = { claude: 'Claude', gemini: 'Gemini', agy: 'Gemini (agy)' }[reader];
+  track('mail', { running: true, started: Date.now(), reader: name, stage: reader === 'claude' ? 'Claude is searching and reading your Gmail' : 'Searching your Gmail', read: 0, listed: 0, batch: 0, batches: 0, spotted: {}, counts: null, error: '' });
+  try {
+    // Reading the workbook needs no lock: the approval checks each row's status again before it writes.
+    const snapshot = await readApplicationWorkbook();
+    const list = mailCandidates(snapshot.rows);
+    const state = readMailState();
+    const skip = new Set(state.processed_message_ids);
+    const query = mailQuery(list, { lastSync: state.last_sync });
+    const read = reader === 'claude'
+      ? await readWithClaude({ candidates: list, query })
+      : reader === 'agy'
+        ? await readWithAgy({ candidates: list, query, skip, mail: mailReadConfig(), onProgress: (fields) => track('mail', fields) })
+        : await readWithGemini({ candidates: list, query, skip, mail: mailReadConfig(), onProgress: (fields) => track('mail', fields) });
+    const checked = validateMail({ findings: read.findings, documents: read.documents, rows: list, skip });
+    // Gemini covered every message it fetched. Claude's connector shows no id list we can trust, so only e-mails it proposed from count.
+    const scanned = read.scanned.length ? read.scanned : checked.proposals.map((proposal) => proposal.messageId);
+    // An hour to review: the student may be busy applying when the check finishes.
+    pendingMail = { token: randomUUID(), proposals: new Map(checked.proposals.map((proposal) => [proposal.rowId, proposal])), scanned, expires: Date.now() + 60 * 60_000 };
+    track('mail', { running: false, stage: 'Done', read: read.scanned.length || progress.mail.read, counts: tallyMail(checked.proposals), proposals: checked.proposals.length });
+    sendJson(res, 200, { confirmation: pendingMail.token, reader, proposals: checked.proposals, counts: tallyMail(checked.proposals), read: read.scanned.length, review: checked.review, dropped: checked.dropped, candidates: list.length, warnings: read.warnings });
+  } catch (error) {
+    track('mail', { running: false, stage: 'Failed', error: error.message });
+    throw error;
+  }
+}
+
+// POST /__editor/mail/apply { confirmation, accept: [rowId, ...] }. An empty list is "none of these": the e-mails are still marked as seen.
+async function handleMailApply(req, res) {
+  const { confirmation, accept } = await readBody(req);
+  if (!Array.isArray(accept) || !accept.every((id) => typeof id === 'string')) return sendJson(res, 400, { error: 'Send the rows you approved.' });
+  // Waits for whatever holds the workbook (an application being sent, a save). A row whose status moved since the check is left alone (stale).
+  await whenFree('mail', async () => {
+    const snapshot = await readApplicationWorkbook();
+    const pending = pendingMail;
+    if (!pending || pending.token !== confirmation || pending.expires < Date.now()) {
+      return sendJson(res, 409, { error: 'The email check expired. Check your email again.' });
+    }
+    pendingMail = null;
+    const chosen = accept.map((id) => pending.proposals.get(id)).filter(Boolean);
+    const done = applyProposals(snapshot.rows, chosen, berlinToday());
+    if (done.applied.length) await saveApplicationWorkbook(done.rows, { revision: snapshot.revision });
+    markProcessed(pending.scanned, berlinToday());
+    logMail([...pending.proposals.values()].map((proposal) => ({ proposal, decision: proposal.untracked ? (chosen.includes(proposal) ? 'kept' : 'skipped') : done.applied.includes(proposal) ? 'applied' : done.stale.includes(proposal) ? 'stale' : 'skipped' })), berlinToday()); // the text of the e-mails that mattered, kept locally on purpose
+    sendJson(res, 200, { ok: true, applied: done.applied.length, kept: chosen.filter((proposal) => proposal.untracked).length, counts: tallyMail([...done.applied, ...chosen.filter((proposal) => proposal.untracked)]), stale: done.stale.length, skipped: pending.proposals.size - chosen.length });
+  });
 }
 
 async function handleApply(req, res) {
@@ -661,7 +795,10 @@ const server = http.createServer(async (req, res) => {
       // Email and local uploads are this server's own, so they are read fresh instead of from the 5-minute cache.
       return sendJson(res, 200, { ...(await capabilitiesCache), email: { available: Boolean(gmailConfig() || smtpConfig()), via: gmailConfig() ? "gmail" : smtpConfig() ? "smtp" : null }, localFileUploads: true });
     }
-    if (pathname === "/__editor/credits" && req.method === "GET") return sendJson(res, 200, { providers: await checkCredits(), ai: llmOverview() });
+    if (pathname === "/__editor/credits" && req.method === "GET") {
+      const [providers, agy] = await Promise.all([checkCredits(), agyState()]);
+      return sendJson(res, 200, { providers, ai: llmOverview(), gemini: { agy, key: Boolean(geminiConfig()), mailToken: Boolean(mailReadConfig()) } });
+    }
     if (pathname === "/__editor/status") {
       return sendJson(res, 200, { ok: true, hasApiKey: Boolean(process.env.ANTHROPIC_API_KEY), llm: llmStatus(), studentFiles: hasStudentFiles() });
     }
@@ -681,6 +818,12 @@ const server = http.createServer(async (req, res) => {
     if (pathname === "/__editor/apply-pack" && req.method === "GET") return handleApplyPack(res);
     if (pathname === "/__editor/apply-preview" && req.method === "GET") return await handleApplyPreview(res);
     if (pathname === "/__editor/apply" && req.method === "POST") return await handleApply(req, res);
+    if (pathname === "/__editor/mail" && req.method === "GET") return await handleMailStatus(res);
+    if (pathname === "/__editor/gemini-test" && req.method === "POST") return await handleGeminiTest(res);
+    if (pathname === "/__editor/mail/scan" && req.method === "POST") return await handleMailScan(req, res);
+    if (pathname === "/__editor/progress" && req.method === "GET") return sendJson(res, 200, progress);
+    if (pathname === "/__editor/mail/log" && req.method === "GET") return sendJson(res, 200, { entries: readMailLog(), counts: tallyMail(readMailLog().filter((entry) => entry.decision === 'applied')) });
+    if (pathname === "/__editor/mail/apply" && req.method === "POST") return await handleMailApply(req, res);
     if (pathname === "/__editor/applications") {
       if (req.method === "POST") return await handleApplicationsWrite(req, res);
       return await handleApplicationsRead(res);

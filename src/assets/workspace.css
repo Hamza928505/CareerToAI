@@ -1,4 +1,5 @@
 @import url("./board.css");
+@import url("./mail-dialog.css");
 
 /* Workspace only — loaded via `pageStyles` in src/workspace.njk, on top of
    assets/style.css. Presentation only; every number on this page comes from
@@ -288,6 +289,7 @@
 .editor-section-icon, .guide-icon { color: var(--color-ai); margin-right: .4rem; }
 .swal-form-col { display: flex; flex-direction: column; gap: .5rem; text-align: left; }
 .swal-form-full { margin: 0; width: 100%; }
+
 
 /* A full row has room for longer notes without stretching the workbook. */
 .tracker-dialog { width: min(960px, calc(100vw - 2rem)); max-height: calc(100dvh - 3rem); padding: 0; background: var(--bg-surface); color: var(--text-primary); border: 1px solid var(--border-strong); border-radius: 8px; box-shadow: var(--shadow-lg); }

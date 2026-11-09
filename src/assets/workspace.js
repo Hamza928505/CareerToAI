@@ -266,7 +266,7 @@ const el = (tag, cls, text) => {
 };
 
 // One orb per search service, its animation matched to what the service does.
-const CREDIT_ORB = { firecrawl: "weaving", tavily: "searching", tinyfish: "working", apify: "working", exa: "connecting", adzuna: "searching", jooble: "searching", careerjet: "connecting" };
+const CREDIT_ORB = { firecrawl: "weaving", tavily: "searching", tinyfish: "working", apify: "working", exa: "connecting", adzuna: "searching", jooble: "searching", careerjet: "connecting", gemini: "connecting" };
 function creditOrb(id, name) {
   const canvas = document.createElement("canvas");
   canvas.setAttribute("role", "img");
@@ -514,6 +514,77 @@ function aiCard(ai) {
   return li;
 }
 
+// Gemini runs through the student's Google AI Pro subscription in a terminal (the agy command), so there is no balance to read:
+// the card says whether agy is installed and signed in, which model it asks for, and what else is set up. An API key is optional.
+function geminiCard(g) {
+  const state = !g.agy.found ? "missing" : !g.agy.signedIn ? "signin" : "ok";
+  const li = el("li", "credit credit--ai");
+  li.dataset.provider = "gemini";
+  li.style.setProperty("--accent", "#4285f4");
+
+  const top = el("div", "credit-top");
+  const head = el("div", "credit-head");
+  head.append(el("span", "credit-kind", "Pro · agy"));
+  const site = el("a", "credit-site", state === "ok" ? "Open ↗" : "Get agy ↗");
+  site.href = "https://antigravity.google/";
+  site.target = "_blank";
+  site.rel = "noopener noreferrer";
+  head.append(site);
+  const sub = state === "ok" ? g.agy.model || "gemini" : state === "signin" ? "Run agy in a terminal and sign in with your Google account" : "Install agy (the Antigravity CLI) to use your Pro subscription";
+  top.append(head, creditTitle("gemini", "Gemini"), el("p", "credit-sub", sub));
+
+  const middle = el("div", "credit-gauge");
+  const body = el("div", "credit-ai");
+  body.append(el("i", `fa-solid ${state === "ok" ? "fa-circle-check" : "fa-terminal"} credit-ai-icon`), el("strong", "credit-number" + (state === "ok" ? "" : " credit-number--dim"), state === "ok" ? "Ready" : state === "signin" ? "Sign in" : "Not found"));
+  const result = el("span", "credit-pct", state === "ok" ? "Runs in your terminal with agy" : "");
+  result.setAttribute("role", "status");
+  body.append(result);
+  const facts = el("span", "credit-pct", `${g.key ? "API key saved. " : ""}${g.mailToken ? "Mail permission saved" : "Mail check needs its read permission"}`);
+  body.append(facts);
+  if (local && state === "ok") {
+    const test = el("button", "credit-test", "Test connection");
+    test.type = "button";
+    test.addEventListener("click", async () => {
+      const held = [...body.childNodes];
+      const live = el("div", "credit-ai-live");
+      live.append(AiStatus.orb("listening", 64), el("span", "credit-pct", "Asking Gemini through agy… about 25 s"));
+      body.replaceChildren(live);
+      let ok = true;
+      let message = "";
+      try {
+        const res = await fetch(api("gemini-test"), { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "The test failed.");
+        message = `Connected · ${data.seconds}s`;
+      } catch (error) { ok = false; message = error.message; }
+      body.replaceChildren(...held);
+      AiStatus.show(result, ok, message);
+    });
+    body.append(test);
+  }
+  middle.append(body);
+
+  const foot = el("div", "credit-foot");
+  const people = el("ul", "credit-people");
+  const orb = el("li", "credit-orb");
+  orb.append(creditOrb("gemini", "Gemini"));
+  people.append(orb);
+  if (local) {
+    const item = el("li");
+    const button = el("button", "credit-add");
+    button.type = "button";
+    button.setAttribute("aria-label", "Manage the Gemini model and key");
+    button.title = "Manage model and key";
+    button.innerHTML = '<i class="fa-solid fa-key" aria-hidden="true"></i>';
+    button.addEventListener("click", () => { showTab("ai"); document.getElementById("setting-AGY_MODEL")?.focus(); });
+    item.append(button);
+    people.append(item);
+  }
+  foot.append(people, el("span", `credit-pill credit-pill--${state === "ok" ? "ok" : "none"}`, state === "ok" ? "Ready" : state === "signin" ? "Not signed in" : "agy not found"));
+  li.append(top, middle, foot);
+  return li;
+}
+
 const creditItem = (p) => creditCard(p);
 const creditSkeleton = (svc) => creditCard(svc, { loading: true });
 
@@ -561,9 +632,9 @@ async function loadCredits() {
   creditList.replaceChildren(...SERVICES.map((svc) => creditSkeleton(svc)));
   try {
     const res = await fetch(api("credits"), { cache: "no-store" });
-    const { providers, ai } = await res.json();
+    const { providers, ai, gemini } = await res.json();
     clearGauges();
-    creditList.replaceChildren(...providers.map(creditItem), ...(ai ? [aiCard(ai)] : []));
+    creditList.replaceChildren(...providers.map(creditItem), ...(ai ? [aiCard(ai)] : []), ...(gemini ? [geminiCard(gemini)] : []));
     updateOverview(providers);
   } catch {
     creditList.replaceChildren(Object.assign(document.createElement("li"), { textContent: "Could not reach the local editor.", className: "muted" }));

@@ -35,7 +35,9 @@ eleventyExcludeFromCollections: true
     <div class="gb-hero-cta">
       <a class="gb-btn gb-btn-light" href="#board-results"><i class="fa-solid fa-arrow-down" aria-hidden="true"></i> Browse internships</a>
       <button type="button" class="gb-btn gb-btn-glass" data-board-help><i class="fa-solid fa-scale-balanced" aria-hidden="true"></i> How the check works</button>
+      <button type="button" class="gb-btn gb-btn-glass" id="btn-check-mail" disabled title="Reads your Gmail (read-only) and proposes status changes for you to approve"><i class="fa-solid fa-envelope-open-text" aria-hidden="true"></i> Check my email</button>
     </div>
+    <p class="gb-hero-note" id="mail-status" role="status" aria-live="polite"></p>
     <ul class="gb-stats" aria-label="Your board at a glance">
       <li class="gb-stat-tile"><i class="fa-solid fa-briefcase" aria-hidden="true"></i><strong data-stat="total">0</strong><span>internships</span></li>
       <li class="gb-stat-tile"><i class="fa-solid fa-circle-check" aria-hidden="true"></i><strong data-stat="meets">0</strong><span>meet the rules</span></li>
@@ -134,6 +136,7 @@ eleventyExcludeFromCollections: true
     <li data-stage="applied" data-state="todo"><a href="#flow-apply"><span class="journey-dot">2</span><strong>Apply</strong><small>You or your assistant</small></a></li>
     <li data-stage="insights" data-state="todo"><a href="#flow-insights"><span class="journey-dot">3</span><strong>Insights</strong><small>Charts</small></a></li>
     <li data-stage="tools" data-state="todo"><a href="#flow-tools"><span class="journey-dot">4</span><strong>Tools</strong><small>Commands</small></a></li>
+    <li data-stage="mail" data-state="todo"><a href="{{ '/mail/' | url }}"><span class="journey-dot">5</span><strong>Mail</strong><small>What employers wrote</small></a></li>
   </ol>
   <p class="journey-next" id="journey-next" role="status" aria-live="polite"><strong>Start with a search.</strong> <span>On the Shortlist, one search finds new internships for your major all over Germany, or in every field, and checks each against the GJU rules for you.</span></p>
 </section>
