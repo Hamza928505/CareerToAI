@@ -78,6 +78,10 @@ export function foundBy(source) {
   return "Search APIs";
 }
 
+/** The logo of an AI that searched (Claude, NVIDIA NIM), bundled with the page (assets/service-logos); "" for the rest, which keep their icon. */
+const SERVICE_LOGO = { Claude: "anthropic", "NVIDIA NIM": "nvidia" };
+export const serviceLogo = (by) => (SERVICE_LOGO[by] ? new URL(`./service-logos/${SERVICE_LOGO[by]}.png`, import.meta.url).href : "");
+
 export function toPosting(row) {
   return {
     id: row.id, row,
@@ -321,7 +325,7 @@ export function createBoard({ Swal, dialog, rules, statusField, info, onFiltered
     });
     combos.by = new Combo($("board-f-by"), {
       id: "board-c-by", label: "Searched by", icon: "fa-robot", placeholder: "Any", value: "", onChange: set("by"),
-      items: [{ value: "", label: "Anyone", icon: "fa-list" }, { value: "Claude", label: "Claude (Indeed, StepStone, Arbeitsagentur)", icon: "fa-plug" }, { value: "NVIDIA NIM", label: "NVIDIA NIM (LinkedIn and other boards)", icon: "fa-microchip" }, { value: "Search APIs", label: "Job APIs and feeds (no AI)", icon: "fa-rss" }, { value: "Added by hand", label: "Added by hand", icon: "fa-pen" }],
+      items: [{ value: "", label: "Anyone", icon: "fa-list" }, { value: "Claude", label: "Claude (Indeed, StepStone, Arbeitsagentur)", icon: "fa-plug", logo: serviceLogo("Claude") }, { value: "NVIDIA NIM", label: "NVIDIA NIM (LinkedIn and other boards)", icon: "fa-microchip", logo: serviceLogo("NVIDIA NIM") }, { value: "Search APIs", label: "Job APIs and feeds (no AI)", icon: "fa-rss" }, { value: "Added by hand", label: "Added by hand", icon: "fa-pen" }],
     });
     combos.sites = new Combo($("board-f-sites"), { id: "board-c-sites", label: "Site", icon: "fa-globe", multiple: true, placeholder: "Any site", hideZero: true, items: [], onChange: set("sites") });
     combos.recent = new Combo($("board-f-recent"), {
@@ -351,9 +355,13 @@ export function createBoard({ Swal, dialog, rules, statusField, info, onFiltered
     const cityItems = [...cityForms.entries()].sort((a, b) => b[1].n - a[1].n || a[0].localeCompare(b[0])).map(([k, e]) => ({ value: k, label: [...e.forms.entries()].sort((a, b) => b[1] - a[1])[0][0] }));
     cityItems.forEach((c) => { state.cityNames[c.value] = c.label; });
     combos.cities.setItems(cityItems);
-    const siteCounts = new Map();
-    state.all.forEach((p) => { if (p.site) siteCounts.set(p.site, (siteCounts.get(p.site) || 0) + 1); });
-    combos.sites.setItems([...siteCounts.keys()].sort((a, b) => siteCounts.get(b) - siteCounts.get(a) || a.localeCompare(b)).map((s) => ({ value: s, label: s })));
+    const siteCounts = new Map(), siteDomain = new Map();
+    state.all.forEach((p) => {
+      if (!p.site) return;
+      siteCounts.set(p.site, (siteCounts.get(p.site) || 0) + 1);
+      if (!siteDomain.has(p.site)) siteDomain.set(p.site, siteDomainOf(p.site, p.url)); // the same icon the row's site chip shows
+    });
+    combos.sites.setItems([...siteCounts.keys()].sort((a, b) => siteCounts.get(b) - siteCounts.get(a) || a.localeCompare(b)).map((s) => ({ value: s, label: s, logo: favicon(siteDomain.get(s)) })));
     for (const key of ["skills", "cities", "sites"]) state.f[key] = combos[key].value;
   }
 
@@ -499,11 +507,13 @@ export function createBoard({ Swal, dialog, rules, statusField, info, onFiltered
     if (logo) { const img = logoImg(logo, "gb-logo"); img.addEventListener("load", () => { a.textContent = ""; a.classList.add("has-logo"); a.append(img); }, { once: true }); }
     return a;
   }
-  /** The site the posting came from: its icon and name. Indeed's short links hide the real host, so its name decides. */
+  /** Indeed's short links hide the real host, so its name decides; every other site is its link's host. */
+  const siteDomainOf = (site, url) => (/indeed/i.test(site) ? "indeed.com" : hostOf(url));
+  /** The site the posting came from: its icon and name. */
   function siteChip(row) {
     if (!row.source_site) return null;
     const chip = el("span", "gb-tag site");
-    const domain = /indeed/i.test(row.source_site) ? "indeed.com" : hostOf(row.job_url);
+    const domain = siteDomainOf(row.source_site, row.job_url);
     if (domain) chip.append(logoImg(favicon(domain), "gb-site-logo"));
     chip.append(document.createTextNode(row.source_site));
     return chip;
@@ -526,7 +536,8 @@ export function createBoard({ Swal, dialog, rules, statusField, info, onFiltered
         : p.by === "Search APIs" ? ["fa-rss", "Job APIs and feeds, no AI"] : ["fa-pen", "Added by hand"];
     const chip = el("span", `gb-tag by ${p.by === "NVIDIA NIM" ? "nim" : p.by === "Claude" ? "claude" : ""}`.trim());
     chip.title = title;
-    chip.append(icon(iconClass), document.createTextNode(p.by));
+    const logo = serviceLogo(p.by);
+    chip.append(logo ? logoImg(logo, "gb-site-logo") : icon(iconClass), document.createTextNode(p.by));
     return chip;
   }
   function stat(iconClass, text, tone) {
