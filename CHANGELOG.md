@@ -15,9 +15,50 @@ per-file diff commands.
 
 ### Changed
 
+- **NVIDIA NIM now brings at least one post from each of its 24 sites, where a search can reach one.** The model picks what it likes, so
+  most sites used to come back empty (in a probe only 5 of 24 had a usable posting, mostly because the engines give no posting date). After
+  the model's loop, a site sweep (`sweepSites` in `lib/nim-agent.mjs`) searches every site that still has no dated, in-window, GJU-passing,
+  not-yet-tracked posting on its own: first what the model's tools already returned, then Arbeitnow's feed, Exa, Tavily, Firecrawl and TinyFish
+  limited to that site (3 sites at once, two queries per engine, 10 calls per site, one retry after a 429, 150 s in all), and keeps one posting per site. A dated posting wins; otherwise the site
+  keeps one **lead** with a blank posting date (`site_lead`, `data_source` ending "no posting date"), never dated by the day it was found.
+  `newEligible` takes a lead without a date but still applies the known and GJU checks, and the shortlist shows it as *Date unknown* inside
+  "Last 7 days" for the week after it was found. Only an individual posting page of that very site whose title says internship counts (a title or address check, `looksLikePosting`, keeps category pages,
+  listings and advice articles out, and a date after tomorrow is dropped), nothing is opened, and employer and city are read off the row's own title and snippet by one more model call and kept only when that text states them.
+  The search reports "N of 24 sites have a posting (D dated, L without a posting date)" and names the sites with none. A live run on 2026-11-09 reached 16 of 24;
+  JOBworld, praktikumsstellen, praktikum.de, connecticum, joboter, bonding and KULTweet only show a search engine category, company-list, event or filter pages, and
+  neuvoo.de (now Talent.com) returns nothing at all, so those eight have no post. `searchNim` takes
+  `sweep: false` to skip it and `isKnown(url)` so a site's post is a new one (`knownAddress` in `lib/application-flow.mjs`).
+- **The "Search with" chooser shows the logo of every site each source searches.** Claude: Indeed, StepStone, Arbeitsagentur. NVIDIA NIM:
+  the 24 boards of `NIM_SITES`. Free job sources: the engine's 11 free APIs and feeds. They are small logo tiles (the name is the tooltip
+  and the alt text; a missing or broken logo shows the site's first letter), and the three sources sit side by side, so the card is about
+  330px tall instead of 720px. The list is `src/_data/searchSources.json`
+  (`test/search-sources.test.mjs` fails if the NIM list drifts from `NIM_SITES` or a named logo file is missing), and the 31 new PNGs sit in
+  `assets/service-logos`, so the public page asks no other site for them. Jobware has no logo because it blocks icon downloads (403); its chip shows the name only.
+- **Logos in the "Search with" chooser.** Claude and NVIDIA NIM show their logos, and the free job sources a feed icon, beside each checkbox.
 - **Logos in the shortlist filters.** The "Searched by" filter and each row's *Searched by* chip show Claude's and NVIDIA's logos (bundled in
   `assets/service-logos`), and the "Site" filter shows each site's icon, the one its row chip already shows. A filter option takes an
   optional `logo` address (`board-combo.js`); a logo that fails to load removes itself so the label stays.
+- **NVIDIA NIM no longer picks LinkedIn feed posts.** Search engines return `linkedin.com/posts/…` (a person sharing a job), profiles
+  and company pages next to the real `/jobs/…` pages; the posts show "2 days ago" so they passed the date rule that dropped the real
+  job pages, and later opened as "Post not found". Only `linkedin.com/jobs/` links reach the model now (`isJobLink`), the search says
+  how many it ignored, and a placeholder company such as "Not specified in snippet" is left blank.
+- **NVIDIA NIM can use MCP search tools.** `lib/nim-agent.mjs` now opens the MCP servers of the Antigravity config
+  (`lib/antigravity-mcp.mjs`) and hands the model the tools listed in `MCP_TOOLS` as function tools; today that is TinyFish `search`. The
+  list is an allowlist because the same servers also offer page scrapers, agents and paid people look-ups, and the NIM search still
+  never opens a page. A server starts only when its `<SERVER>_API_KEY` is set; a missing config or a server that will not connect is a
+  warning and the search carries on, and the MCP processes are always closed. Exa, Tavily and Firecrawl stay on their APIs (the same
+  keys and credits). Known limit: TinyFish results carry no posting date, so the search's date rule drops them until a page-reading
+  tool is permitted by `data/source-access-policy.json`.
+- **The search follows the student's major, or searches every field, and keeps low matches.** Before a search the workspace asks *what*
+  (`My major`, read from the field of study in the profile, or `Everything in Germany`) and *with what* (Claude, NVIDIA NIM, free job
+  sources, each on or off, so every student's own keys decide the cost). `lib/search-focus.mjs` turns the major into German and English
+  job-title words (`data/majors.json`, the 22 GJU majors; another field is searched by its own name plus AI-suggested words) for the free
+  sources, Indeed, Apify and the NVIDIA NIM prompt, and `GET /__editor/search-plan` previews them. The IT-only title gate and the
+  "scored under 10" drop are gone: every field counts, a low Fit % is kept and only sorts the board, the AI scores up to 100 new
+  postings, and `scoreJobMatch` scores a posting that matches nothing low instead of leaving it blank. The 7-day window and the GJU
+  rules are unchanged. The result line shows how many postings each source found. `scripts/nim-search.mjs` takes `--global` and
+  `--field=`.
+
 - **The service cards show each service's logo.** Firecrawl, Tavily, TinyFish, Apify, Exa, Adzuna, Jooble, Careerjet and the AI provider
   card now carry the service's own logo (`src/assets/service-logos/`, bundled with the page, so the page asks no other site for it). The
   logos belong to their owners and are used only to identify the service.

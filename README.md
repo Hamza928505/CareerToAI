@@ -102,10 +102,16 @@ Review the imported files, then commit and push when ready. Candidate JSON and t
 - **Ask Claude Code** — copy-ready `/apply`, `/rank`, `/outcome`, `/interview` and
   `/upskill` commands. These read postings and write German, so they need Claude
   Code; a web page cannot run them.
-- **Search** — one button finds new IT internships anywhere in Germany, in German and
-  English, from free job sources and from Indeed (through your Claude account's Indeed
-  connector), and checks each against the GJU rules in `data/gju-rules.json`. Werkstudent
-  and other non-IT jobs are left out.
+- **Search** — one button finds new internships anywhere in Germany, in German and
+  English, and checks each against the GJU rules in `data/gju-rules.json`. You choose
+  *what*: **My major** (taken from the field of study in your profile, with the job-title
+  words of `data/majors.json`) or **Everything in Germany** (every field). And you choose
+  *with what*, using your own keys: **Claude** (Indeed, StepStone and Arbeitsagentur through
+  your Claude account's connectors), **NVIDIA NIM** (LinkedIn and other boards through search
+  APIs, no Claude tokens) and **free job sources**. Only postings from the last 7 days that
+  the GJU rules allow are added; a low Fit % never removes one, it only sorts the board.
+  Werkstudent jobs are not internships and are left out. Import your GJUBoard export first
+  (`npm run import-data -- <file>`) so your field of study is known.
 - **Your internship board** — your rows, read live from `data/applications.csv`, with the
   board's hero, filters (skills, status, city, kind, GJU rules, Apply?, who applies,
   languages, duration, pay, dates) and a table or card list with each row's status and an

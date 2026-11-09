@@ -47,7 +47,8 @@ import { resolveSite } from "../lib/site.mjs";
 import { buildApplyPack } from "../lib/apply-pack.mjs";
 import { SCHEMA, jobMatchKey } from "../lib/tracker.mjs";
 import { getApplicationCapabilities, runBrowserApplication } from "../lib/job-search.mjs";
-import { searchWithEngine } from "../lib/engine-search.mjs";
+import { engineDir, enginePython, searchWithEngine } from "../lib/engine-search.mjs";
+import { readField, searchPlan } from "../lib/search-focus.mjs";
 import { searchIndeed } from "../lib/indeed-agent.mjs";
 import { searchApify } from "../lib/apify-agent.mjs";
 import { searchNim } from "../lib/nim-agent.mjs";
@@ -56,7 +57,7 @@ import { applyAssignments, decideApplicants } from "../lib/assign-applicant.mjs"
 import { runLocalApplication } from "../lib/local-browser.mjs";
 import { draftEmail, emailRecipient, gmailConfig, sendApplicationEmail, smtpConfig } from "../lib/send-email.mjs";
 import { readApplicationWorkbook, saveApplicationWorkbook } from "../lib/application-workbook.mjs";
-import { MIN_FIT, NEW_DAYS, applicationRoute, applicationTarget, assistantQueue, mergeSearchResults, newEligible } from "../lib/application-flow.mjs";
+import { NEW_DAYS, applicationRoute, applicationTarget, assistantQueue, knownAddress, mergeSearchResults, newEligible } from "../lib/application-flow.mjs";
 import { readSettings, saveSettings } from "../lib/env-settings.mjs";
 import { chatJson, llmConfig, llmOverview, llmStatus } from "../lib/llm.mjs";
 import { analyseSkills, scoreJobs } from "../lib/profile-ai.mjs";
@@ -257,28 +258,52 @@ async function handleApplicationsWrite(req, res) {
   sendJson(res, 200, { ok: true, ...snapshot });
 }
 
+// What each search source needs, for the page to show before anything is spent. Claude's connectors cannot be checked
+// without running them, so that source is always offered and a failure shows up as a warning.
+const searchSources = () => ({ claude: true, nim: Boolean(process.env.NVIDIA_API_KEY), apis: Boolean(enginePython(engineDir())) });
+
+// GET /__editor/search-plan?mode=profile|global: the words a search would use, with no AI call and no search.
+async function handleSearchPlan(req, res) {
+  const mode = new URL(req.url, `http://${HOST}`).searchParams.get('mode') === 'global' ? 'global' : 'profile';
+  const field = readField();
+  const plan = field || mode === 'global' ? await searchPlan({ mode, field, ai: false }) : null;
+  sendJson(res, 200, { ok: true, mode, field, available: searchSources(), plan: plan && { label: plan.label, matched: plan.matched, keywords: plan.engineKeywords, searches: plan.indeedSearches.map((item) => item.search) } });
+}
+
 async function handleSearch(req, res) {
-  const { useProfile } = await readBody(req);
+  const { useProfile, mode = 'profile', sources = {} } = await readBody(req);
+  if (!['profile', 'global'].includes(mode)) return sendJson(res, 400, { error: 'Choose a search by your major (profile) or a global search.' });
+  const use = { claude: sources.claude !== false, nim: sources.nim !== false, apis: sources.apis !== false };
+  if (!Object.values(use).some(Boolean)) return sendJson(res, 400, { error: 'Choose at least one search source.' });
   if (useProfile && !llmConfig()) return sendJson(res, 400, { error: 'Set up an AI provider in .env to score jobs with your profile files.' });
   if (useProfile && !hasStudentFiles()) return sendJson(res, 400, { error: 'Upload student.json and both base documents in the editor first.' });
+  const plan = await searchPlan({ mode }); // the major's words (or every field's); fails with a clear message when the profile has no field of study
   await withWorkflow('search', async () => {
-    // Any IT internship anywhere in Germany, in German and English. The JobSearchEngine decides what each source
-    // permits; this page never searches or opens job sites itself. Indeed comes through the student's Claude connector
-    // (lib/indeed-agent.mjs) and StepStone/Arbeitsagentur through Claude's Apify connector: those two are Claude's, they need
-    // its connectors. Everything an NVIDIA NIM model can reach through plain search APIs (LinkedIn and the other boards)
-    // goes to it instead (lib/nim-agent.mjs), so Claude spends no tokens there. Any may fail alone; that is a warning.
-    const [engine, indeed, apify, nim] = await Promise.allSettled([searchWithEngine({ days: NEW_DAYS }), searchIndeed({ days: NEW_DAYS }), searchApify({ days: NEW_DAYS }), searchNim({ days: NEW_DAYS })]);
-    if ([engine, indeed, apify, nim].every((r) => r.status === 'rejected')) throw engine.reason;
-    const result = engine.status === 'fulfilled' ? engine.value : { jobs: [], warnings: [`Free job sources: ${engine.reason.message}`], unverified: 0 };
-    if (indeed.status === 'fulfilled') { result.jobs.push(...indeed.value.jobs); result.warnings.push(...indeed.value.warnings); }
-    else result.warnings.push(`Indeed was not searched: ${indeed.reason.message}`);
-    if (apify.status === 'fulfilled') { result.jobs.push(...apify.value.jobs); result.warnings.push(...apify.value.warnings); }
-    else result.warnings.push(`Apify was not searched: ${apify.reason.message}`);
-    if (nim.status === 'fulfilled') { result.jobs.push(...nim.value.jobs); result.warnings.push(...nim.value.warnings); }
-    else result.warnings.push(`NVIDIA NIM was not searched: ${nim.reason.message}`);
-    // Only what is new and can count for the German Year goes on, so AI scoring is spent on those alone.
-    const { jobs, skipped } = newEligible(result.jobs, (await readApplicationWorkbook()).rows);
-    let unfit = 0;
+    // The student chooses the sources. The JobSearchEngine decides what each free source permits; this page never searches or
+    // opens job sites itself. Indeed comes through the student's Claude connector (lib/indeed-agent.mjs) and
+    // StepStone/Arbeitsagentur through Claude's Apify connector: those two are Claude's, they need its connectors.
+    // Everything an NVIDIA NIM model can reach through plain search APIs (LinkedIn and the other boards) goes to it instead
+    // (lib/nim-agent.mjs), so Claude spends no tokens there. Any may fail alone; that is a warning.
+    const tasks = [
+      use.apis && ['apis', 'Free job sources', searchWithEngine({ days: NEW_DAYS, keywords: plan.engineKeywords })],
+      use.claude && ['claude', 'Indeed', searchIndeed({ days: NEW_DAYS, searches: plan.indeedSearches })],
+      use.claude && ['claude', 'Apify', searchApify({ days: NEW_DAYS, searches: plan.apifySearches })],
+      use.nim && ['nim', 'NVIDIA NIM', searchNim({ days: NEW_DAYS, plan, isKnown: knownAddress((await readApplicationWorkbook()).rows) })],
+    ].filter(Boolean);
+    const settled = await Promise.allSettled(tasks.map((task) => task[2]));
+    if (settled.every((r) => r.status === 'rejected')) throw settled[0].reason;
+    const result = { jobs: [], warnings: [] };
+    const bySource = {};
+    settled.forEach((r, i) => {
+      const [group, name] = tasks[i];
+      if (r.status === 'rejected') return result.warnings.push(`${name} was not searched: ${r.reason.message}`);
+      result.jobs.push(...r.value.jobs);
+      result.warnings.push(...r.value.warnings);
+      bySource[group] = (bySource[group] || 0) + r.value.jobs.length;
+    });
+    // Only what is new and can count for the German Year goes on, so AI scoring is spent on those alone. Every field is taken
+    // (the search is already about the student's major or about everything) and no posting is dropped for a low Fit.
+    const { jobs, skipped } = newEligible(result.jobs, (await readApplicationWorkbook()).rows, { field: null });
     if (useProfile && jobs.length) {
       // Optional and best-effort: any failure keeps the built-in score and says so.
       try {
@@ -288,27 +313,24 @@ async function handleSearch(req, res) {
       } catch (error) {
         result.warnings.push(`AI scoring was skipped: ${error.message}`);
       }
-      unfit = jobs.filter((job) => job.match && job.match.score < MIN_FIT).length;
     }
-    // Only a score from the AI provider drops a posting; one it did not score stays.
-    const fit = jobs.filter((job) => !job.match || job.match.score >= MIN_FIT);
     // A company with no logo and no website gets its website looked up by name (Exa), so the table can show its icon.
-    const unplaced = fit.filter((job) => job.company && !job.website && !job.logo_url);
+    const unplaced = jobs.filter((job) => job.company && !job.website && !job.logo_url);
     if (unplaced.length) {
       const { sites, error } = await findCompanySites(unplaced.map((job) => job.company));
       for (const job of unplaced) if (sites[job.company]) job.website = sites[job.company];
       if (error && error !== 'no Exa key') result.warnings.push(`Company websites were not all looked up: ${error}`);
     }
     const left = [[skipped.known, 'already in your workbook'], [skipped.undated, 'without a posting date'], [skipped.old, `posted more than ${NEW_DAYS} days ago`],
-      [skipped.ineligible, 'not internships or failing the GJU rules'], [skipped.notIT, 'not IT (no IT field in the title)'], [unfit, `scored under ${MIN_FIT}`]].filter(([count]) => count);
+      [skipped.ineligible, 'not internships or failing the GJU rules']].filter(([count]) => count);
     if (left.length) result.warnings.push(`Left out: ${left.map(([count, why]) => `${count} ${why}`).join(', ')}.`);
     // Read after the network calls so edits made in Excel during the search are retained.
     const snapshot = await readApplicationWorkbook();
-    const merged = mergeSearchResults(snapshot.rows, fit);
-    if (fit.length) await saveApplicationWorkbook(merged.rows, { revision: snapshot.revision });
+    const merged = mergeSearchResults(snapshot.rows, jobs, { scoring: { keepLow: true, words: [...plan.de, ...plan.en], skills: plan.skills } });
+    if (jobs.length) await saveApplicationWorkbook(merged.rows, { revision: snapshot.revision });
     const { Meets = 0, Check = 0 } = merged.gju;
     if (merged.added) result.warnings.push(`GJU check of the ${merged.added} new jobs: meets the rules ${Meets}, check by hand ${Check}.`);
-    sendJson(res, 200, { ok: true, found: result.jobs.length, added: merged.added, unverified: fit.filter((job) => job.verified === false).length, rows: merged.rows.length, unavailableServers: result.unavailableServers || [], warnings: result.warnings });
+    sendJson(res, 200, { ok: true, found: result.jobs.length, added: merged.added, unverified: jobs.filter((job) => job.verified === false).length, rows: merged.rows.length, bySource, plan: { mode, label: plan.label }, warnings: result.warnings });
   });
 }
 
@@ -339,7 +361,10 @@ async function handleSkillsAnalysis(req, res) {
   }
   if (!llmConfig()) return sendJson(res, 400, { error: "Set up an AI provider in .env (see API keys & AI provider in the workspace)." });
   const { profile } = await readBody(req);
-  const result = await analyseSkills({ profile, targetRoles: ["Any IT internship (Pflichtpraktikum) in Germany: software and web development, data, IT, cloud and DevOps, security"] });
+  // The skills are rated for the student's own major (the words of lib/search-focus.mjs), not for IT in general.
+  const focus = await searchPlan({ mode: "profile", ai: false }).catch(() => null);
+  const target = focus ? `Internships (Pflichtpraktikum) in Germany for a student of ${focus.label.replace(/ internships$/, "")}: ${[...focus.de, ...focus.en].slice(0, 8).join(", ")}` : "Any internship (Pflichtpraktikum) in Germany";
+  const result = await analyseSkills({ profile, targetRoles: [target] });
   const saved = { generatedAt: new Date().toISOString(), provider: llmConfig().provider, model: llmConfig().model, ...result };
   fs.writeFileSync(ANALYSIS_FILE, JSON.stringify(saved, null, 2) + "\n");
   sendJson(res, 200, { ok: true, ...saved });
@@ -648,6 +673,7 @@ const server = http.createServer(async (req, res) => {
     if (pathname === "/__editor/run" && req.method === "POST") return await handleRun(req, res);
     if (pathname === "/__editor/student-data") return await handleStudentData(req, res);
     if (pathname === "/__editor/search" && req.method === "POST") return await handleSearch(req, res);
+    if (pathname === "/__editor/search-plan" && req.method === "GET") return await handleSearchPlan(req, res);
     if (pathname === "/__editor/settings") return await handleSettings(req, res);
     if (pathname === "/__editor/llm-test" && req.method === "POST") return await handleLlmTest(res);
     if (pathname === "/__editor/tailor" && req.method === "POST") return await handleTailor(req, res);

@@ -615,6 +615,25 @@
 .sx-card [hidden] { display: none !important; }
 
 
+.sx-focus { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr)); gap: var(--s4); padding: var(--s4) var(--s5) var(--s3); }
+.sx-focus fieldset { display: grid; align-content: start; gap: .5rem; min-width: 0; margin: 0; padding: 0; border: 0; }
+.sx-focus legend { padding: 0; margin-bottom: .35rem; font-size: .8rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+.sx-focus label { display: flex; align-items: flex-start; gap: .5rem; font-size: .9rem; }
+.sx-focus label input { margin-top: .2rem; }
+.sx-logo { flex: none; width: 20px; height: 20px; margin-top: .1rem; border-radius: 4px; object-fit: contain; }
+i.sx-logo { display: grid; place-items: center; color: var(--primary, #2563eb); font-size: 1rem; }
+/* The three sources sit side by side (two of the card's three columns, beside "what to search for"); below 62rem they stack. */
+.sx-focus .sx-sources { grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: var(--s4); }
+@media (min-width: 62rem) { .sx-focus .sx-sources { grid-column: span 2; } }
+.sx-source { display: grid; align-content: start; gap: .5rem; min-width: 0; }
+.sx-source:has(input:disabled) .sx-sites { opacity: .5; }
+.sx-sites { display: flex; flex-wrap: wrap; gap: .25rem; }
+.sx-site { display: grid; place-items: center; width: 28px; height: 28px; border: 1px solid var(--border); border-radius: 7px; background: var(--surface); font-size: .7rem; font-weight: 600; color: var(--muted); cursor: default; }
+.sx-site img { width: 18px; height: 18px; object-fit: contain; border-radius: 3px; }
+.sx-focus small { display: block; color: var(--muted); font-size: .8rem; }
+.sx-focus label:has(input:disabled) { opacity: .6; }
+.sx-plan { grid-column: 1 / -1; margin: 0; color: var(--muted); font-size: .85rem; max-width: none; overflow-wrap: anywhere; }
+.sx-plan[data-state="error"] { color: var(--error-text, #f87171); }
 .sx-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s3); padding: var(--s3) var(--s5); border-top: 1px solid var(--border); }
 .sx-foot .search-profile { margin: 0; }
 .sx-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-left: auto; }

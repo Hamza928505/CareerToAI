@@ -1,0 +1,635 @@
+{
+  "$comment": "The 22 GJU bachelor programs and the job-title words used to search internships for each (copied from the GJU board project so the workspace needs no sibling folder; program names from https://www.gju.edu.jo/gju-programs, read 2026-10-10). lib/search-focus.mjs turns the student's field of study into searches with the de/en words, in the order listed, so the first words matter most. Keep every word at least 5 characters: some free job sources match a keyword anywhere in the text, and a short word such as KI would match Kinder. areaWords are the one word per area used by the global search. Edit freely: a major missing here is searched by its own name.",
+  "areas": [
+    "Engineering",
+    "Computing and data",
+    "Business",
+    "Architecture and design",
+    "Health and science",
+    "Languages and communication"
+  ],
+  "areaWords": {
+    "Engineering": {
+      "de": "Ingenieur",
+      "en": "Engineering"
+    },
+    "Computing and data": {
+      "de": "Informatik",
+      "en": "Data Science"
+    },
+    "Business": {
+      "de": "Wirtschaft",
+      "en": "Business"
+    },
+    "Architecture and design": {
+      "de": "Architektur",
+      "en": "Design"
+    },
+    "Health and science": {
+      "de": "Gesundheit",
+      "en": "Healthcare"
+    },
+    "Languages and communication": {
+      "de": "Kommunikation",
+      "en": "Translation"
+    }
+  },
+  "majors": [
+    {
+      "id": "logistic-sciences",
+      "name": "Logistic Sciences",
+      "area": "Business",
+      "de": [
+        "Logistik",
+        "Supply Chain",
+        "Einkauf",
+        "Disposition",
+        "Materialwirtschaft"
+      ],
+      "en": [
+        "Logistics",
+        "Supply Chain Management",
+        "Procurement",
+        "Operations"
+      ],
+      "skills": [
+        "SAP",
+        "Supply Chain",
+        "Excel",
+        "Lagerverwaltung",
+        "Transport",
+        "Einkauf"
+      ]
+    },
+    {
+      "id": "computer-science",
+      "name": "Computer Science",
+      "area": "Computing and data",
+      "de": [
+        "Softwareentwicklung",
+        "Informatik",
+        "Webentwicklung",
+        "Datenanalyse",
+        "Künstliche Intelligenz",
+        "IT-Sicherheit"
+      ],
+      "en": [
+        "Software Engineering",
+        "Data Science",
+        "Machine Learning",
+        "Cyber Security",
+        "Cloud DevOps",
+        "Software Developer",
+        "Web Development"
+      ],
+      "skills": [
+        "Python",
+        "Java",
+        "C#",
+        ".NET",
+        "JavaScript",
+        "TypeScript",
+        "SQL",
+        "React",
+        "Docker",
+        "Git",
+        "Linux",
+        "AWS",
+        "Azure",
+        "Machine Learning",
+        "Cybersecurity"
+      ]
+    },
+    {
+      "id": "architecture",
+      "name": "Architecture",
+      "area": "Architecture and design",
+      "de": [
+        "Architektur",
+        "Architekt",
+        "Bauplanung",
+        "Hochbau"
+      ],
+      "en": [
+        "Architecture",
+        "Architectural Design",
+        "BIM"
+      ],
+      "skills": [
+        "AutoCAD",
+        "Revit",
+        "ArchiCAD",
+        "SketchUp",
+        "Rhino",
+        "BIM",
+        "Photoshop"
+      ]
+    },
+    {
+      "id": "computer-engineering",
+      "name": "Computer Engineering",
+      "area": "Computing and data",
+      "de": [
+        "Embedded",
+        "Hardware",
+        "Elektronik",
+        "Systementwicklung",
+        "Firmware"
+      ],
+      "en": [
+        "Embedded Systems",
+        "Hardware Engineer",
+        "Firmware",
+        "IoT"
+      ],
+      "skills": [
+        "C",
+        "C++",
+        "Embedded Systems",
+        "FPGA",
+        "VHDL",
+        "Linux",
+        "Python",
+        "Mikrocontroller",
+        "IoT"
+      ]
+    },
+    {
+      "id": "digital-marketing",
+      "name": "Digital Marketing",
+      "area": "Business",
+      "de": [
+        "Online Marketing",
+        "Digitales Marketing",
+        "Social Media",
+        "SEO",
+        "Content Marketing"
+      ],
+      "en": [
+        "Digital Marketing",
+        "Social Media",
+        "SEO",
+        "Content Marketing"
+      ],
+      "skills": [
+        "SEO",
+        "SEA",
+        "Google Analytics",
+        "Google Ads",
+        "Social Media",
+        "Content",
+        "CRM",
+        "HubSpot",
+        "Canva"
+      ]
+    },
+    {
+      "id": "sustainable-infrastructure-systems-engineering",
+      "name": "Sustainable Infrastructure Systems Engineering",
+      "area": "Engineering",
+      "de": [
+        "Infrastruktur",
+        "Bauingenieur",
+        "Wasserwirtschaft",
+        "Nachhaltigkeit",
+        "Umwelttechnik"
+      ],
+      "en": [
+        "Infrastructure Engineering",
+        "Civil Engineering",
+        "Sustainability",
+        "Water Management"
+      ],
+      "skills": [
+        "AutoCAD",
+        "Civil 3D",
+        "GIS",
+        "BIM",
+        "Nachhaltigkeit",
+        "Wasserbau"
+      ]
+    },
+    {
+      "id": "business-intelligence-data-analytics",
+      "name": "Business Intelligence and Data Analytics",
+      "area": "Computing and data",
+      "de": [
+        "Business Intelligence",
+        "Datenanalyse",
+        "Data Analyst",
+        "Reporting",
+        "Controlling"
+      ],
+      "en": [
+        "Business Intelligence",
+        "Data Analyst",
+        "Analytics",
+        "Reporting"
+      ],
+      "skills": [
+        "SQL",
+        "Power BI",
+        "Tableau",
+        "Excel",
+        "Python",
+        "R",
+        "ETL",
+        "Data Warehouse",
+        "SAP"
+      ]
+    },
+    {
+      "id": "interior-architecture",
+      "name": "Interior Architecture",
+      "area": "Architecture and design",
+      "de": [
+        "Innenarchitektur",
+        "Raumgestaltung",
+        "Innenausbau"
+      ],
+      "en": [
+        "Interior Design",
+        "Interior Architecture"
+      ],
+      "skills": [
+        "AutoCAD",
+        "SketchUp",
+        "Revit",
+        "3ds Max",
+        "Photoshop",
+        "Rhino"
+      ]
+    },
+    {
+      "id": "management-science",
+      "name": "Management Science",
+      "area": "Business",
+      "de": [
+        "Betriebswirtschaft",
+        "Management",
+        "Projektmanagement",
+        "Unternehmensberatung",
+        "Assistenz der Geschäftsführung"
+      ],
+      "en": [
+        "Business Administration",
+        "Management",
+        "Project Management",
+        "Consulting"
+      ],
+      "skills": [
+        "Excel",
+        "PowerPoint",
+        "SAP",
+        "Projektmanagement",
+        "Scrum",
+        "Controlling"
+      ]
+    },
+    {
+      "id": "translation",
+      "name": "Translation German, English, Arabic",
+      "area": "Languages and communication",
+      "de": [
+        "Übersetzung",
+        "Übersetzer",
+        "Lektorat",
+        "Dolmetschen",
+        "Fremdsprachen"
+      ],
+      "en": [
+        "Translation",
+        "Translator",
+        "Localization",
+        "Proofreading"
+      ],
+      "skills": [
+        "Übersetzung",
+        "Lokalisierung",
+        "CAT-Tools",
+        "Trados",
+        "Lektorat",
+        "Arabisch",
+        "Deutsch",
+        "Englisch"
+      ]
+    },
+    {
+      "id": "gebc",
+      "name": "German and English for Business and Communication",
+      "area": "Languages and communication",
+      "de": [
+        "Unternehmenskommunikation",
+        "Kommunikation",
+        "Public Relations",
+        "Redaktion",
+        "Fremdsprachenassistenz"
+      ],
+      "en": [
+        "Corporate Communication",
+        "Communications",
+        "Public Relations",
+        "Content"
+      ],
+      "skills": [
+        "Kommunikation",
+        "PR",
+        "Redaktion",
+        "Social Media",
+        "Deutsch",
+        "Englisch",
+        "Microsoft Office"
+      ]
+    },
+    {
+      "id": "electrical-engineering",
+      "name": "Electrical Engineering",
+      "area": "Engineering",
+      "de": [
+        "Elektrotechnik",
+        "Elektroingenieur",
+        "Automatisierungstechnik",
+        "Energietechnik",
+        "Schaltungsentwicklung"
+      ],
+      "en": [
+        "Electrical Engineering",
+        "Power Systems",
+        "Automation"
+      ],
+      "skills": [
+        "MATLAB",
+        "Simulink",
+        "SPS",
+        "PLC",
+        "Python",
+        "Embedded Systems"
+      ]
+    },
+    {
+      "id": "energy-engineering",
+      "name": "Energy Engineering",
+      "area": "Engineering",
+      "de": [
+        "Energietechnik",
+        "Erneuerbare Energien",
+        "Photovoltaik",
+        "Energiemanagement",
+        "Windenergie"
+      ],
+      "en": [
+        "Energy Engineering",
+        "Renewable Energy",
+        "Solar",
+        "Energy Management"
+      ],
+      "skills": [
+        "MATLAB",
+        "PVsyst",
+        "Energiemanagement",
+        "Photovoltaik",
+        "SCADA",
+        "Excel"
+      ]
+    },
+    {
+      "id": "mechatronics-engineering",
+      "name": "Mechatronics Engineering",
+      "area": "Engineering",
+      "de": [
+        "Mechatronik",
+        "Automatisierung",
+        "Robotik",
+        "Steuerungstechnik",
+        "Konstruktion"
+      ],
+      "en": [
+        "Mechatronics",
+        "Robotics",
+        "Automation",
+        "Control Systems"
+      ],
+      "skills": [
+        "SPS",
+        "PLC",
+        "CAD",
+        "SolidWorks",
+        "MATLAB",
+        "ROS",
+        "Python",
+        "C++",
+        "Siemens TIA"
+      ]
+    },
+    {
+      "id": "industrial-engineering",
+      "name": "Industrial Engineering",
+      "area": "Engineering",
+      "de": [
+        "Wirtschaftsingenieurwesen",
+        "Produktionsplanung",
+        "Prozessoptimierung",
+        "Qualitätsmanagement",
+        "Lean"
+      ],
+      "en": [
+        "Industrial Engineering",
+        "Process Optimization",
+        "Production Planning",
+        "Quality Management",
+        "Lean"
+      ],
+      "skills": [
+        "Lean",
+        "Six Sigma",
+        "SAP",
+        "Excel",
+        "Prozessoptimierung",
+        "CAD",
+        "Qualitätsmanagement"
+      ]
+    },
+    {
+      "id": "game-design-media-informatics",
+      "name": "Game Design and Media Informatics",
+      "area": "Computing and data",
+      "de": [
+        "Spieleentwicklung",
+        "Game Design",
+        "Mediendesign",
+        "Medieninformatik"
+      ],
+      "en": [
+        "Game Development",
+        "Game Design",
+        "Unity",
+        "Media Informatics"
+      ],
+      "skills": [
+        "Unity",
+        "Unreal Engine",
+        "C#",
+        "C++",
+        "Blender",
+        "Photoshop",
+        "3D",
+        "UI"
+      ]
+    },
+    {
+      "id": "mechanical-maintenance-engineering",
+      "name": "Mechanical and Maintenance Engineering",
+      "area": "Engineering",
+      "de": [
+        "Maschinenbau",
+        "Instandhaltung",
+        "Konstruktion",
+        "Anlagenbau",
+        "Fertigung"
+      ],
+      "en": [
+        "Mechanical Engineering",
+        "Maintenance",
+        "Design Engineer",
+        "Manufacturing"
+      ],
+      "skills": [
+        "SolidWorks",
+        "CATIA",
+        "CAD",
+        "AutoCAD",
+        "Inventor",
+        "FEM",
+        "ANSYS",
+        "Instandhaltung"
+      ]
+    },
+    {
+      "id": "nursing-science",
+      "name": "Nursing Science",
+      "area": "Health and science",
+      "de": [
+        "Pflege",
+        "Gesundheits- und Krankenpflege",
+        "Pflegedienst",
+        "Klinik"
+      ],
+      "en": [
+        "Nursing",
+        "Healthcare",
+        "Clinical"
+      ],
+      "skills": [
+        "Nursing Care",
+        "Patientenversorgung",
+        "Dokumentation",
+        "Hygiene"
+      ]
+    },
+    {
+      "id": "pharmaceutical-chemical-engineering",
+      "name": "Pharmaceutical and Chemical Engineering",
+      "area": "Health and science",
+      "de": [
+        "Pharmatechnik",
+        "Verfahrenstechnik",
+        "Chemie",
+        "Qualitätskontrolle",
+        "Pharmazie"
+      ],
+      "en": [
+        "Pharmaceutical",
+        "Chemical Engineering",
+        "Process Engineering",
+        "Quality Control"
+      ],
+      "skills": [
+        "GMP",
+        "HPLC",
+        "Verfahrenstechnik",
+        "Qualitätskontrolle",
+        "Laborarbeit",
+        "Validierung"
+      ]
+    },
+    {
+      "id": "international-accounting",
+      "name": "International Accounting",
+      "area": "Business",
+      "de": [
+        "Buchhaltung",
+        "Rechnungswesen",
+        "Controlling",
+        "Wirtschaftsprüfung",
+        "Steuer"
+      ],
+      "en": [
+        "Accounting",
+        "Finance",
+        "Audit",
+        "Controlling"
+      ],
+      "skills": [
+        "DATEV",
+        "SAP",
+        "IFRS",
+        "HGB",
+        "Excel",
+        "Buchhaltung",
+        "Controlling"
+      ]
+    },
+    {
+      "id": "design-visual-communication",
+      "name": "Design and Visual Communication",
+      "area": "Architecture and design",
+      "de": [
+        "Grafikdesign",
+        "Kommunikationsdesign",
+        "Mediengestaltung",
+        "UX Design",
+        "Motion Design"
+      ],
+      "en": [
+        "Graphic Design",
+        "Visual Design",
+        "UX Design",
+        "Motion Design"
+      ],
+      "skills": [
+        "Photoshop",
+        "Illustrator",
+        "InDesign",
+        "Figma",
+        "After Effects",
+        "UX",
+        "Typografie"
+      ]
+    },
+    {
+      "id": "biomedical-engineering",
+      "name": "Biomedical Engineering",
+      "area": "Health and science",
+      "de": [
+        "Medizintechnik",
+        "Biomedizintechnik",
+        "Medizinprodukte",
+        "Regulatory Affairs"
+      ],
+      "en": [
+        "Biomedical Engineering",
+        "Medical Devices",
+        "Medical Technology"
+      ],
+      "skills": [
+        "MATLAB",
+        "Medizintechnik",
+        "Qualitätsmanagement",
+        "ISO 13485",
+        "CAD",
+        "Python",
+        "MDR"
+      ]
+    }
+  ]
+}

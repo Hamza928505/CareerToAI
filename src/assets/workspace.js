@@ -218,7 +218,7 @@ function renderJourney(c) {
     : c.interview ? [`${c.interview} interview${c.interview > 1 ? "s" : ""} on the way.`, "Someone wants to meet you. Run /interview to prepare."]
     : c.applied ? [`${c.applied} application${c.applied > 1 ? "s" : ""} sent.`, "That took courage. Follow up after a week, and keep the next one moving."]
     : c.toapply ? [`${c.toapply} on your shortlist.`, "Set Apply? to Yes on the strongest one and send it today."]
-    : ["Start with a search.", "On the Shortlist, one search finds new IT internships all over Germany and checks each against the GJU rules for you."];
+    : ["Start with a search.", "On the Shortlist, one search finds new internships for your major all over Germany, or in every field, and checks each against the GJU rules for you."];
   const el = $("#journey-next");
   el.replaceChildren(Object.assign(document.createElement("strong"), { textContent: title }), " ", Object.assign(document.createElement("span"), { textContent: body }));
 }
