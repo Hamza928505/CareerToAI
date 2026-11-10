@@ -67,6 +67,14 @@ import { agyJson, agyModel, agyStatus } from "../lib/agy.mjs";
 import { analyseSkills, scoreJobs } from "../lib/profile-ai.mjs";
 import { hasStudentFiles, readStudent, TAILORED_DIRS, tailoredPaths } from "../lib/student-files.mjs";
 import { slug, tailorDocuments } from "../lib/tailor-docs.mjs";
+import {
+  evaluatePostings,
+  generateDocumentsForPosting,
+  getStudioState,
+  runAtsCheckOnPdf,
+  saveStudioSettings,
+  studioDirs,
+} from "../lib/internships-studio.mjs";
 
 const execFileAsync = promisify(execFile);
 
@@ -113,6 +121,7 @@ const MIME = {
   ".ico": "image/x-icon",
   ".woff2": "font/woff2",
   ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 };
 loadEnv();
 
@@ -771,6 +780,134 @@ async function handleStudentData(req, res) {
   }
 }
 
+// ---------------------------------------------------------------------------
+// GJU Internships Studio (/documents/) — C:\Users\Hamza928\Desktop\Internships
+// ---------------------------------------------------------------------------
+
+async function handleInternshipsState(res) {
+  sendJson(res, 200, { ok: true, ...(await getStudioState()) });
+}
+
+async function handleInternshipsSettings(req, res) {
+  const body = await readBody(req);
+  const settings = saveStudioSettings(body);
+  sendJson(res, 200, { ok: true, settings, ...(await getStudioState(settings.workingDir)) });
+}
+
+async function handleInternshipsEvaluate(req, res) {
+  const body = await readBody(req);
+  const postings = Array.isArray(body.postings) ? body.postings : [];
+  if (!postings.length) return sendJson(res, 400, { error: "Provide at least one internship posting to evaluate." });
+  const result = await evaluatePostings({ postings, settings: body.settings || {} });
+  sendJson(res, 200, result);
+}
+
+async function handleInternshipsGenerate(req, res) {
+  const body = await readBody(req);
+  const posting = body.posting;
+  if (!posting || typeof posting !== "object") {
+    return sendJson(res, 400, { error: "Provide the posting object to generate CV & Cover Letter for." });
+  }
+  const result = await generateDocumentsForPosting({ posting, settings: body.settings || {} });
+  sendJson(res, 200, { ...result, studio: await getStudioState() });
+}
+
+async function handleInternshipsAtsCheck(req, res) {
+  const body = await readBody(req);
+  const dirs = studioDirs();
+  const folder = body.folder === "CLs" ? dirs.cls : body.folder === "Input Data" ? dirs.inputData : dirs.cvs;
+  const name = path.basename(String(body.name || ""));
+  if (!name.toLowerCase().endsWith(".pdf")) {
+    return sendJson(res, 400, { error: "Choose a .pdf file to run the ATS check on." });
+  }
+  const pdfPath = path.join(folder, name);
+  if (!fs.existsSync(pdfPath)) {
+    return sendJson(res, 404, { error: `PDF not found: ${name}` });
+  }
+  const keywords = Array.isArray(body.keywords)
+    ? body.keywords
+    : String(body.keywords || "").split(/[,;\n]+/).map((s) => s.trim()).filter(Boolean);
+  const report = await runAtsCheckOnPdf({ pdfPath, keywords });
+  sendJson(res, 200, { ok: true, name, folder: body.folder || "CVs", report });
+}
+
+function handleInternshipsManual(req, res) {
+  const url = new URL(req.url, `http://${HOST}`);
+  const rel = String(url.searchParams.get("path") || "").replace(/\\/g, "/");
+  const dirs = studioDirs();
+  const candidate = path.resolve(dirs.ats, rel);
+  if (!candidate.startsWith(dirs.ats + path.sep) && candidate !== dirs.ats) {
+    return sendJson(res, 400, { error: "Invalid manual path." });
+  }
+  if (!fs.existsSync(candidate) || !fs.statSync(candidate).isFile()) {
+    return sendJson(res, 404, { error: "Manual not found." });
+  }
+  sendJson(res, 200, {
+    ok: true,
+    path: rel,
+    name: path.basename(candidate),
+    content: fs.readFileSync(candidate, "utf8"),
+  });
+}
+
+function handleInternshipsFile(req, res) {
+  const url = new URL(req.url, `http://${HOST}`);
+  const folderKey = String(url.searchParams.get("folder") || "CVs");
+  const name = path.basename(String(url.searchParams.get("name") || ""));
+  if (!name) return sendJson(res, 400, { error: "Missing file name." });
+  const dirs = studioDirs();
+  const folderMap = {
+    CVs: dirs.cvs,
+    CLs: dirs.cls,
+    "Input Data": dirs.inputData,
+    root: dirs.root,
+  };
+  const baseDir = folderMap[folderKey];
+  if (!baseDir) return sendJson(res, 400, { error: "Unknown folder." });
+  const filePath = path.resolve(baseDir, name);
+  if (!filePath.startsWith(baseDir + path.sep) || !fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) {
+    res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
+    return res.end("File not found");
+  }
+  const ext = path.extname(filePath).toLowerCase();
+  const download = url.searchParams.get("download") === "1";
+  const headers = {
+    "Content-Type": MIME[ext] || "application/octet-stream",
+    "Cache-Control": "no-store",
+  };
+  if (download || ext === ".docx") {
+    headers["Content-Disposition"] = `attachment; filename="${encodeURIComponent(name)}"`;
+  }
+  res.writeHead(200, headers);
+  fs.createReadStream(filePath).pipe(res);
+}
+
+async function handleInternshipsTemplateUpload(req, res) {
+  const body = await readBody(req);
+  const slot = String(body.slot || "");
+  const dataUrl = String(body.dataUrl || "");
+  const slotNames = {
+    cvDe: "Lebenslauf_Hamza_Salameh_DE.docx",
+    cvEn: "CV_Hamza_Salameh_EN.docx",
+    clDe: "Anschreiben_Hamza_Salameh_DE.docx",
+    clEn: "CL_Hamza_Salameh_EN.docx",
+  };
+  const targetName = slotNames[slot];
+  if (!targetName) return sendJson(res, 400, { error: "Invalid template slot." });
+  const match = /^data:([^;,]+)?(;base64)?,(.*)$/s.exec(dataUrl);
+  if (!match) return sendJson(res, 400, { error: "Invalid file upload payload." });
+  const dirs = studioDirs();
+  fs.mkdirSync(dirs.inputData, { recursive: true });
+  const targetPath = path.join(dirs.inputData, targetName);
+  // Back up existing template so we never lose originals
+  if (fs.existsSync(targetPath)) {
+    const backupName = targetName.replace(/\.docx$/i, `_backup_${Date.now()}.docx`);
+    fs.copyFileSync(targetPath, path.join(dirs.inputData, backupName));
+  }
+  fs.writeFileSync(targetPath, Buffer.from(match[3], "base64"));
+  sendJson(res, 200, { ok: true, targetName, ...(await getStudioState()) });
+}
+
 const server = http.createServer(async (req, res) => {
   let pathname = new URL(req.url, `http://${HOST}`).pathname;
 
@@ -844,6 +981,14 @@ const server = http.createServer(async (req, res) => {
       if (req.method === "POST") return await handleTrackerWrite(req, res);
       return await handleTrackerRead(res);
     }
+    if (pathname === "/__editor/internships/state" && req.method === "GET") return await handleInternshipsState(res);
+    if (pathname === "/__editor/internships/settings" && req.method === "POST") return await handleInternshipsSettings(req, res);
+    if (pathname === "/__editor/internships/evaluate" && req.method === "POST") return await handleInternshipsEvaluate(req, res);
+    if (pathname === "/__editor/internships/generate" && req.method === "POST") return await handleInternshipsGenerate(req, res);
+    if (pathname === "/__editor/internships/ats-check" && req.method === "POST") return await handleInternshipsAtsCheck(req, res);
+    if (pathname === "/__editor/internships/ats-manual" && req.method === "GET") return handleInternshipsManual(req, res);
+    if (pathname === "/__editor/internships/file" && req.method === "GET") return handleInternshipsFile(req, res);
+    if (pathname === "/__editor/internships/template" && req.method === "POST") return await handleInternshipsTemplateUpload(req, res);
 
     if (pathname === "/") {
       res.writeHead(302, { Location: `${prefix}workspace/` });

@@ -133,10 +133,11 @@ eleventyExcludeFromCollections: true
   <h2 id="journey-h" class="visually-hidden">Your journey and workspace sections</h2>
   <ol class="journey-steps" id="journey-steps">
     <li data-stage="toapply" data-state="todo"><a href="#flow-review"><span class="journey-dot">1</span><strong>Shortlist</strong><small>Search and your board</small></a></li>
-    <li data-stage="applied" data-state="todo"><a href="#flow-apply"><span class="journey-dot">2</span><strong>Apply</strong><small>You or your assistant</small></a></li>
-    <li data-stage="insights" data-state="todo"><a href="#flow-insights"><span class="journey-dot">3</span><strong>Insights</strong><small>Charts</small></a></li>
-    <li data-stage="tools" data-state="todo"><a href="#flow-tools"><span class="journey-dot">4</span><strong>Tools</strong><small>Commands</small></a></li>
-    <li data-stage="mail" data-state="todo"><a href="{{ '/mail/' | url }}"><span class="journey-dot">5</span><strong>Mail</strong><small>What employers wrote</small></a></li>
+    <li data-stage="documents" data-state="todo"><a href="{{ '/documents/' | url }}"><span class="journey-dot">2</span><strong>CVs &amp; CLs</strong><small>Lebenslauf &amp; Anschreiben</small></a></li>
+    <li data-stage="applied" data-state="todo"><a href="#flow-apply"><span class="journey-dot">3</span><strong>Apply</strong><small>You or your assistant</small></a></li>
+    <li data-stage="insights" data-state="todo"><a href="#flow-insights"><span class="journey-dot">4</span><strong>Insights</strong><small>Charts</small></a></li>
+    <li data-stage="tools" data-state="todo"><a href="#flow-tools"><span class="journey-dot">5</span><strong>Tools</strong><small>Commands</small></a></li>
+    <li data-stage="mail" data-state="todo"><a href="{{ '/mail/' | url }}"><span class="journey-dot">6</span><strong>Mail</strong><small>What employers wrote</small></a></li>
   </ol>
   <p class="journey-next" id="journey-next" role="status" aria-live="polite"><strong>Start with a search.</strong> <span>On the Shortlist, one search finds new internships for your major all over Germany, or in every field, and checks each against the GJU rules for you.</span></p>
 </section>
@@ -287,7 +288,8 @@ eleventyExcludeFromCollections: true
       <p id="apply-contact">Loading the contact details saved in your profile...</p>
       <p id="apply-tools" role="status">Checking your application connection...</p>
       <p>Web forms use your saved contact details and application documents. Email applications need a connected email account and sending tool; until then, they are marked <strong>Needs input</strong>.</p>
-      <a href="https://hamza928505.github.io/GJUYearKit/editor.html" class="flow-next-link">Edit profile in GJUBoard <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+      <a href="{{ '/editor/' | url }}" class="flow-next-link">Edit profile in Profile Editor <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+      <a href="{{ '/documents/' | url }}" class="flow-next-link" style="display:block; margin-top:0.4rem;">Open CVs &amp; CLs Studio <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
     </aside>
   </div>
   <div id="apply-queue" class="apply-queue" aria-label="Selected applications"></div>

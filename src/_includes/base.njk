@@ -72,10 +72,12 @@
     <a class="wordmark" href="{{ '/' | url }}" aria-label="CareerToAI home">CareerTo<span>AI</span></a>
     <nav aria-label="Primary">
       <ul>
-        <li><a href="{{ '/' | url }}"{% if page.url == '/' or page.url == '/editor/' %} aria-current="page"{% endif %}>Profile</a></li>
-        <li><a href="https://hamza928505.github.io/GJUYearKit/guide.html" rel="noopener">German Year Guide</a></li>
-        <li><a href="{{ '/workspace/' | url }}"{% if page.url == '/workspace/' %} aria-current="page"{% endif %}>
-            Workspace</a></li>
+        <li><a href="{{ '/' | url }}"{% if page.url == '/' %} aria-current="page"{% endif %}>Profile</a></li>
+        <li><a href="{{ '/guide/' | url }}"{% if page.url == '/guide/' %} aria-current="page"{% endif %}>German Year Guide</a></li>
+        <li><a href="{{ '/boards/' | url }}"{% if page.url == '/boards/' %} aria-current="page"{% endif %}>Job Boards</a></li>
+        <li><a href="{{ '/documents/' | url }}"{% if page.url == '/documents/' %} aria-current="page"{% endif %}>CVs &amp; CLs</a></li>
+        <li><a href="{{ '/editor/' | url }}"{% if page.url == '/editor/' %} aria-current="page"{% endif %}>Profile Editor</a></li>
+        <li><a href="{{ '/workspace/' | url }}"{% if page.url == '/workspace/' %} aria-current="page"{% endif %}>Workspace</a></li>
         <li>
           <button class="theme-toggle" type="button" id="theme-toggle"
                   aria-label="Switch to dark theme" title="Switch theme">

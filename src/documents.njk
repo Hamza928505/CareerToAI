@@ -1,0 +1,356 @@
+---
+layout: base.njk
+title: CVs & CLs Studio — GJU Pflichtpraktikum Lebenslauf & Anschreiben
+description: Check internship postings against GJU German Year rules (Part A), generate tailored German/English CVs and Cover Letters (.docx + .pdf) into Desktop\Internships (Part B & C), and run ATS checks.
+permalink: /documents/
+noindex: true
+pageStyles: /assets/documents.css
+pageScript: /assets/documents.js
+eleventyExcludeFromCollections: true
+---
+
+<div class="doc-studio">
+  <h1 class="visually-hidden">CVs &amp; Cover Letters Studio</h1>
+
+  <div class="notice" id="doc-offline-notice" hidden>
+    <p>
+      <strong>Local Studio Server Needed for Live Generation.</strong>
+      Run <code>npm run editor</code> in this folder to connect to
+      <code>C:\Users\Hamza928\Desktop\Internships</code>, run Part A GJU checks, build tailored
+      <code>.docx</code> + <code>.pdf</code> documents, and run <code>ats_check.py</code>.
+    </p>
+  </div>
+
+  <!-- ================================================================= Hero -->
+  <section class="gb gb-hero doc-hero" aria-labelledby="doc-hero-h">
+    <div class="gb-hero-bg" aria-hidden="true">
+      <span class="gb-blob b1"></span><span class="gb-blob b2"></span><span class="gb-blob b3"></span>
+    </div>
+    <div class="gb-hero-inner">
+      <p class="gb-eyebrow">
+        <i class="fa-solid fa-file-signature" aria-hidden="true"></i>
+        Connected to <code id="hero-working-dir">C:\Users\Hamza928\Desktop\Internships</code>
+      </p>
+      <h2 id="doc-hero-h">GJU Pflichtpraktikum <span class="gb-grad-text">CV &amp; Cover Letter</span> Studio</h2>
+      <p class="gb-lead">
+        Part A checks every posting against the GJU internship rules (Rules 1–10) and drafts your German HR clarification email &amp; contract clauses.
+        Part B &amp; C generate tailored German or English <strong>Lebenslauf</strong> (max. 2 pages) and <strong>Anschreiben</strong> (max. 1 page, DIN 5008)
+        in <code>.docx</code> and <code>.pdf</code> from your templates—never inventing facts and never overwriting existing files.
+      </p>
+      <div class="gb-hero-cta">
+        <a class="gb-btn gb-btn-light" href="#workbench-section"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i> Evaluate &amp; Tailor Postings</a>
+        <a class="gb-btn gb-btn-glass" href="#archive-section"><i class="fa-solid fa-folder-open" aria-hidden="true"></i> Browse CVs &amp; CLs</a>
+        <a class="gb-btn gb-btn-glass" href="#ats-section"><i class="fa-solid fa-magnifying-glass-chart" aria-hidden="true"></i> ATS Checker &amp; Manuals</a>
+        <a class="gb-btn gb-btn-glass" href="#settings-section"><i class="fa-solid fa-sliders" aria-hidden="true"></i> Templates &amp; Settings</a>
+      </div>
+      <ul class="gb-stats" aria-label="Internships folder summary">
+        <li class="gb-stat-tile"><i class="fa-solid fa-file-user" aria-hidden="true"></i><strong id="stat-cvs">0</strong><span>CV pairs in <code>CVs/</code></span></li>
+        <li class="gb-stat-tile"><i class="fa-solid fa-envelope-open-text" aria-hidden="true"></i><strong id="stat-cls">0</strong><span>CL pairs in <code>CLs/</code></span></li>
+        <li class="gb-stat-tile"><i class="fa-solid fa-map-location-dot" aria-hidden="true"></i><strong id="stat-cities">0</strong><span>German city addresses</span></li>
+        <li class="gb-stat-tile"><i class="fa-solid fa-book-bookmark" aria-hidden="true"></i><strong id="stat-manuals">0</strong><span>ATS &amp; company manuals</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ==================================== Section 1: Settings & Templates -->
+  <section class="doc-panel" id="settings-section" aria-labelledby="settings-h">
+    <div class="doc-panel-head">
+      <div>
+        <span class="doc-step">01 / Settings &amp; Input Data</span>
+        <h2 id="settings-h">Templates, Dates &amp; Official Documents</h2>
+        <p class="muted">Single source of truth: <code>Input Data\gju-profile.json</code> and your <code>.docx</code> templates. Uploading a new CV or CL template backs up the previous one automatically.</p>
+      </div>
+      <button type="button" class="btn" id="btn-refresh-state"><i class="fa-solid fa-rotate" aria-hidden="true"></i> Refresh folder</button>
+    </div>
+
+    <div class="doc-settings-grid">
+      <form class="doc-card" id="studio-settings-form">
+        <h3><i class="fa-solid fa-sliders" aria-hidden="true"></i> Application Settings</h3>
+        <div class="doc-form-grid">
+          <label class="doc-field">
+            <span>Document language</span>
+            <select id="set-doc-lang" name="docLang">
+              <option value="de">German (Deutsch) — default, also for EN postings</option>
+              <option value="en">English — only when posting requires EN</option>
+            </select>
+          </label>
+          <label class="doc-field">
+            <span>Earliest internship start (after THD exams)</span>
+            <input type="text" id="set-earliest-start" name="earliestStart" value="01.03.2027" placeholder="TT.MM.JJJJ">
+          </label>
+          <label class="doc-field">
+            <span>Latest internship end (residence permit)</span>
+            <input type="text" id="set-latest-end" name="latestEnd" value="30.09.2027" placeholder="TT.MM.JJJJ">
+          </label>
+          <label class="doc-field">
+            <span>Preferred duration (min. 20 weeks)</span>
+            <input type="text" id="set-preferred-duration" name="preferredDuration" value="6 Monate" placeholder="6 Monate">
+          </label>
+          <label class="doc-field">
+            <span>Documents for LIKELY REJECTED postings</span>
+            <select id="set-rejected-policy" name="rejectedPolicy">
+              <option value="negotiable">Only if negotiable (duration, hours, start, remote)</option>
+              <option value="all">All postings</option>
+              <option value="none">None (skip rejected)</option>
+            </select>
+          </label>
+          <label class="doc-field doc-field-check">
+            <input type="checkbox" id="set-match-city" name="matchCityAddress" checked>
+            <span>Match student-housing address in posting's German city (from 93-city CSV)</span>
+          </label>
+        </div>
+        <div class="doc-card-foot">
+          <span id="settings-save-status" class="muted" role="status" aria-live="polite"></span>
+          <button type="submit" class="btn btn--primary"><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> Save settings</button>
+        </div>
+      </form>
+
+      <div class="doc-card">
+        <h3><i class="fa-solid fa-file-word" aria-hidden="true"></i> Base Templates (<code>Input Data/</code>)</h3>
+        <p class="muted">You can replace your main CV or Cover Letter template at any time. Originals are never overwritten without a timestamped backup.</p>
+        <ul class="template-slot-list" id="template-slot-list">
+          <li data-slot="cvDe">
+            <div class="slot-info">
+              <strong>German CV (Lebenslauf)</strong>
+              <code>Lebenslauf_Hamza_Salameh_DE.docx</code>
+              <span class="slot-badge" data-slot-status="cvDe">Checking…</span>
+            </div>
+            <div class="slot-actions">
+              <a class="btn btn--sm" data-slot-dl="cvDe" href="/__editor/internships/file?folder=Input%20Data&amp;name=Lebenslauf_Hamza_Salameh_DE.docx&amp;download=1"><i class="fa-solid fa-download" aria-hidden="true"></i> .docx</a>
+              <label class="btn btn--sm">
+                <i class="fa-solid fa-upload" aria-hidden="true"></i> Replace
+                <input type="file" accept=".docx" data-slot-upload="cvDe" hidden>
+              </label>
+            </div>
+          </li>
+          <li data-slot="cvEn">
+            <div class="slot-info">
+              <strong>English CV</strong>
+              <code>CV_Hamza_Salameh_EN.docx</code>
+              <span class="slot-badge" data-slot-status="cvEn">Checking…</span>
+            </div>
+            <div class="slot-actions">
+              <a class="btn btn--sm" data-slot-dl="cvEn" href="/__editor/internships/file?folder=Input%20Data&amp;name=CV_Hamza_Salameh_EN.docx&amp;download=1"><i class="fa-solid fa-download" aria-hidden="true"></i> .docx</a>
+              <label class="btn btn--sm">
+                <i class="fa-solid fa-upload" aria-hidden="true"></i> Replace
+                <input type="file" accept=".docx" data-slot-upload="cvEn" hidden>
+              </label>
+            </div>
+          </li>
+          <li data-slot="clDe">
+            <div class="slot-info">
+              <strong>German Cover Letter (Anschreiben)</strong>
+              <code>Anschreiben_Hamza_Salameh_DE.docx</code>
+              <span class="slot-badge" data-slot-status="clDe">Checking…</span>
+            </div>
+            <div class="slot-actions">
+              <a class="btn btn--sm" data-slot-dl="clDe" href="/__editor/internships/file?folder=Input%20Data&amp;name=Anschreiben_Hamza_Salameh_DE.docx&amp;download=1"><i class="fa-solid fa-download" aria-hidden="true"></i> .docx</a>
+              <label class="btn btn--sm">
+                <i class="fa-solid fa-upload" aria-hidden="true"></i> Replace
+                <input type="file" accept=".docx" data-slot-upload="clDe" hidden>
+              </label>
+            </div>
+          </li>
+          <li data-slot="clEn">
+            <div class="slot-info">
+              <strong>English Cover Letter</strong>
+              <code>CL_Hamza_Salameh_EN.docx</code>
+              <span class="slot-badge" data-slot-status="clEn">Checking…</span>
+            </div>
+            <div class="slot-actions">
+              <a class="btn btn--sm" data-slot-dl="clEn" href="/__editor/internships/file?folder=Input%20Data&amp;name=CL_Hamza_Salameh_EN.docx&amp;download=1"><i class="fa-solid fa-download" aria-hidden="true"></i> .docx</a>
+              <label class="btn btn--sm">
+                <i class="fa-solid fa-upload" aria-hidden="true"></i> Replace
+                <input type="file" accept=".docx" data-slot-upload="clEn" hidden>
+              </label>
+            </div>
+          </li>
+        </ul>
+
+        <details class="official-docs-drawer">
+          <summary><i class="fa-solid fa-stamp" aria-hidden="true"></i> Official GJU, THD &amp; Visa Documents in Folder</summary>
+          <div id="official-docs-list" class="official-docs-list"></div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= Section 2: Phase 1 & Phase 2 Posting Workbench -->
+  <section class="doc-panel" id="workbench-section" aria-labelledby="workbench-h">
+    <div class="doc-panel-head">
+      <div>
+        <span class="doc-step">02 / Part A, B &amp; C Workbench</span>
+        <h2 id="workbench-h">Check Postings &amp; Generate Tailored CVs and Cover Letters</h2>
+        <p class="muted">
+          Add one or more internship postings (#1, #2, …) or import shortlisted jobs from your Workspace tracker.
+          Run <strong>Phase 1 (Part A GJU Rules Check)</strong> first, or go straight to <strong>Phase 2 (Generate .docx + .pdf)</strong>.
+        </p>
+      </div>
+      <div class="doc-head-actions">
+        <button type="button" class="btn" id="btn-import-tracker"><i class="fa-solid fa-table-list" aria-hidden="true"></i> Import from Workspace Tracker</button>
+        <button type="button" class="btn" id="btn-add-posting"><i class="fa-solid fa-plus" aria-hidden="true"></i> Add Posting</button>
+      </div>
+    </div>
+
+    <!-- Tracker picker drawer -->
+    <div class="doc-card" id="tracker-picker-card" hidden>
+      <div class="doc-card-head">
+        <h3><i class="fa-solid fa-briefcase" aria-hidden="true"></i> Pick Postings from Workspace Tracker</h3>
+        <button type="button" class="btn btn--sm" id="btn-close-tracker-picker"><i class="fa-solid fa-xmark" aria-hidden="true"></i> Close</button>
+      </div>
+      <div class="tracker-picker-controls">
+        <input type="search" id="tracker-picker-search" placeholder="Filter by company, position, or city…" class="doc-input">
+        <button type="button" class="btn btn--primary btn--sm" id="btn-import-selected-rows"><i class="fa-solid fa-file-import" aria-hidden="true"></i> Add Selected to Workbench</button>
+      </div>
+      <div class="tracker-picker-list" id="tracker-picker-list"></div>
+    </div>
+
+    <!-- Postings input queue -->
+    <div id="postings-input-list" class="postings-input-list"></div>
+
+    <div class="workbench-actions">
+      <button type="button" class="btn btn--primary" id="btn-run-phase1">
+        <i class="fa-solid fa-scale-balanced" aria-hidden="true"></i> Run Phase 1: GJU Rules Check (Part A)
+      </button>
+      <button type="button" class="btn btn--accent" id="btn-run-phase2-all" disabled>
+        <i class="fa-solid fa-file-export" aria-hidden="true"></i> Run Phase 2: Generate Eligible CVs &amp; CLs (.docx + .pdf)
+      </button>
+      <span id="workbench-status" class="muted" role="status" aria-live="polite"></span>
+    </div>
+
+    <!-- Phase 1 & 2 Results -->
+    <div id="evaluation-results" hidden>
+      <div class="doc-card">
+        <h3>1. Overview Table (Sorted by GJU Verdict, then Fit)</h3>
+        <div class="doc-table-wrap">
+          <table class="doc-table" id="overview-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Company</th>
+                <th>Position</th>
+                <th>Location</th>
+                <th>Start / Duration</th>
+                <th>Hours / Remote</th>
+                <th>GJU Verdict</th>
+                <th>Fit</th>
+                <th>Documents</th>
+                <th>Next Step</th>
+              </tr>
+            </thead>
+            <tbody id="overview-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="posting-reports-container" class="posting-reports-container"></div>
+    </div>
+  </section>
+
+  <!-- ================ Section 3: Generated CVs & CLs Archive + ATS Checker -->
+  <section class="doc-panel" id="archive-section" aria-labelledby="archive-h">
+    <div class="doc-panel-head">
+      <div>
+        <span class="doc-step">03 / Saved Documents Archive</span>
+        <h2 id="archive-h">Generated CVs (<code>CVs/</code>) &amp; Cover Letters (<code>CLs/</code>)</h2>
+        <p class="muted">Every generated file in <code>C:\Users\Hamza928\Desktop\Internships\CVs</code> and <code>CLs</code>. Existing files are never overwritten—new runs increment <code>_v2</code>, <code>_v3</code>.</p>
+      </div>
+      <div class="doc-head-actions">
+        <input type="search" id="archive-filter" class="doc-input" placeholder="Search company or filename…">
+      </div>
+    </div>
+
+    <div class="archive-columns">
+      <div class="doc-card">
+        <h3><i class="fa-solid fa-file-user" aria-hidden="true"></i> Tailored CVs / Lebensläufe (<span id="count-cvs-badge">0</span>)</h3>
+        <div id="archive-cvs-list" class="archive-file-list"></div>
+      </div>
+      <div class="doc-card">
+        <h3><i class="fa-solid fa-envelope-open-text" aria-hidden="true"></i> Tailored Cover Letters / Anschreiben (<span id="count-cls-badge">0</span>)</h3>
+        <div id="archive-cls-list" class="archive-file-list"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================= Section 4: ATS Self-Check & Manuals Library -->
+  <section class="doc-panel" id="ats-section" aria-labelledby="ats-h">
+    <div class="doc-panel-head">
+      <div>
+        <span class="doc-step">04 / ATS Verification &amp; Guides</span>
+        <h2 id="ats-h">ATS Self-Checker (<code>ats_check.py</code>) &amp; Employer ATS Manuals</h2>
+        <p class="muted">Tests your PDF text layer, page limits (≤ 2 pages CV, ≤ 1 page CL), contact links, German/English headings, <code>MM/YYYY</code> date ranges, two-column reading traps, and optional posting keywords.</p>
+      </div>
+    </div>
+
+    <div class="doc-settings-grid">
+      <div class="doc-card">
+        <h3><i class="fa-solid fa-vial-circle-check" aria-hidden="true"></i> Run <code>ats_check.py</code> on Any PDF</h3>
+        <div class="doc-form-grid">
+          <label class="doc-field">
+            <span>Folder</span>
+            <select id="ats-folder-select">
+              <option value="CVs">CVs (Desktop\Internships\CVs)</option>
+              <option value="CLs">CLs (Desktop\Internships\CLs)</option>
+              <option value="Input Data">Input Data (Base Templates)</option>
+            </select>
+          </label>
+          <label class="doc-field">
+            <span>Select PDF file</span>
+            <select id="ats-pdf-select"></select>
+          </label>
+          <label class="doc-field" style="grid-column: 1 / -1;">
+            <span>Optional posting keywords (comma-separated, e.g. <code>Python, PyTorch, Docker, NLP, FastAPI</code>)</span>
+            <input type="text" id="ats-keywords-input" placeholder="Python, PyTorch, Docker, SQL, Git…">
+          </label>
+        </div>
+        <div class="doc-card-foot">
+          <span id="ats-run-status" class="muted"></span>
+          <button type="button" class="btn btn--primary" id="btn-run-ats"><i class="fa-solid fa-play" aria-hidden="true"></i> Run ATS Check</button>
+        </div>
+        <div id="ats-report-output" class="ats-report-output" hidden></div>
+      </div>
+
+      <div class="doc-card">
+        <h3><i class="fa-solid fa-book-open" aria-hidden="true"></i> ATS Systems &amp; German Company Manuals (<code>Input Data/ATS/</code>)</h3>
+        <div class="doc-form-grid">
+          <label class="doc-field" style="grid-column: 1 / -1;">
+            <span>Choose an ATS system or German employer manual</span>
+            <select id="ats-manual-select"></select>
+          </label>
+        </div>
+        <pre id="ats-manual-viewer" class="ats-manual-viewer">Select a manual above to read its ATS parsing rules and keyword matching strategy.</pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================== Section 5: MyGJU Contract Checklist & Housing Map -->
+  <section class="doc-panel" id="checklist-section" aria-labelledby="checklist-h">
+    <div class="doc-panel-head">
+      <div>
+        <span class="doc-step">05 / MyGJU Contract Checklist &amp; Needs Your Input</span>
+        <h2 id="checklist-h">Before Signing &amp; Uploading to MyGJU</h2>
+      </div>
+    </div>
+    <div class="doc-settings-grid">
+      <div class="doc-card">
+        <h3><i class="fa-solid fa-clipboard-check" aria-hidden="true"></i> MyGJU &amp; IAD Approval Checklist</h3>
+        <ul class="contract-checklist">
+          <li><label><input type="checkbox"> <strong>Duration ≥ 20 weeks:</strong> Contract states exact start and end dates totaling at least 20 full-time weeks (up to 6 months counts as compulsory Pflichtpraktikum).</label></li>
+          <li><label><input type="checkbox"> <strong>Full-time hours (≥ 35 h/week):</strong> Weekly working hours (35–40 h/week) are explicitly written in the contract.</label></li>
+          <li><label><input type="checkbox"> <strong>On-site &amp; Remote ≤ 40%:</strong> Main workplace is in Germany/German-speaking area on site; mobile/remote work is capped at max. 40% (2 of 5 days/week).</label></li>
+          <li><label><input type="checkbox"> <strong>German Work Environment:</strong> Continuous integration into a German-speaking team and work culture.</label></li>
+          <li><label><input type="checkbox"> <strong>CS/AI Professional Tasks:</strong> Contract or addendum lists concrete software/AI/data engineering duties matching Intelligent Systems / Computer Science.</label></li>
+          <li><label><input type="checkbox"> <strong>Praktikumszeugnis Guaranteed:</strong> Company commits to issuing a qualified internship certificate with personal data, exact duration, and tasks upon completion.</label></li>
+          <li><label><input type="checkbox"> <strong>Signed &amp; Approved BEFORE Start:</strong> Signed by both you and the company, uploaded to MyGJU, and approved by <code>IO.Internship.Team@gju.edu.jo</code> / <code>IAD.Internship.team@gju.edu.jo</code> before day 1.</label></li>
+        </ul>
+      </div>
+
+      <div class="doc-card">
+        <h3><i class="fa-solid fa-house-laptop" aria-hidden="true"></i> German City Student-Housing Lookup (93 Cities)</h3>
+        <p class="muted">Used automatically to place a local student-housing address on your tailored CV &amp; Anschreiben when applying to a city in Germany.</p>
+        <input type="search" id="city-lookup-input" class="doc-input" placeholder="Search city (e.g. München, Berlin, Stuttgart, Walldorf, Deggendorf)…">
+        <div id="city-lookup-results" class="city-lookup-results"></div>
+      </div>
+    </div>
+  </section>
+</div>
