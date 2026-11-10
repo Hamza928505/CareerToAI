@@ -1,0 +1,294 @@
+{
+  "$comment": "Other ways adverts write a skill, mapped to the spelling used in the profile editor's skill library (src/assets/skill-library.js in the private repo). Mostly German terms and short tool names. Add to it as you meet new spellings.",
+  "aliases": {
+    "Microsoft Excel": [
+      "Excel",
+      "MS Excel"
+    ],
+    "Microsoft PowerPoint": [
+      "PowerPoint",
+      "MS PowerPoint"
+    ],
+    "Microsoft Word": [
+      "MS Word"
+    ],
+    "Microsoft Office": [
+      "MS Office",
+      "Office-Kenntnisse",
+      "MS-Office"
+    ],
+    "Adobe Photoshop": [
+      "Photoshop"
+    ],
+    "Adobe Illustrator": [
+      "Illustrator"
+    ],
+    "Adobe InDesign": [
+      "InDesign"
+    ],
+    "Adobe After Effects": [
+      "After Effects"
+    ],
+    "SAP ERP": [
+      "SAP"
+    ],
+    "Supply Chain Management": [
+      "Supply Chain",
+      "Lieferkettenmanagement"
+    ],
+    "Logistics": [
+      "Logistik"
+    ],
+    "Procurement": [
+      "Einkauf",
+      "Beschaffung"
+    ],
+    "Warehouse Management": [
+      "Lagerverwaltung",
+      "Lagerlogistik"
+    ],
+    "Inventory Management": [
+      "Bestandsmanagement",
+      "Bestandsführung"
+    ],
+    "Quality Management": [
+      "Qualitätsmanagement"
+    ],
+    "Quality Control": [
+      "Qualitätskontrolle",
+      "Qualitätssicherung"
+    ],
+    "Process Optimisation": [
+      "Process Optimization",
+      "Prozessoptimierung"
+    ],
+    "Lean Manufacturing": [
+      "Lean"
+    ],
+    "Project Management": [
+      "Projektmanagement"
+    ],
+    "Financial Accounting": [
+      "Buchhaltung",
+      "Finanzbuchhaltung"
+    ],
+    "International Financial Reporting Standards (IFRS)": [
+      "IFRS"
+    ],
+    "Search Engine Optimisation (SEO)": [
+      "SEO",
+      "Suchmaschinenoptimierung",
+      "Search Engine Optimization"
+    ],
+    "Search Engine Advertising (SEA)": [
+      "SEA",
+      "Suchmaschinenwerbung"
+    ],
+    "Social Media Marketing": [
+      "Social Media"
+    ],
+    "Content Marketing": [
+      "Content-Marketing"
+    ],
+    "Google Tag Manager": [
+      "GTM"
+    ],
+    "Building Information Modelling (BIM)": [
+      "BIM",
+      "Building Information Modeling"
+    ],
+    "Geographic Information Systems (GIS)": [
+      "GIS"
+    ],
+    "Finite Element Analysis (FEA)": [
+      "FEM",
+      "FEA",
+      "Finite-Elemente-Methode"
+    ],
+    "Maintenance Planning": [
+      "Instandhaltung",
+      "Instandhaltungsplanung"
+    ],
+    "Photovoltaics": [
+      "Photovoltaik",
+      "PV-Anlagen"
+    ],
+    "Energy Management": [
+      "Energiemanagement"
+    ],
+    "Embedded Systems": [
+      "Embedded Software",
+      "Embedded-Software",
+      "Eingebettete Systeme"
+    ],
+    "Microcontrollers": [
+      "Mikrocontroller",
+      "Microcontroller"
+    ],
+    "PLC Programming": [
+      "SPS",
+      "PLC",
+      "SPS-Programmierung"
+    ],
+    "Siemens TIA Portal": [
+      "TIA Portal",
+      "Siemens TIA"
+    ],
+    "Internet of Things (IoT)": [
+      "IoT"
+    ],
+    "Interior Design": [
+      "Innenarchitektur",
+      "Raumgestaltung"
+    ],
+    "Architectural Design": [
+      "Architekturentwurf"
+    ],
+    "Technical Drawing": [
+      "Technisches Zeichnen"
+    ],
+    "Translation": [
+      "Übersetzung",
+      "Übersetzen"
+    ],
+    "Proofreading": [
+      "Lektorat",
+      "Korrektorat"
+    ],
+    "Localisation": [
+      "Lokalisierung",
+      "Localization"
+    ],
+    "CAT Tools": [
+      "CAT-Tools",
+      "CAT Tool",
+      "CAT-Tool"
+    ],
+    "SDL Trados": [
+      "Trados"
+    ],
+    "Patient Care": [
+      "Patientenversorgung",
+      "Patientenbetreuung"
+    ],
+    "Nursing Care": [
+      "Krankenpflege",
+      "Altenpflege",
+      "Pflegefachkraft",
+      "Pflegekraft",
+      "Gesundheits- und Krankenpflege"
+    ],
+    "Hygiene Standards": [
+      "Hygiene",
+      "Hygienestandards"
+    ],
+    "Infection Control": [
+      "Infektionsschutz",
+      "Infektionsprävention"
+    ],
+    "Patient Documentation": [
+      "Pflegedokumentation",
+      "Patientendokumentation"
+    ],
+    "Good Manufacturing Practice (GMP)": [
+      "GMP",
+      "Good Manufacturing Practice"
+    ],
+    "Method Validation": [
+      "Methodenvalidierung"
+    ],
+    "Process Validation": [
+      "Prozessvalidierung"
+    ],
+    "Laboratory Techniques": [
+      "Laborarbeit",
+      "Labortechniken"
+    ],
+    "Medical Device Regulation (MDR)": [
+      "MDR"
+    ],
+    "Technical Documentation": [
+      "Technische Dokumentation"
+    ],
+    "Game Design": [
+      "Spieledesign"
+    ],
+    "3D Modelling": [
+      "3D-Modellierung",
+      "3D Modeling"
+    ],
+    "Microsoft Azure": [
+      "Azure"
+    ],
+    "Customer Relationship Management (CRM)": [
+      "CRM"
+    ],
+    "AutoCAD Civil 3D": [
+      "Civil 3D"
+    ],
+    "Sustainability": [
+      "Nachhaltigkeit"
+    ],
+    "Hydraulic Engineering": [
+      "Wasserbau"
+    ],
+    "Autodesk Inventor": [
+      "Inventor"
+    ],
+    "UI/UX Design": [
+      "UX",
+      "UI Design",
+      "UX Design"
+    ],
+    "Typography": [
+      "Typografie"
+    ],
+    "Process Engineering": [
+      "Verfahrenstechnik"
+    ],
+    "Public Relations": [
+      "PR",
+      "Öffentlichkeitsarbeit"
+    ],
+    "Corporate Communication": [
+      "Unternehmenskommunikation"
+    ],
+    "Editorial Work": [
+      "Redaktion"
+    ],
+    "German GAAP (HGB)": [
+      "HGB",
+      "Handelsgesetzbuch"
+    ],
+    "ROS (Robot Operating System)": [
+      "ROS"
+    ],
+    "Medical Technology": [
+      "Medizintechnik"
+    ]
+  },
+  "skip": [
+    "Teamwork",
+    "Problem Solving",
+    "Analytical Thinking",
+    "Critical Thinking",
+    "Attention to Detail",
+    "Time Management",
+    "Adaptability",
+    "Self-Motivation",
+    "Independent Work",
+    "Reliability",
+    "Leadership",
+    "Mentoring",
+    "Research",
+    "Continuous Learning",
+    "Documentation",
+    "Reporting",
+    "Editing",
+    "German",
+    "English",
+    "Arabic",
+    "French",
+    "Spanish"
+  ]
+}

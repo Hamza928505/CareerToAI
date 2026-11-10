@@ -1,0 +1,123 @@
+---
+layout: base.njk
+permalink: /boards/
+pageTitle: Where to find internships in Germany · German Year Kit
+pageDescription: Load the internships your scheduled Claude search found on Indeed, filter them against the GJU rules and track your applications. Plus the German job boards and RSS feeds worth searching, and how Claude can help with your CV and cover letter.
+pageStyles: /assets/boards.css
+pageScript: /assets/boards.js
+---
+
+<div class="boards-page">
+<section class="hero" id="top">
+  <div class="hero-bg" aria-hidden="true"><span class="blob b1"></span><span class="blob b2"></span><span class="blob b3"></span>
+    <span class="orb o1"><i class="fa-solid fa-graduation-cap"></i></span><span class="orb o2"><i class="fa-solid fa-briefcase"></i></span>
+    <span class="orb o3"><i class="fa-solid fa-magnifying-glass"></i></span><span class="orb o4"><i class="fa-solid fa-file-word"></i></span>
+  </div>
+  <div class="wrap hero-inner">
+    <p class="eyebrow reveal"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i> German Year · Where to look</p>
+    <h1 class="reveal" style="--d:1">Where to find your <span class="grad-text">German Year</span> internship</h1>
+    <p class="lead reveal" style="--d:2">Load the internships your scheduled Claude search found on Indeed, filter them against the GJU rules and keep track of your applications. Below: the German job boards and RSS feeds worth searching, and how Claude can help you write your CV and cover letter.</p>
+  </div>
+</section>
+
+<main class="wrap" id="main">
+  <section id="results" aria-labelledby="results-title">
+    <div class="toolbar reveal">
+      <div class="toolbar-title">
+        <span class="chip-icon"><i class="fa-solid fa-briefcase" aria-hidden="true"></i></span>
+        <div><h2 id="results-title">Your Indeed results</h2><p class="result-count" id="results-meta">Load the file your scheduled Claude search saved.</p></div>
+      </div>
+      <div class="toolbar-tools" id="results-actions" hidden>
+        <button type="button" class="btn btn-sm" id="results-load"><i class="fa-solid fa-upload" aria-hidden="true"></i>Load newer file</button>
+        <button type="button" class="btn btn-sm" id="results-csv"><i class="fa-solid fa-file-csv" aria-hidden="true"></i>Export CSV</button>
+        <button type="button" class="btn btn-sm btn-ghost" id="results-clear"><i class="fa-solid fa-trash-can" aria-hidden="true"></i>Remove results</button>
+      </div>
+    </div>
+    <input type="file" id="results-file" accept="application/json,.json" hidden>
+    <noscript><p class="notice">Loading your results needs JavaScript. The job boards below work without it.</p></noscript>
+
+    <div class="dropzone reveal" id="results-empty">
+      <p>Let Claude search Indeed for you every day or week and check each internship against the GJU rules. Then load the results here to filter them, read why each one does or does not fit, and mark the ones you applied to.</p>
+      <ol class="steps">
+        <li><b>Connect Indeed to Claude.</b> In Claude, open Settings → Connectors and add Indeed.</li>
+        <li><b>Schedule the search in Claude Cowork.</b> In a Cowork task, type <code>/schedule</code>, choose daily or weekly, and paste this with your major and city filled in:
+          <div class="prompt-box">
+            <p id="results-prompt">Find German Year internships on Indeed for me and check each one against the GJU rules.
+My major: [your GJU major, for example Computer Engineering]
+Where: [a city, or anywhere in Germany]
+Follow https://hamza928505.github.io/GJUYearKit/.claude/skills/gju-internships/SKILL.md exactly, and finish with its step 5: save the results as gju-internships-YYYY-MM-DD.json.</p>
+            <button type="button" class="btn btn-sm" id="results-copy-prompt"><i class="fa-solid fa-copy" aria-hidden="true"></i>Copy</button>
+          </div>
+        </li>
+        <li><b>Download the file.</b> Each run saves a file named gju-internships-<i>date</i>.json. Open the run in Claude and download it.</li>
+        <li><b>Load it here.</b> Choose the file, or drop it on this box. It stays in this browser: nothing is uploaded.
+          <div class="hero-cta"><button type="button" class="btn btn-primary" id="results-choose"><i class="fa-solid fa-folder-open" aria-hidden="true"></i>Choose file</button></div>
+        </li>
+      </ol>
+    </div>
+
+    <div id="results-view" hidden>
+      <div class="panel results-filters">
+        <div class="filter-grid">
+          <div class="field s4"><label class="field-label" for="results-q"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>Search</label>
+            <input id="results-q" class="control" type="search" placeholder="Title, company or city" autocomplete="off" enterkeyhint="search"></div>
+          <div class="field s2" id="f-verdict"></div>
+          <div class="field s2" id="f-city"></div>
+          <div class="field s2" id="f-posted"></div>
+          <div class="field s2" id="f-status"></div>
+        </div>
+        <div class="active-row" id="results-chips" aria-label="Active filters"></div>
+      </div>
+      <p class="result-count" id="results-count" role="status" aria-live="polite"></p>
+      <div id="results-list"></div>
+    </div>
+  </section>
+
+  <section id="boards" aria-labelledby="boards-title">
+    <div class="toolbar reveal">
+      <div class="toolbar-title">
+        <span class="chip-icon"><i class="fa-solid fa-globe" aria-hidden="true"></i></span>
+        <div><h2 id="boards-title">Job boards</h2><p class="result-count">Open a board and search for “Praktikum” (internship) or “Pflichtpraktikum” (mandatory internship).</p></div>
+      </div>
+      <div class="toolbar-tools">
+        <div class="field compact"><label class="sr" for="boards-q">Filter job boards and feeds</label>
+          <input id="boards-q" class="control" type="search" placeholder="Filter boards and feeds" autocomplete="off" enterkeyhint="search" aria-describedby="boards-count"></div>
+        <p class="result-count" id="boards-count" role="status" aria-live="polite">43 of 43 shown</p>
+      </div>
+    </div>
+    <div class="board-grid">
+      <a class="card-item board-link" data-search-item href="https://www.meinpraktikum.de/" target="_blank" rel="noopener noreferrer"><span class="chip-icon soft board-logo"><img src="{{ ('/assets/boards/meinpraktikum.de.png') | url }}" alt="" width="24" height="24" loading="lazy"></span><span class="who"><span class="title">meinpraktikum</span><span class="sub">https://www.meinpraktikum.de/</span></span><i class="fa-solid fa-arrow-up-right-from-square out" aria-hidden="true"></i></a>
+      <a class="card-item board-link" data-search-item href="https://www.praktikumsstellen.de/" target="_blank" rel="noopener noreferrer"><span class="chip-icon soft board-logo"><img src="{{ ('/assets/boards/praktikumsstellen.de.png') | url }}" alt="" width="24" height="24" loading="lazy"></span><span class="who"><span class="title">praktikumsstellen</span><span class="sub">https://www.praktikumsstellen.de/</span></span><i class="fa-solid fa-arrow-up-right-from-square out" aria-hidden="true"></i></a>
+      <a class="card-item board-link" data-search-item href="https://www.praktika.de/" target="_blank" rel="noopener noreferrer"><span class="chip-icon soft board-logo"><img src="{{ ('/assets/boards/praktika.de.png') | url }}" alt="" width="24" height="24" loading="lazy"></span><span class="who"><span class="title">praktika.de</span><span class="sub">https://www.praktika.de/</span></span><i class="fa-solid fa-arrow-up-right-from-square out" aria-hidden="true"></i></a>
+      <a class="card-item board-link" data-search-item href="https://www.praktikum.info/" target="_blank" rel="noopener noreferrer"><span class="chip-icon soft board-logo"><img src="{{ ('/assets/boards/praktikum.info.png') | url }}" alt="" width="24" height="24" loading="lazy"></span><span class="who"><span class="title">praktikum.info</span><span class="sub">https://www.praktikum.info/</span></span><i class="fa-solid fa-arrow-up-right-from-square out" aria-hidden="true"></i></a>
+      <a class="card-item board-link" data-search-item href="https://www.jobware.de/Praktikum" target="_blank" rel="noopener noreferrer"><span class="chip-icon soft board-logo"><img src="{{ ('/assets/boards/jobware.de.png') | url }}" alt="" width="24" height="24" loading="lazy"></span><span class="who"><span class="title">jobware</span><span class="sub">https://www.jobware.de/Praktikum</span></span><i class="fa-solid fa-arrow-up-right-from-square out" aria-hidden="true"></i></a>
+      <a class="card-item board-link" data-search-item href="https://www.connecticum.de/praktikum" target="_blank" rel="noopener noreferrer"><span class="chip-icon soft board-logo"><img src="{{ ('/assets/boards/connecticum.de.png') | url }}" alt="" width="24" height="24" loading="lazy"></span><span class="who"><span class="title">connecticum</span><span class="sub">https://www.connecticum.de/praktikum</span></span><i class="fa-solid fa-arrow-up-right-from-square out" aria-hidden="true"></i></a>
+      <a class="card-item board-link" data-search-item href="https://de.indeed.com/" target="_blank" rel="noopener noreferrer"><span class="chip-icon soft board-logo"><img src="{{ ('/assets/boards/de.indeed.com.png') | url }}" alt="" width="24" height="24" loading="lazy"></span><span class="who"><span class="title">Indeed</span><span class="sub">https://de.indeed.com/</span><span class="tag kind">Official AI connector</span></span><i class="fa-solid fa-arrow-up-right-from-square out" aria-hidden="true"></i></a>
+      <a class="card-item board-link" data-search-item href="https://www.jobmensa.de/" target="_blank" rel="noopener noreferrer"><span class="chip-icon soft board-logo"><img src="{{ ('/assets/boards/jobmensa.de.png') | url }}" alt="" width="24" height="24" loading="lazy"></span><span class="who"><span class="title">jobmensa</span><span class="sub">https://www.jobmensa.de/</span></span><i class="fa-solid fa-arrow-up-right-from-square out" aria-hidden="true"></i></a>
+      <a class="card-item board-link" data-search-item href="https://www.monster.de" target="_blank" rel="noopener noreferrer"><span class="chip-icon soft board-logo"><img src="{{ ('/assets/boards/monster.de.png') | url }}" alt="" width="24" height="24" loading="lazy"></span><span class="who"><span class="title">Monster</span><span class="sub">https://www.monster.de</span></span><i class="fa-solid fa-arrow-up-right-from-square out" aria-hidden="true"></i></a>
+      <a class="card-item board-link" data-search-item href="https://www.stepstone.de" target="_blank" rel="noopener noreferrer"><span class="chip-icon soft board-logo"><img src="{{ ('/assets/boards/stepstone.de.png') | url }}" alt="" width="24" height="24" loading="lazy"></span><span class="who"><span class="title">StepStone</span><span class="sub">https://www.stepstone.de</span></span><i class="fa-solid fa-arrow-up-right-from-square out" aria-hidden="true"></i></a>
+      <a class="card-item board-link" data-search-item href="https://www.jobboerse.arbeitsagentur.de" target="_blank" rel="noopener noreferrer"><span class="chip-icon soft board-logo"><img src="{{ ('/assets/boards/jobboerse.arbeitsagentur.de.png') | url }}" alt="" width="24" height="24" loading="lazy"></span><span class="who"><span class="title">Arbeitsagentur Jobbörse</span><span class="sub">https://www.jobboerse.arbeitsagentur.de</span></span><i class="fa-solid fa-arrow-up-right-from-square out" aria-hidden="true"></i></a>
+      <a class="card-item board-link" data-search-item href="https://www.stellenanzeigen.de" target="_blank" rel="noopener noreferrer"><span class="chip-icon soft board-logo"><img src="{{ ('/assets/boards/stellenanzeigen.de.png') | url }}" alt="" width="24" height="24" loading="lazy"></span><span class="who"><span class="title">stellenanzeigen.de</span><span class="sub">https://www.stellenanzeigen.de</span></span><i class="fa-solid fa-arrow-up-right-from-square out" aria-hidden="true"></i></a>
+      <a class="card-item board-link" data-search-item href="https://www.academics.de" target="_blank" rel="noopener noreferrer"><span class="chip-icon soft board-logo"><img src="{{ ('/assets/boards/academics.de.png') | url }}" alt="" width="24" height="24" loading="lazy"></span><span class="who"><span class="title">academics</span><span class="sub">https://www.academics.de</span></span><i class="fa-solid fa-arrow-up-right-from-square out" aria-hidden="true"></i></a>
+      <a class="card-item board-link" data-search-item href="https://www.kimeta.de/" target="_blank" rel="noopener noreferrer"><span class="chip-icon soft board-logo"><img src="{{ ('/assets/boards/kimeta.de.png') | url }}" alt="" width="24" height="24" loading="lazy"></span><span class="who"><span class="title">kimeta</span><span class="sub">https://www.kimeta.de/</span></span><i class="fa-solid fa-arrow-up-right-from-square out" aria-hidden="true"></i></a>
+      <a class="card-item board-link" data-search-item href="https://www.joboter.de" target="_blank" rel="noopener noreferrer"><span class="chip-icon soft board-logo"><img src="{{ ('/assets/boards/joboter.de.png') | url }}" alt="" width="24" height="24" loading="lazy"></span><span class="who"><span class="title">joboter</span><span class="sub">https://www.joboter.de</span></span><i class="fa-solid fa-arrow-up-right-from-square out" aria-hidden="true"></i></a>
+      <a class="card-item board-link" data-search-item href="https://www.jobworld.de" target="_blank" rel="noopener noreferrer"><span class="chip-icon soft board-logo"><img src="{{ ('/assets/boards/jobworld.de.png') | url }}" alt="" width="24" height="24" loading="lazy"></span><span class="who"><span class="title">jobworld</span><span class="sub">https://www.jobworld.de</span></span><i class="fa-solid fa-arrow-up-right-from-square out" aria-hidden="true"></i></a>
+      <a class="card-item board-link" data-search-item href="http://www.backinjob.de/" target="_blank" rel="noopener noreferrer"><span class="chip-icon soft board-logo"><img src="{{ ('/assets/boards/backinjob.de.png') | url }}" alt="" width="24" height="24" loading="lazy"></span><span class="who"><span class="title">backinjob</span><span class="sub">http://www.backinjob.de/</span></span><i class="fa-solid fa-arrow-up-right-from-square out" aria-hidden="true"></i></a>
+      <a class="card-item board-link" data-search-item href="http://www.jobscanner.de" target="_blank" rel="noopener noreferrer"><span class="chip-icon soft board-logo"><img src="{{ ('/assets/boards/jobscanner.de.png') | url }}" alt="" width="24" height="24" loading="lazy"></span><span class="who"><span class="title">jobscanner</span><span class="sub">http://www.jobscanner.de</span></span><i class="fa-solid fa-arrow-up-right-from-square out" aria-hidden="true"></i></a>
+      <a class="card-item board-link" data-search-item href="https://www.kultweet.de/jobs.php" target="_blank" rel="noopener noreferrer"><span class="chip-icon soft board-logo"><img src="{{ ('/assets/boards/kultweet.de.png') | url }}" alt="" width="24" height="24" loading="lazy"></span><span class="who"><span class="title">kultweet</span><span class="sub">https://www.kultweet.de/jobs.php</span></span><i class="fa-solid fa-arrow-up-right-from-square out" aria-hidden="true"></i></a>
+      <a class="card-item board-link" data-search-item href="https://www.meinestadt.de/" target="_blank" rel="noopener noreferrer"><span class="chip-icon soft board-logo"><img src="{{ ('/assets/boards/meinestadt.de.png') | url }}" alt="" width="24" height="24" loading="lazy"></span><span class="who"><span class="title">meinestadt</span><span class="sub">https://www.meinestadt.de/</span></span><i class="fa-solid fa-arrow-up-right-from-square out" aria-hidden="true"></i></a>
+      <a class="card-item board-link" data-search-item href="http://www.karrierebibel.de" target="_blank" rel="noopener noreferrer"><span class="chip-icon soft board-logo"><img src="{{ ('/assets/boards/karrierebibel.de.png') | url }}" alt="" width="24" height="24" loading="lazy"></span><span class="who"><span class="title">karrierebibel</span><span class="sub">http://www.karrierebibel.de</span></span><i class="fa-solid fa-arrow-up-right-from-square out" aria-hidden="true"></i></a>
+      <a class="card-item board-link" data-search-item href="https://www.jobsandjobs.de" target="_blank" rel="noopener noreferrer"><span class="chip-icon soft board-logo"><img src="{{ ('/assets/boards/jobsandjobs.de.png') | url }}" alt="" width="24" height="24" loading="lazy"></span><span class="who"><span class="title">jobsandjobs</span><span class="sub">https://www.jobsandjobs.de</span></span><i class="fa-solid fa-arrow-up-right-from-square out" aria-hidden="true"></i></a>
+    </div>
+  </section>
+
+  <section id="feeds" aria-labelledby="feeds-title">
+    <div class="section-head reveal">
+      <span class="chip-icon"><i class="fa-solid fa-rss" aria-hidden="true"></i></span>
+      <div><h2 id="feeds-title">backinjob RSS feeds</h2><p>These category feeds may include jobs other than internships.</p></div>
+    </div>
+    <article class="chart-card note-card wide feed-note reveal" aria-labelledby="rss-what-title">
+      <header class="chart-head"><span class="chip-icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></span><div><h3 id="rss-what-title">These are RSS feeds, not websites</h3><p>What they are and how to use them</p></div>
+</div>
+<div class="menu" id="menu" role="menu" aria-label="Actions" hidden></div>
+<script src="{{ '/assets/board-logic.js' | url }}"></script>

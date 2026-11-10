@@ -2,17 +2,303 @@
 layout: base.njk
 permalink: /editor/
 noindex: true
+# A noindex page has no business in the sitemap.
 eleventyExcludeFromCollections: true
-pageTitle: Profile editor moved
-pageDescription: Move your saved browser draft to the GJUBoard profile editor.
-pageScript: /assets/editor-migration.js
+pageTitle: Profile editor
+pageDescription: Local editing tool for this profile. Not profile content.
+pageStyles: /assets/editor.css
+pageScript: /assets/editor.js
 ---
-<h1>The profile editor has moved to GJUBoard</h1>
-<p>The editor is now a standalone page with browser storage and JSON import/export.</p>
-<p><a class="btn btn-primary" href="https://hamza928505.github.io/GJUYearKit/editor.html">Open the GJUBoard editor</a></p>
-<p>If you have an old draft in this browser, download it here, then choose <strong>Load .json</strong> in GJUBoard. Open this page at the same address and in the same browser you used before; drafts belong to that browser and origin.</p>
-<p><button class="btn" type="button" data-export-draft>Download old browser draft</button></p>
-<p data-export-status role="status" aria-live="polite">Downloading leaves your old draft and attachments intact.</p>
-<noscript><p>Enable JavaScript to download a saved browser draft.</p></noscript>
-<p>To update this profile site, export JSON from GJUBoard and run <code>npm run import-data -- &lt;file&gt;</code> in CareerToAI, then build and publish as usual.</p>
-<p>For a local copy, serve the GJUBoard folder with a static server and open <code>editor.html</code>.</p>
+
+{#
+  Every section is a fieldset whose legend is a toggle button: the grouping
+  stays semantic, the body collapses, and which sections are open is remembered
+  in this browser. The chevron is inline rather than a background image so it
+  can turn with the button's aria-expanded state.
+#}
+
+{% macro sectionHead(id, label, icon, counts) %}
+<legend>
+  <button type="button" class="section-toggle" data-section-toggle="{{ id }}"
+          aria-expanded="true" aria-controls="section-{{ id }}">
+    <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="m9 18 6-6-6-6"/>
+    </svg>
+    {% if icon %}<i class="fa-solid {{ icon }}" style="margin-right: 0.5rem; color: var(--accent);"></i>{% endif %}
+    {{ label | safe }}
+    {% if counts %}<span class="section-count" data-section-count="{{ id }}"></span>{% endif %}
+  </button>
+</legend>
+{% endmacro %}
+
+
+{#
+  The row of controls above a repeatable list: how many entries it holds, and —
+  for the lists with dates on them — a one-click way back to newest-first after
+  dragging. Rendered here so the markup stays in the template, filled by the script.
+#}
+{% macro listTools(id, addLabel, dated) %}
+<div class="list-tools">
+  <p class="list-count muted" data-list-count="{{ id }}" aria-live="polite"></p>
+  <span class="toolbar-spacer"></span>
+  {#- Collapses the rows of this list only. The toolbar's Collapse all works on
+      whole sections; this one is for the drop-downs inside one of them. It
+      hides itself below two rows, where a row's own title is enough. -#}
+  <button type="button" class="btn btn-small" data-rows-toggle="{{ id }}" hidden><i class="fa-solid fa-compress" style="margin-right: 0.3rem;"></i>Collapse all</button>
+  {% if dated %}
+  <button type="button" class="btn btn-small" data-sort="{{ id }}"><i class="fa-solid fa-arrow-down-short-wide" style="margin-right: 0.3rem;"></i>Sort by date</button>
+  {% endif %}
+  <button type="button" class="btn btn-small" data-add="{{ id }}"><i class="fa-solid fa-plus" style="margin-right: 0.3rem;"></i>{{ addLabel }}</button>
+</div>
+{% endmacro %}
+
+<div class="editor" data-editor>
+  <header class="editor-intro">
+    <h1>Profile editor</h1>
+    <p class="lede">
+      Fill this in, and it becomes the site. Everything you type is saved in this browser
+      as you go, so a refresh or a closed tab loses nothing. Uploaded images are kept in
+      this browser too.
+    </p>
+    <p class="muted">
+      Fields marked <span class="required">required</span> have no fallback in the
+      published profile, so <strong>Download .json</strong> and <strong>Save to data/</strong>
+      check them before they run. Everything else is optional.
+    </p>
+    <p class="muted">
+      Every section heading and every entry inside one opens and closes when you click it.
+      <strong>Collapse all</strong> in the toolbar shuts every section; the one above each
+      list shuts that list's entries. Which sections you left open is remembered in this
+      browser, and a closed section is still saved and still published — collapsing only
+      hides it here.
+    </p>
+    <p class="muted">
+      <strong>The order you put things in is the order they are published.</strong> Drag a
+      row by its handle (<span class="grip-inline" aria-hidden="true">⠿</span>) to move it,
+      or focus the handle and press <kbd>↑</kbd>/<kbd>↓</kbd>. Nothing re-sorts behind your
+      back, so put what you most want read at the top; <strong>Sort by date</strong> puts a
+      list back in newest-first order whenever you want it.
+    </p>
+    <p class="muted" data-mode-note>Checking how this page is running…</p>
+    {# Rows move without anything visible changing for a screen reader, so every
+       move says where the row landed. #}
+    <p class="visually-hidden" data-reorder-status role="status" aria-live="polite"></p>
+  </header>
+
+  <div class="editor-toolbar" role="group" aria-label="Save and export">
+    <span class="save-status" data-save-status aria-live="polite">Loading…</span>
+    <span class="toolbar-spacer"></span>
+    <button type="button" class="btn" data-action="toggle-all" aria-live="polite"><i class="fa-solid fa-compress" style="margin-right: 0.3rem;"></i>Collapse all</button>
+    <button type="button" class="btn btn-primary" data-action="save-server" hidden><i class="fa-solid fa-database" style="margin-right: 0.3rem;"></i>Save to data/</button>
+    <button type="button" class="btn btn-primary" data-action="save-student-data" hidden><i class="fa-solid fa-cloud-arrow-up" style="margin-right: 0.3rem;"></i>Save to Student-data</button>
+    <button type="button" class="btn" data-action="export"><i class="fa-solid fa-download" style="margin-right: 0.3rem;"></i>Download .json</button>
+    <button type="button" class="btn" data-action="import"><i class="fa-solid fa-upload" style="margin-right: 0.3rem;"></i>Load .json</button>
+    <button type="button" class="btn btn-danger" data-action="reset"><i class="fa-solid fa-trash-can" style="margin-right: 0.3rem;"></i>Clear all</button>
+    <input type="file" accept="application/json,.json" data-import-input hidden>
+  </div>
+
+  <ul class="data-summary" data-summary aria-label="What is loaded"></ul>
+
+  <form class="editor-form" data-form autocomplete="on">
+    <fieldset class="collapsible">
+      {{ sectionHead("student-data", "Student Data & Base Documents", "fa-file-invoice", true) }}
+      <div class="section-body" id="section-student-data">
+        <p class="muted">Upload your base CV and Cover Letter here. They will be saved to <code>src/assets/Student-data/</code> for the AI to use.</p>
+                  <div class="grid-2">
+            <div class="dropzone" data-dropzone>
+  <i class="fa-solid fa-cloud-arrow-up dropzone-icon"></i>
+  <span class="dropzone-label">Base CV (EN)</span>
+  <span class="dropzone-text">Drag & drop .pdf or .docx here, or click to browse</span>
+  <div class="dropzone-info">
+    <span class="current-doc" data-doc-display="base_cv_en"></span>
+    <span class="dropzone-file-name" data-file-name="base_cv_en"></span>
+  </div>
+  <input type="file" accept=".pdf,.docx" data-doc-upload="base_cv_en">
+</div>
+            <div class="dropzone" data-dropzone>
+  <i class="fa-solid fa-cloud-arrow-up dropzone-icon"></i>
+  <span class="dropzone-label">Base Cover Letter (EN)</span>
+  <span class="dropzone-text">Drag & drop .pdf or .docx here, or click to browse</span>
+  <div class="dropzone-info">
+    <span class="current-doc" data-doc-display="base_cover_letter_en"></span>
+    <span class="dropzone-file-name" data-file-name="base_cover_letter_en"></span>
+  </div>
+  <input type="file" accept=".pdf,.docx" data-doc-upload="base_cover_letter_en">
+</div>
+          </div>
+      </div>
+    </fieldset>
+
+    <fieldset class="collapsible">
+      {{ sectionHead("basics", "Basics", "fa-user") }}
+      <div class="section-body" id="section-basics">
+        <div class="grid-2">
+          <label>First name <span class="required">required</span>
+            <input type="text" data-path="profile.firstName" autocomplete="given-name" required>
+          </label>
+          <label>Last name <span class="required">required</span>
+            <input type="text" data-path="profile.lastName" autocomplete="family-name" required>
+          </label>
+        </div>
+        <label>Headline <span class="required">required</span>
+          <textarea rows="3" data-path="profile.headline"
+            placeholder="Cloud Infrastructure Engineer" required></textarea>
+          <small>Sits under your name. Line breaks are kept, so you can run it over more than one line.</small>
+        </label>
+        <div class="grid-2">
+          <label>Location <span class="optional">optional</span>
+            <input type="text" data-path="profile.location" placeholder="Amman, Jordan">
+            <small>Leave blank to publish no location.</small>
+          </label>
+          <label>Pronouns <span class="optional">optional</span>
+            <select data-path="profile.pronouns">
+              <option value="">Not specified</option>
+              <option value="he/him">he/him</option>
+              <option value="she/her">she/her</option>
+            </select>
+            <small>Leave as Not specified to publish no pronouns at all.</small>
+          </label>
+        </div>
+        <label>Email
+          <input type="email" data-path="profile.email" autocomplete="email" placeholder="you@example.com">
+          <small>Published in the HTML, the JSON-LD and /llms.txt. Leave blank to publish no email.</small>
+        </label>
+        <label>Phone <span class="optional">optional</span>
+          <input type="tel" data-private-phone autocomplete="tel" placeholder="+49 170 0000000" maxlength="30" disabled>
+          <small data-private-phone-note>Private: saved to the gitignored <code>data/profile-private.json</code> and never published. Needs <code>npm run editor</code>.</small>
+        </label>
+
+        <h3 class="subhead">Languages</h3>
+        <p class="muted">
+          Every language you can work in professionally, with your honest level. This is not
+          decoration: the <strong>Language Gate</strong> that <code>/apply</code> and
+          <code>/rank</code> run treats an undeclared language as a hard no rather than a gap
+          to talk around, so leave out what you do not actually work in — and add what you do,
+          or German-language postings cannot be scored at all.
+        </p>
+        <div data-list="languages" class="entry-editor-list"></div>
+        {{ listTools("languages", "Add language", false) }}
+      </div>
+    </fieldset>
+
+    <fieldset class="collapsible">
+      {{ sectionHead("about", "About", "fa-address-card") }}
+      <div class="section-body" id="section-about">
+        <label>About me <span class="required">required</span>
+          <textarea rows="7" data-path="profile.bio" required
+            placeholder="Two to four sentences. Write it the way you would want an AI assistant to summarize you to someone else."></textarea>
+          <small>The single most-quoted piece of text when an assistant summarizes you. State facts, not marketing.</small>
+        </label>
+      </div>
+    </fieldset>
+
+    <fieldset class="collapsible">
+      {{ sectionHead("education", "Education", "fa-graduation-cap", true) }}
+      <div class="section-body" id="section-education">
+        <div data-list="education" class="entry-editor-list"></div>
+        {{ listTools("education", "Add education", true) }}
+      </div>
+    </fieldset>
+
+    <fieldset class="collapsible">
+      {{ sectionHead("experience", "Experience", "fa-briefcase", true) }}
+      <div class="section-body" id="section-experience">
+        <div data-list="experience" class="entry-editor-list"></div>
+        {{ listTools("experience", "Add position", true) }}
+      </div>
+    </fieldset>
+
+    <fieldset class="collapsible">
+      {{ sectionHead("projects", "Projects", "fa-lightbulb", true) }}
+      <div class="section-body" id="section-projects">
+        <p class="muted">
+          Work you can point at that no employer owns: a side project, a university
+          capstone, an open-source contribution. Published to <code>data/projects.json</code>,
+          to <code>/llms.txt</code>, and as the <em>Independent Projects</em> section of the
+          profile the job-search commands read.
+        </p>
+        <div data-list="projects" class="entry-editor-list"></div>
+        {{ listTools("projects", "Add project", true) }}
+      </div>
+    </fieldset>
+
+    <fieldset class="collapsible">
+      {{ sectionHead("certificates", "Licenses &amp; certifications", "fa-certificate", true) }}
+      <div class="section-body" id="section-certificates">
+        <div data-list="certificates" class="entry-editor-list"></div>
+        {{ listTools("certificates", "Add certification", true) }}
+      </div>
+    </fieldset>
+
+    <fieldset class="collapsible">
+      {{ sectionHead("links", "Links", "fa-link", true) }}
+      <div class="section-body" id="section-links">
+        <div data-list="links" class="entry-editor-list"></div>
+        {{ listTools("links", "Add link", false) }}
+      </div>
+    </fieldset>
+
+    <fieldset class="collapsible">
+      {{ sectionHead("radar", "Skills radar", "fa-chart-pie") }}
+      <div class="section-body" id="section-radar">
+        <p class="muted">
+          Your skills by field, from every role, project, certificate and extra skill. Skills you have
+          pasted from job adverts (<strong>From a job ad</strong>) show as a second shape, so the gap
+          between what employers ask and what you can show is visible.
+        </p>
+        <div id="skills-radar" class="skills-radar" role="img" aria-label="Radar chart of your skills by field"></div>
+        <div class="radar-ai">
+          <button type="button" class="btn btn-primary" data-action="analyse-skills" disabled><i class="fa-solid fa-wand-magic-sparkles" style="margin-right: 0.3rem;"></i>Analyse with AI</button>
+          <button type="button" class="btn" data-action="radar-reset" hidden>Back to my skills</button>
+          <span class="muted" data-radar-ai-note>Needs <code>npm run editor</code> and an AI provider (set in the workspace).</span>
+        </div>
+        <div class="radar-notes" data-radar-notes aria-live="polite"></div>
+      </div>
+    </fieldset>
+
+    <fieldset class="collapsible">
+      {{ sectionHead("skills", "Extra skills", "fa-star", true) }}
+      <div class="section-body" id="section-skills">
+        <p class="muted">
+          Skills that no role, project or certificate already covers. The site unions these
+          with every skill listed on a position, a project or a certification.
+        </p>
+        <p class="muted">
+          Every skills box takes a whole list at once — paste one skill per line, or
+          comma-separated. <strong><i class="fa-solid fa-list-check"></i> Add skills</strong> browses a catalogue by field and
+          searches it, German labels included. <strong>From a job ad</strong> takes a pasted
+          advert and pulls the skills out of it. The type-ahead offers your own skills first,
+          then ones it has seen in adverts, then the catalogue — and anything you type is
+          accepted whether or not it has heard of it. Duplicates are dropped whatever their
+          capitalisation.
+        </p>
+        <div data-skills="profile.skills"></div>
+      </div>
+    </fieldset>
+  </form>
+
+  <section class="editor-help">
+    <h2>What happens to this data</h2>
+    <p>
+      Nothing here is uploaded anywhere by the page itself. Text is stored in this browser's
+      <code>localStorage</code> and images in its <code>IndexedDB</code>, both private to
+      this browser on this device.
+    </p>
+    <p>
+      <strong>Download .json</strong> gives you one file containing everything, images
+      included. To publish it, run <code>npm run import-data -- &lt;file&gt;</code> in the
+      repository, then commit and push — the site rebuilds from it.
+    </p>
+    <p data-local-help hidden>
+      Because you are running <code>npm run editor</code>, <strong>Save to data/</strong> is
+      available and skips the download entirely: it writes
+      <code>data/profile.json</code>, <code>data/experience.json</code>,
+      <code>data/projects.json</code>, <code>data/certificates.json</code> and the images
+      straight into the repository.
+    </p>
+  </section>
+</div>
+
+<script src="{{ '/assets/thinking-orbs.js' | url }}"></script>
+<script src="{{ '/assets/ai-status.js' | url }}"></script>
