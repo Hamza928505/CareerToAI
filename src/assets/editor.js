@@ -25,6 +25,97 @@ const STORAGE_KEY = "careertoai:v1";
 const DB_NAME = "careertoai";
 const DB_VERSION = 1;
 const IMAGE_STORE = "images";
+const STORAGE_ENC_VERSION = 1;
+const PBKDF2_ITERATIONS = 210000;
+
+let storagePassphrasePromise = null;
+
+const textEncoder = new TextEncoder();
+const textDecoder = new TextDecoder();
+
+function bytesToBase64(bytes) {
+  let binary = "";
+  bytes.forEach((b) => {
+    binary += String.fromCharCode(b);
+  });
+  return btoa(binary);
+}
+
+function base64ToBytes(base64) {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+
+function getStoragePassphrase() {
+  if (!storagePassphrasePromise) {
+    storagePassphrasePromise = Promise.resolve().then(() => {
+      const value = window.prompt("Enter a passphrase to encrypt your local draft:");
+      if (!value) throw new Error("Draft encryption passphrase is required.");
+      return value;
+    });
+  }
+  return storagePassphrasePromise;
+}
+
+async function deriveStorageKey(passphrase, salt) {
+  const keyMaterial = await crypto.subtle.importKey(
+    "raw",
+    textEncoder.encode(passphrase),
+    "PBKDF2",
+    false,
+    ["deriveKey"]
+  );
+  return crypto.subtle.deriveKey(
+    {
+      name: "PBKDF2",
+      salt,
+      iterations: PBKDF2_ITERATIONS,
+      hash: "SHA-256",
+    },
+    keyMaterial,
+    { name: "AES-GCM", length: 256 },
+    false,
+    ["encrypt", "decrypt"]
+  );
+}
+
+async function encryptForStorage(plainText) {
+  const passphrase = await getStoragePassphrase();
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const key = await deriveStorageKey(passphrase, salt);
+  const cipherBuffer = await crypto.subtle.encrypt(
+    { name: "AES-GCM", iv },
+    key,
+    textEncoder.encode(plainText)
+  );
+  return JSON.stringify({
+    v: STORAGE_ENC_VERSION,
+    s: bytesToBase64(salt),
+    i: bytesToBase64(iv),
+    c: bytesToBase64(new Uint8Array(cipherBuffer)),
+  });
+}
+
+async function decryptFromStorage(payload) {
+  const wrapped = JSON.parse(payload);
+  if (!wrapped || wrapped.v !== STORAGE_ENC_VERSION || !wrapped.s || !wrapped.i || !wrapped.c) {
+    throw new Error("Not an encrypted payload");
+  }
+  const passphrase = await getStoragePassphrase();
+  const salt = base64ToBytes(wrapped.s);
+  const iv = base64ToBytes(wrapped.i);
+  const cipherBytes = base64ToBytes(wrapped.c);
+  const key = await deriveStorageKey(passphrase, salt);
+  const plainBuffer = await crypto.subtle.decrypt(
+    { name: "AES-GCM", iv },
+    key,
+    cipherBytes
+  );
+  return textDecoder.decode(plainBuffer);
+}
 
 const root = document.querySelector("[data-editor]");
 
@@ -291,9 +382,10 @@ function setStatus(text, tone = "") {
   statusEl.dataset.tone = tone;
 }
 
-function save() {
+async function save() {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    const encrypted = await encryptForStorage(JSON.stringify(state));
+    localStorage.setItem(STORAGE_KEY, encrypted);
     const now = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
     setStatus(`Saved ${now}`, "ok");
   } catch (error) {
@@ -307,10 +399,14 @@ function save() {
 function scheduleSave() {
   setStatus("Saving…");
   clearTimeout(saveTimer);
-  saveTimer = setTimeout(save, 400);
+  saveTimer = setTimeout(() => {
+    save().catch((error) => {
+      console.error("[editor] async save failed:", error);
+    });
+  }, 400);
 }
 
-function load() {
+async function load() {
   let stored = null;
   try {
     stored = localStorage.getItem(STORAGE_KEY);
@@ -319,7 +415,13 @@ function load() {
   }
   if (!stored) return false;
   try {
-    adoptState(JSON.parse(stored));
+    let plain = stored;
+    try {
+      plain = await decryptFromStorage(stored);
+    } catch (_) {
+      // Backward compatibility: older drafts may be plaintext JSON.
+    }
+    adoptState(JSON.parse(plain));
     return true;
   } catch (error) {
     console.error("[editor] stored data was not valid JSON:", error);
