@@ -31,11 +31,11 @@
         "esbuild": "^0.28.2",
         "exceljs": "^4.4.0",
         "jszip": "^3.10.2",
-        "nodemailer": "^10.0.16",
+        "nodemailer": "^10.1.4",
         "playwright": "^1.64.0",
         "sharp": "^0.35.5",
         "sweetalert2": "^11.26.25",
-        "zod": "^4.5.4"
+        "zod": "^4.6.7"
     },
     "engines": {
         "node": ">=20"
