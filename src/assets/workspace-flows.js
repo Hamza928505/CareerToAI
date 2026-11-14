@@ -47,17 +47,47 @@ export async function initWorkspaceFlows({ local, api, Swal, dialog, onRows }) {
     return data;
   }
 
-  // What the next search will do: the major (or every field) it looks for, and the sources that can run.
+  // What the next search will do: the major (or every field) it looks for, and the sources and individual job boards that can run.
   let searchOk = false;
   let planLabel = '';
+  let planDetail = '';
   const sourceOff = new Set();
-  const SOURCE_NAMES = { claude: 'Claude', nim: 'NVIDIA NIM', apis: 'Free job sources' };
+  const SOURCE_NAMES = { claude: 'Claude', nim: 'NVIDIA NIM', apis: 'Free job sources', companies: 'Company websites' };
   const searchMode = () => document.querySelector('input[name="search-mode"]:checked').value;
-  const searchSources = () => Object.fromEntries([...document.querySelectorAll('input[name="search-source"]')].map((input) => [input.value, input.checked && !sourceOff.has(input.value)]));
+  const boardButtons = (group) => [...document.querySelectorAll(`.sx-site[data-group="${group}"][data-board]`)];
+  const selectedBoardsFor = (group) => boardButtons(group).filter((btn) => btn.getAttribute('aria-pressed') === 'true').map((btn) => btn.dataset.board);
+  const selectedBoards = () => Object.fromEntries(['claude', 'nim', 'apis'].map((group) => [group, selectedBoardsFor(group)]));
+  const searchSources = () => Object.fromEntries([...document.querySelectorAll('input[name="search-source"]')].map((input) => [
+    input.value,
+    // A source with board tiles needs at least one switched on; company websites has none and counts as it is.
+    input.checked && !sourceOff.has(input.value) && (boardButtons(input.value).length === 0 || selectedBoardsFor(input.value).length > 0),
+  ]));
+  function updateBoardGroupUi(group) {
+    const buttons = boardButtons(group);
+    const active = buttons.filter((btn) => btn.getAttribute('aria-pressed') === 'true').length;
+    const countEl = document.querySelector(`[data-board-count="${group}"]`);
+    if (countEl) countEl.textContent = `${active}/${buttons.length} board${buttons.length === 1 ? '' : 's'}`;
+    const box = document.querySelector(`input[name="search-source"][value="${group}"]`);
+    if (box && !sourceOff.has(group)) {
+      box.checked = active > 0;
+      box.indeterminate = active > 0 && active < buttons.length;
+    }
+  }
+  function setGroupBoards(group, on) {
+    boardButtons(group).forEach((btn) => btn.setAttribute('aria-pressed', String(Boolean(on))));
+    updateBoardGroupUi(group);
+  }
   function syncSearch() {
+    ['claude', 'nim', 'apis'].forEach(updateBoardGroupUi);
     const anySource = Object.values(searchSources()).some(Boolean);
     searchOk = Boolean(planLabel) && anySource;
-    if (planLabel && !anySource) { $('search-plan').textContent = 'Choose at least one source to search with.'; $('search-plan').dataset.state = 'error'; }
+    if (planLabel && !anySource) {
+      $('search-plan').textContent = 'Choose at least one source and job board to search with.';
+      $('search-plan').dataset.state = 'error';
+    } else if (planLabel && planDetail) {
+      $('search-plan').textContent = planDetail;
+      $('search-plan').dataset.state = '';
+    }
     controls();
   }
   async function refreshPlan() {
@@ -68,15 +98,16 @@ export async function initWorkspaceFlows({ local, api, Swal, dialog, onRows }) {
       for (const [name, ready] of Object.entries(data.available || {})) {
         const box = document.querySelector(`input[name="search-source"][value="${name}"]`);
         const hint = document.querySelector(`[data-source-hint="${name}"]`);
-        if (!ready) { sourceOff.add(name); box.checked = false; if (name === 'nim') hint.textContent = 'Add NVIDIA_API_KEY under API keys & AI provider to use it.'; if (name === 'apis') hint.textContent = 'The JobSearchEngine is not set up (see the README).'; }
+        if (!ready) { sourceOff.add(name); box.checked = false; box.indeterminate = false; if (name === 'nim') hint.textContent = 'Add NVIDIA_API_KEY under API keys & AI provider to use it.'; if (name === 'apis') hint.textContent = 'The JobSearchEngine is not set up (see the README).'; if (name === 'companies') hint.textContent = 'No company in your directory has a searchable job board yet. Open the company directory and check their careers pages.'; }
       }
       $('search-field').textContent = data.field ? data.field : 'No field of study in your profile: import your profile or use the global search';
       planLabel = data.plan?.label || '';
-      $('search-plan').dataset.state = data.plan ? '' : 'error';
-      $('search-plan').textContent = data.plan
+      planDetail = data.plan
         ? `${data.plan.label}. Free sources ask for: ${data.plan.keywords.join(', ')}. Claude and NVIDIA NIM start from ${data.plan.searches.length} searches such as ${data.plan.searches.slice(0, 3).join(', ')}${data.plan.matched || mode === 'global' ? '' : '. Your AI provider adds more title words when you search'}.`
-        : 'Your profile has no field of study, so there is nothing to search for yet.';
-    } catch (error) { planLabel = ''; $('search-plan').dataset.state = 'error'; $('search-plan').textContent = error.message; }
+        : '';
+      $('search-plan').dataset.state = data.plan ? '' : 'error';
+      $('search-plan').textContent = planDetail || 'Your profile has no field of study, so there is nothing to search for yet.';
+    } catch (error) { planLabel = ''; planDetail = ''; $('search-plan').dataset.state = 'error'; $('search-plan').textContent = error.message; }
     syncSearch();
   }
 
@@ -89,6 +120,7 @@ export async function initWorkspaceFlows({ local, api, Swal, dialog, onRows }) {
     $('search-use-profile').disabled = !local || searching || !aiReady;
     document.querySelectorAll('input[name="search-mode"]').forEach((input) => { input.disabled = !local || searching; });
     document.querySelectorAll('input[name="search-source"]').forEach((input) => { input.disabled = !local || searching || sourceOff.has(input.value); });
+    document.querySelectorAll('.sx-site[data-group], .sx-site-btn[data-group]').forEach((btn) => { btn.disabled = !local || searching || sourceOff.has(btn.dataset.group); });
     document.querySelectorAll('.apply-tailor').forEach((button) => { button.disabled = !local || busy || !aiReady; });
     document.querySelectorAll('#tracker-table input, #tracker-table select, #tracker-table textarea, #tracker-table button, #board-list select, #board-list button').forEach((input) => { input.disabled = busy; });
     $('tracker-table-wrap').setAttribute('aria-busy', String(busy));
@@ -430,21 +462,26 @@ export async function initWorkspaceFlows({ local, api, Swal, dialog, onRows }) {
     if (!local || searching) return;
     const note = $('search-run-status');
     const sources = searchSources();
-    const using = Object.keys(sources).filter((name) => sources[name]).map((name) => SOURCE_NAMES[name]).join(', ');
+    const boards = selectedBoards();
+    const using = Object.keys(sources).filter((name) => sources[name]).map((name) => {
+      const total = boardButtons(name).length;
+      const picked = boards[name] || [];
+      return picked.length && picked.length < total ? `${SOURCE_NAMES[name]} (${picked.join(', ')})` : SOURCE_NAMES[name];
+    }).join(', ');
     let task;
     searching = true; note.dataset.state = ''; controls();
     try {
       if (dirty) await save();
       task = startTask({ title: `Searching for ${planLabel.toLowerCase() || 'internships'}`, state: 'searching', poll: async () => searchLines((await request('progress')).search) });
       note.textContent = `Searching with ${using}. Follow it in the top-right corner; you can keep working meanwhile.`;
-      const result = await request('search', { useProfile: $('search-use-profile').checked, mode: searchMode(), sources });
+      const result = await request('search', { useProfile: $('search-use-profile').checked, mode: searchMode(), sources, boards });
       await refresh();
       const warnings = (result.warnings || []).join(' ');
       const leads = result.unverified || 0;
       const counts = Object.entries(result.bySource || {}).map(([name, count]) => `${SOURCE_NAMES[name]} ${count}`).join(', ');
       note.textContent = `${result.found ? `Found ${result.found} postings${counts ? ` (${counts})` : ''}. Added ${result.added} new internship${result.added === 1 ? '' : 's'}${leads ? `, ${leads} of them search-engine leads to open and check` : ''}` : 'No postings were found for this search'}. Your existing choices are preserved.${warnings ? ` ${warnings}` : ''}`;
       task.done(result.found ? `Found ${result.found}, added ${result.added} new internship${result.added === 1 ? '' : 's'}.` : 'No postings were found for this search.', {
-        lines: counts ? [counts] : [],
+        lines: [counts, ...Object.entries(result.failed || {}).map(([name, why]) => `${name} failed: ${why}`)].filter(Boolean),
         action: result.added ? { label: 'Show them', run: () => { task.remove(); $('flow-review')?.scrollIntoView({ behavior: 'smooth' }); } } : undefined,
       });
     } catch (error) {
@@ -523,7 +560,27 @@ export async function initWorkspaceFlows({ local, api, Swal, dialog, onRows }) {
     refreshAi();
     refreshPlan();
     document.querySelectorAll('input[name="search-mode"]').forEach((input) => input.addEventListener('change', refreshPlan));
-    document.querySelectorAll('input[name="search-source"]').forEach((input) => input.addEventListener('change', syncSearch));
+    document.querySelectorAll('input[name="search-source"]').forEach((input) => input.addEventListener('change', () => {
+      setGroupBoards(input.value, input.checked);
+      syncSearch();
+    }));
+    document.querySelectorAll('.sx-site[data-group][data-board]').forEach((btn) => btn.addEventListener('click', (event) => {
+      const group = btn.dataset.group;
+      if (sourceOff.has(group)) return;
+      if (event.shiftKey || event.altKey) {
+        boardButtons(group).forEach((item) => item.setAttribute('aria-pressed', String(item === btn)));
+      } else {
+        const next = btn.getAttribute('aria-pressed') !== 'true';
+        btn.setAttribute('aria-pressed', String(next));
+      }
+      syncSearch();
+    }));
+    document.querySelectorAll('.sx-site-btn[data-board-action][data-group]').forEach((btn) => btn.addEventListener('click', () => {
+      const group = btn.dataset.group;
+      if (sourceOff.has(group)) return;
+      setGroupBoards(group, btn.dataset.boardAction === 'all');
+      syncSearch();
+    }));
     window.addEventListener('settings-saved', () => { refreshAi(); refreshPlan(); });
     request('application-capabilities').then((capabilities) => {
       const how = [

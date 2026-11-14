@@ -8,6 +8,8 @@ const tavily = { name: "search", inputSchema: { properties: { query: { type: "st
 const browser = { name: "firecrawl_interact", inputSchema: { properties: { url: { type: "string" }, prompt: { type: "string" }, timeout: { type: "number" } } } };
 const scrapeTool = { name: 'firecrawl_scrape' };
 const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Berlin', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+// A closing date and a start date that are always ahead of today: a fixed date turns the posting stale once it has passed.
+const later = (days) => new Date(Date.now() + days * 86400000).toISOString().slice(0, 10);
 function livePage(url, date = today, statusCode = 200) {
   return { structuredContent: { metadata: { url, statusCode }, rawHtml: `<script type="application/ld+json">${JSON.stringify({ '@type': 'JobPosting', title: 'Data analyst internship Berlin', url, datePosted: date, hiringOrganization: { name: 'Example GmbH' }, jobLocation: { address: { addressLocality: 'Berlin' } } })}</script>` } };
 }
@@ -107,8 +109,8 @@ test('verified structured posting supplies only stated extra fields', () => {
   const page = livePage(url);
   const posting = { '@type': 'JobPosting', url, title: 'Backend internship Berlin', datePosted: today,
     hiringOrganization: { name: 'Example GmbH', url: 'https://example.org/' }, description: '<p>Build REST APIs in C#.</p>',
-    skills: 'C#, SQL', validThrough: '2026-10-31', employmentType: 'PART_TIME',
-    inLanguage: 'de', industry: 'Software', jobStartDate: '2026-11-01', jobBenefits: 'Flexible hours',
+    skills: 'C#, SQL', validThrough: later(30), employmentType: 'PART_TIME',
+    inLanguage: 'de', industry: 'Software', jobStartDate: later(31), jobBenefits: 'Flexible hours',
     applicationContact: { name: 'Hiring Team', email: 'jobs@example.org' },
     jobLocation: { address: { streetAddress: 'Main Street 1', postalCode: '10115', addressLocality: 'Berlin' } },
     baseSalary: { currency: 'EUR', value: { value: 1200, unitText: 'MONTH' } } };
@@ -116,14 +118,14 @@ test('verified structured posting supplies only stated extra fields', () => {
   const result = verifyLivePosting({ url }, page, today, 'indeed.de').job;
   assert.equal(result.address, 'Main Street 1, 10115, Berlin');
   assert.equal(result.req_skills, 'C#, SQL');
-  assert.equal(result.deadline, '2026-10-31');
+  assert.equal(result.deadline, later(30));
   assert.equal(result.salary, '1200 EUR / MONTH');
   assert.equal(result.full_part, 'Part time');
   assert.match(result.description, /REST APIs in C#/);
   assert.equal(result.work_model, '');
   assert.equal(result.website, 'https://example.org/');
   assert.equal(result.posting_lang, 'de');
-  assert.equal(result.start_date, '2026-11-01');
+  assert.equal(result.start_date, later(31));
   assert.equal(result.contact_email, 'jobs@example.org');
 });
 

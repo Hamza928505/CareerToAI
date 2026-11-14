@@ -45,7 +45,14 @@ Rules that follow from that:
   reads them locally to score jobs and tailor documents (the search itself reads the field of study from `data/profile.json`, then from `student.json`); the AI provider is
   chosen in `.env` (`LLM_PROVIDER`, see `.env.example`). The phone number lives in
   `data/profile-private.json`, also gitignored: never put it in `profile-extras.json`,
-  because that file and the generated candidate profile are committed.
+  because that file is published on the site.
+- **The profile stays out of git as well.** `data/profile.json`, `experience.json`, `projects.json`,
+  `certificates.json`, `profile-extras.json` and the generated `01-candidate-profile.md` are
+  gitignored (the student asked, 2026-11-15) and live only on this computer. A checkout without
+  them, the GitHub Pages build included, reads `data/<name>.example.json` instead (placeholders,
+  no personal data) through `readable()` in `lib/content.mjs`, so the published site shows
+  placeholders. Reads only fall back: `writeJson` and every save write the real file. Never put
+  real data in an `.example.json`, and never `git add -f` the real files.
 - **The tracker stays out of git.** It holds employers' contact names, e-mails and
   phone numbers, and this repo publishes a public site. `data/applications.csv`
   and `job_search_tracker.xlsx` are gitignored; `data/applications.example.csv`
@@ -88,7 +95,7 @@ root tree.
 
 | Command | Does |
 |---|---|
-| `npm run editor` | Serves the local `/workspace/` and application APIs; `/editor/` offers migration of old browser drafts to GJUBoard |
+| `npm run editor` | Serves the whole app on this computer (the seven pages below) and the `/__editor/` APIs they call |
 | `npm run profile` | Regenerate the framework's candidate profile from `data/*.json` |
 | `npm run profile:check` | Fail if that file is stale (what CI should run) |
 | `npm run tracker` | Re-render `job_search_tracker.xlsx` from `data/applications.csv` |
@@ -98,7 +105,85 @@ root tree.
 `npm run tracker` is safe to re-run: the rows live in the CSV, and the workbook is a
 rendering of them.
 
-## The workspace page
+## The pages
+
+The header has seven links, one page each. Every page is plain HTML built by Eleventy; what needs this computer
+(keys, the tracker, the student's files) comes from the local editor server, and on the published site each page says so.
+
+| Link | Page | What lives there |
+|---|---|---|
+| Search | `/workspace/` (`src/workspace.njk`) | The search, the shortlist board, Apply, Insights. Three tabs (`.ws-tabs`), no journey strip |
+| Job Boards | `/boards/` | The board directory (how each board can be searched, last scan), boards added by hand, and the **company directory** |
+| GY Guide | `/guide/` | The German Year rules, unchanged |
+| CVs & CLs | `/documents/` | GJU check, **ATS assessment**, tailored CV and letter, editing a generated document. `?job=<row id>` opens it on a shortlisted job |
+| Profile / Editor | `/editor/` | The one profile, its sections, and **Import from your documents** |
+| Mail | `/mail/` | Unchanged, now a header link |
+| Settings | `/settings/` | Keys, AI provider, Test for every integration, MCP connectors, ways of applying, tools, and the setup guide |
+
+The local server opens on Search (`/` redirects to `/workspace/`); `/?public` shows the public profile page.
+"Profile" always means `/editor/`. Never make that link a redirect to another page.
+
+**One profile.** `readUserProfile()` (`lib/student-files.mjs`) is the only way a module reads who the student is:
+`src/assets/Student-data/student.json` (what the editor's **Save profile** writes, together with `data/*.json` in the same
+request), or the export in the Internships folder (`Input Data/gju-profile.json`) while that file is newer, or `data/*.json`
+when neither exists. Do not add another reader, and do not hard-code a fact about the student in code: the studio's old
+built-in skill list is gone for that reason. The editor's extra sections (courses, achievements, soft skills, interests,
+status, constraints) are saved to `data/profile-extras.json` by `lib/apply-data.mjs`.
+
+**`src/assets/Student-data/` is the home of everything private about the student**, and all of it except `.gitkeep` is
+git-ignored (`src/assets/Student-data/*`) and left out of the build: `student.json`, the two base `.docx`, `tailored/`,
+`documents/` (uploads and their register `index.json`) and `ats/` (the ATS manuals, the employer notes and `ats_check.py`,
+copied from the Internships folder; `atsDir()` falls back to that folder). Serve these from the editor server only.
+
+**Import from your documents** (`lib/document-intake.mjs`, `/__editor/documents/*`): an uploaded certificate, reference,
+transcript or CV is read by an AI and becomes *proposals*. Nothing reaches the profile until the student ticks it in the
+review dialog and saves. PDFs and pictures are read by the Anthropic API when `ANTHROPIC_API_KEY` is set, else by
+`claude -p` allowed to Read one temporary folder holding a copy of that one file (no web, no other tool); Word and text
+files go to the configured provider. `ground()` then checks the answer against the document's own text where code can
+read it: a skill, title or issuer that is not in the text is marked (*AI suggestion*, *Check this*), never passed as
+read. A certificate's provider is looked up with Tavily or Exa and described from those results only, kept apart as
+*Online research* with its sources. An approved entry carries `evidence` (which document) in `student.json` and only
+`verifiedBy: "document"` in the published `data/*.json`.
+
+**AI provider.** `LLM_PROVIDER=claude` is Claude through the student's subscription: `completeWithClaude` (`lib/llm.mjs`)
+runs the claude command with every tool off, in an empty folder, without `ANTHROPIC_*` in its environment. It needs no key
+and is what to suggest when no API key is saved. `anthropic` is the paid API.
+
+**Settings** is built from `src/_data/integrations.json` (status rows, Test buttons and the setup guide: keep the seven
+answers for every new integration). `lib/integration-tests.mjs` holds one cheap real test per integration id.
+MCP servers come from `lib/mcp-config.mjs`: the app's own `data/mcp-servers.json` over the Antigravity config, which is
+only ever read. The browser can add a preset (`PRESETS`) or an https address, never a command, and sees a host name and the
+names of the `${KEYS}` a server reads, never an address path, a header or a value.
+
+**Company directory** (`data/companies.json`, git-ignored). Discovery is four separate steps that can each be re-run
+(`lib/company-discovery.mjs`): `discoverCompanies` (sources in `SOURCES`: the ATS manuals, the tracker, Wikidata, by hand),
+`findWebsite`, `findCareers`, `detectPlatform`. `upsertCompanies` (`lib/company-directory.mjs`) never duplicates (host,
+then name without its legal form) and never downgrades. Every website read goes through `createReader`: robots.txt
+obeyed, two seconds between requests to a site, size and time limits, no private address, and never a site
+`data/source-access-policy.json` marks prohibited. A broken or blocked address is recorded with its reason, never guessed
+around. `lib/company-jobs.mjs` asks the published job-board APIs of Greenhouse, Lever, Personio, SmartRecruiters, Recruitee,
+Ashby and Workable (dated postings), and reads other careers pages once for undated leads. The workspace search takes
+*Company websites* as a fourth source (`searchCompanySites`); the usual rules apply (known date, last 7 days, GJU check),
+and these rows are for the private tracker only.
+
+**ATS assessment** (`lib/ats-assess.mjs`, `POST /__editor/internships/ats-assess`). It follows the manuals' own method
+(MET / PARTLY / GAP, section 2 of every manual) with the manual of the posting's platform and the employer's note in the
+prompt. `checkAssessment` then holds the answer to the profile: MET stands only when the profile names the term or the
+evidence names a real profile entry, and a gap never gets wording. With a CV PDF, `ats_check.py` counts which supported
+terms a parser finds. The score is this tool's estimate and the page says so; do not present it as an employer's score.
+Generate (Phase 2) and the ATS assessment run on the AI picked beside the Phase 2 button (`tailorModel`: Claude Opus by default
+through the subscription, Sonnet, Haiku, or any provider of `lib/llm.mjs` by name through `providerConfig`), never on
+`LLM_PROVIDER` unless the student picked that provider.
+A tailored CV is kept to 2 pages and a letter to 1: the model may not lengthen a paragraph, and a CV that still runs over
+is saved without the AI rewording.
+
+**Applying.** Web forms go through `lib/apply-providers.mjs` (`PROVIDERS`: `local`, `claude`, `remote`; the student chooses
+with `APPLY_BROWSER`). To add a browser tool, add an entry there. `claude` is `lib/claude-browser.mjs`: Claude fills the
+form through `lib/apply-form-server.mjs`, an MCP server with five tools that cannot open another address, upload anything
+but the two tailored files, tick a box, or press anything but a button that opens the form or goes to its next step. The
+final Submit is the student's. Keep that property when changing those tools: it is what makes the route safe.
+
+## The Search page
 
 `/workspace/` is the student-facing front end. Under `npm run editor` it reads
 `data/applications.csv` live, runs the four deterministic npm tasks above through
@@ -135,7 +220,8 @@ at the interview, employers take students at their level), and the AI scoring is
 the JobSearchEngine it searches Indeed through the Indeed connector of the student's Claude account:
 `lib/indeed-agent.mjs` runs `claude -p` in `INTERNSHIPS_DIR` with only ToolSearch and the two Indeed tools allowed
 (`dontAsk`), `--setting-sources project` so the user's plugins and hooks stay out, and no `ANTHROPIC_*` in its env
-(connectors load only with the claude.ai login). Postings are parsed from the tool results, never from the model's text. A Cowork pre-search saved as `indeed-presearch.md` in that folder (the connector's raw results) is merged in; a missing or old file is fine (the laptop may have been off) and a failed live run falls back to it.
+(connectors load only with the claude.ai login). The connectors connect in the background (Claude Code 2.1.323 on), so the prompt goes in
+as stream-json after `CONNECTOR_WAIT_MS`; a prompt sent at once finds no ToolSearch. Postings are parsed from the tool results, never from the model's text. A Cowork pre-search saved as `indeed-presearch.md` in that folder (the connector's raw results) is merged in; a missing or old file is fine (the laptop may have been off) and a failed live run falls back to it.
 Indeed rows are for the private tracker only; never feed them to the public board. Claude searches only what nothing else reaches (Indeed, and StepStone and Arbeitsagentur through its Apify connector, both with `--model sonnet`). An NVIDIA NIM model (`lib/nim-agent.mjs`, model and key from `.env`) searches LinkedIn and the other boards through plain search APIs (Tavily, Exa, Firecrawl, the Arbeitnow API) and the MCP search tools allowlisted in `MCP_TOOLS` (today TinyFish `search`, through the MCP client `lib/antigravity-mcp.mjs` and the servers of `~/.gemini/config/mcp_config.json`, opened only when `TINYFISH_API_KEY` is set; never an MCP tool that opens a page, runs an agent or buys data; the claude.ai connectors Indeed and Apify load only in `claude -p`, so NIM cannot use them) so Claude spends no tokens there; it reads snippets only, never opens a page, never searches Indeed, takes dates from the tool results by code, and its rows are unverified leads. **Site sweep:** the model picks what it likes, so after its loop `sweepSites` searches each of the 24 `NIM_SITES` that has no dated, in-window, GJU-passing, not-yet-known posting on its own (what the model's tools already returned first, free; then Arbeitnow's feed, Exa, Tavily, Firecrawl, TinyFish, each limited to that site, at most 3 sites at once, two queries per engine, 10 calls per site, one retry after a 429, 150 s in all) and keeps ONE posting per site: a dated one when any engine finds it, else a **site lead** (`site_lead: true`, a blank `date_posted`, `data_source` ending "no posting date"). A lead is never dated by the day it was found, `newEligible` takes it without a date but still applies the known check and the GJU check, and the shortlist shows it as *Date unknown* in the "Last 7 days" view for the week after `date_found`. Only an individual posting page of that very site whose title says internship counts (`isIndividualPosting`, then `looksLikePosting`, which keeps category pages, listings and advice articles out by title and address, then `gjuVerdict`), a date after tomorrow is dropped as no posting date, nothing is opened, and the employer and city are read off the row's own title and snippet by one more model call and kept only when that text states them. The search says how many sites have a post and names those with none (measured live on 2026-11-09: 16 of 24; the other eight show a search engine only category, company-list, event or filter pages, or nothing, and the sweep takes none of those for a post). The search tags every row with `data_source`, and the board derives *Searched by* (Claude, NVIDIA NIM, Search APIs) from it, with *Site* and *Posted* (default: last 7 days) filters and Fit as a percentage. The shortlist (`#flow-review`) is
 the old private board page moved into the workspace: its hero with count tiles, its filter panel and its internship list
 (`src/assets/workspace-board.js`, the dropdown in `board-combo.js`, the look in `board.css`, every class and token

@@ -240,8 +240,9 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      # The candidate profile is generated from data/*.json. If someone edited the
-      # markdown by hand, or changed the data without re-running the generator,
-      # this fails rather than letting the two drift apart.
-      - run: npm run profile:check
+      # The candidate profile and the data/*.json it is generated from are git-ignored
+      # (the student's own data), so there is nothing committed to compare: CI generates it
+      # from the placeholders (data/*.example.json) to prove the generator still runs.
+      # `npm run profile:check` stays the local freshness check.
+      - run: npm run profile
       - run: npm run build

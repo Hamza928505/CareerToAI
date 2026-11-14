@@ -55,32 +55,37 @@ pageScript: /assets/editor.js
 
 <div class="editor" data-editor>
   <header class="editor-intro">
-    <h1>Profile editor</h1>
+    <h1>Profile</h1>
     <p class="lede">
-      Fill this in, and it becomes the site. Everything you type is saved in this browser
-      as you go, so a refresh or a closed tab loses nothing. Uploaded images are kept in
-      this browser too.
-    </p>
-    <p class="muted">
-      Fields marked <span class="required">required</span> have no fallback in the
-      published profile, so <strong>Download .json</strong> and <strong>Save to data/</strong>
-      check them before they run. Everything else is optional.
-    </p>
-    <p class="muted">
-      Every section heading and every entry inside one opens and closes when you click it.
-      <strong>Collapse all</strong> in the toolbar shuts every section; the one above each
-      list shuts that list's entries. Which sections you left open is remembered in this
-      browser, and a closed section is still saved and still published — collapsing only
-      hides it here.
-    </p>
-    <p class="muted">
-      <strong>The order you put things in is the order they are published.</strong> Drag a
-      row by its handle (<span class="grip-inline" aria-hidden="true">⠿</span>) to move it,
-      or focus the handle and press <kbd>↑</kbd>/<kbd>↓</kbd>. Nothing re-sorts behind your
-      back, so put what you most want read at the top; <strong>Sort by date</strong> puts a
-      list back in newest-first order whenever you want it.
+      Everything the platform knows about you lives here: Search scores jobs against it, CVs &amp; CLs
+      write from it, and applications are filled in from it. Type it in, or upload your documents and
+      let the AI propose the entries for you to approve.
     </p>
     <p class="muted" data-mode-note>Checking how this page is running…</p>
+    <details class="editor-intro-help">
+      <summary>How this editor works</summary>
+      <p class="muted">
+        Fields marked <span class="required">required</span> have no fallback in the published profile,
+        so <strong>Save profile</strong> and <strong>Download .json</strong> check them before they run.
+        Everything else is optional.
+      </p>
+      <p class="muted">
+        Every section heading and every entry inside one opens and closes when you click it. Which
+        sections you left open is remembered in this browser, and a closed section is still saved.
+      </p>
+      <p class="muted">
+        <strong>The order you put things in is the order they are published.</strong> Drag a row by its
+        handle (<span class="grip-inline" aria-hidden="true">⠿</span>) to move it, or focus the handle
+        and press <kbd>↑</kbd>/<kbd>↓</kbd>. <strong>Sort by date</strong> puts a list back in
+        newest-first order.
+      </p>
+      <p class="muted">
+        What you type is kept in this browser as you go, so a refresh loses nothing. On your own
+        computer, <strong>Save profile</strong> writes it to <code>data/</code> (what the public site
+        shows) and to <code>src/assets/Student-data/student.json</code> (the private copy, with what is
+        never published). <a href="{{ '/' | url }}?public">See your public profile</a>.
+      </p>
+    </details>
     {# Rows move without anything visible changing for a screen reader, so every
        move says where the row landed. #}
     <p class="visually-hidden" data-reorder-status role="status" aria-live="polite"></p>
@@ -90,8 +95,7 @@ pageScript: /assets/editor.js
     <span class="save-status" data-save-status aria-live="polite">Loading…</span>
     <span class="toolbar-spacer"></span>
     <button type="button" class="btn" data-action="toggle-all" aria-live="polite"><i class="fa-solid fa-compress" style="margin-right: 0.3rem;"></i>Collapse all</button>
-    <button type="button" class="btn btn-primary" data-action="save-server" hidden><i class="fa-solid fa-database" style="margin-right: 0.3rem;"></i>Save to data/</button>
-    <button type="button" class="btn btn-primary" data-action="save-student-data" hidden><i class="fa-solid fa-cloud-arrow-up" style="margin-right: 0.3rem;"></i>Save to Student-data</button>
+    <button type="button" class="btn btn-primary" data-action="save-server" hidden><i class="fa-solid fa-floppy-disk" style="margin-right: 0.3rem;"></i>Save profile</button>
     <button type="button" class="btn" data-action="export"><i class="fa-solid fa-download" style="margin-right: 0.3rem;"></i>Download .json</button>
     <button type="button" class="btn" data-action="import"><i class="fa-solid fa-upload" style="margin-right: 0.3rem;"></i>Load .json</button>
     <button type="button" class="btn btn-danger" data-action="reset"><i class="fa-solid fa-trash-can" style="margin-right: 0.3rem;"></i>Clear all</button>
@@ -101,10 +105,32 @@ pageScript: /assets/editor.js
   <ul class="data-summary" data-summary aria-label="What is loaded"></ul>
 
   <form class="editor-form" data-form autocomplete="on">
+    {# Shown only on your own computer: the documents stay in src/assets/Student-data/documents and are never published. #}
+    <fieldset class="collapsible" data-documents hidden>
+      {{ sectionHead("documents", "Import from your documents", "fa-wand-magic-sparkles", true) }}
+      <div class="section-body" id="section-documents">
+        <p class="muted">
+          Upload certificates, course and internship certificates, employment references, transcripts,
+          project documents or an old CV. The AI reads each one and proposes profile entries.
+          <strong>Nothing is added until you review it and tick it</strong>, and every value says
+          whether it was found in the document, came from online research on the provider, or is
+          only the AI's suggestion.
+        </p>
+        <label class="dropzone" data-documents-drop>
+          <i class="fa-solid fa-cloud-arrow-up dropzone-icon" aria-hidden="true"></i>
+          <span class="dropzone-label">Upload documents</span>
+          <span class="dropzone-text">Drop PDF, picture, Word or text files here, or click to choose. Up to 20 MB each.</span>
+          <input type="file" accept=".pdf,.png,.jpg,.jpeg,.webp,.docx,.txt,.md" multiple data-documents-input>
+        </label>
+        <p class="muted" data-documents-note></p>
+        <div class="doc-list" data-documents-list aria-live="polite"></div>
+      </div>
+    </fieldset>
+
     <fieldset class="collapsible">
-      {{ sectionHead("student-data", "Student Data & Base Documents", "fa-file-invoice", true) }}
+      {{ sectionHead("student-data", "Base CV &amp; cover letter", "fa-file-invoice", true) }}
       <div class="section-body" id="section-student-data">
-        <p class="muted">Upload your base CV and Cover Letter here. They will be saved to <code>src/assets/Student-data/</code> for the AI to use.</p>
+        <p class="muted">The two documents the tailoring starts from. They are kept in <code>src/assets/Student-data/</code> on this computer and never published.</p>
                   <div class="grid-2">
             <div class="dropzone" data-dropzone>
   <i class="fa-solid fa-cloud-arrow-up dropzone-icon"></i>
@@ -194,7 +220,7 @@ pageScript: /assets/editor.js
     </fieldset>
 
     <fieldset class="collapsible">
-      {{ sectionHead("education", "Education", "fa-graduation-cap", true) }}
+      {{ sectionHead("education", "Education &amp; academic qualifications", "fa-graduation-cap", true) }}
       <div class="section-body" id="section-education">
         <div data-list="education" class="entry-editor-list"></div>
         {{ listTools("education", "Add education", true) }}
@@ -202,7 +228,7 @@ pageScript: /assets/editor.js
     </fieldset>
 
     <fieldset class="collapsible">
-      {{ sectionHead("experience", "Experience", "fa-briefcase", true) }}
+      {{ sectionHead("experience", "Work experience &amp; internships", "fa-briefcase", true) }}
       <div class="section-body" id="section-experience">
         <div data-list="experience" class="entry-editor-list"></div>
         {{ listTools("experience", "Add position", true) }}
@@ -228,6 +254,24 @@ pageScript: /assets/editor.js
       <div class="section-body" id="section-certificates">
         <div data-list="certificates" class="entry-editor-list"></div>
         {{ listTools("certificates", "Add certification", true) }}
+      </div>
+    </fieldset>
+
+    <fieldset class="collapsible">
+      {{ sectionHead("courses", "Courses &amp; training", "fa-chalkboard-user", true) }}
+      <div class="section-body" id="section-courses">
+        <p class="muted">Courses you completed that are not a formal certification: a university module worth naming, an online course, a workshop.</p>
+        <div data-list="courses" class="entry-editor-list"></div>
+        {{ listTools("courses", "Add course", true) }}
+      </div>
+    </fieldset>
+
+    <fieldset class="collapsible">
+      {{ sectionHead("awards", "Achievements", "fa-trophy", true) }}
+      <div class="section-body" id="section-awards">
+        <p class="muted">Prizes, scholarships, rankings and anything else you earned that a recruiter can check.</p>
+        <div data-list="awards" class="entry-editor-list"></div>
+        {{ listTools("awards", "Add achievement", true) }}
       </div>
     </fieldset>
 
@@ -258,7 +302,7 @@ pageScript: /assets/editor.js
     </fieldset>
 
     <fieldset class="collapsible">
-      {{ sectionHead("skills", "Extra skills", "fa-star", true) }}
+      {{ sectionHead("skills", "Technical skills", "fa-star", true) }}
       <div class="section-body" id="section-skills">
         <p class="muted">
           Skills that no role, project or certificate already covers. The site unions these
@@ -276,6 +320,32 @@ pageScript: /assets/editor.js
         <div data-skills="profile.skills"></div>
       </div>
     </fieldset>
+
+    <fieldset class="collapsible">
+      {{ sectionHead("soft", "Soft skills &amp; professional interests", "fa-people-group") }}
+      <div class="section-body" id="section-soft">
+        <h3 class="subhead">Soft skills</h3>
+        <p class="muted">How you work: the ones you can back with an example from a role or a project above. Used in cover letters, never to pass a requirement you do not meet.</p>
+        <div data-skills="extras.softSkills"></div>
+        <h3 class="subhead">Professional interests</h3>
+        <p class="muted">The fields and kinds of work you want. They steer which postings rank first.</p>
+        <div data-skills="extras.interests"></div>
+      </div>
+    </fieldset>
+
+    <fieldset class="collapsible">
+      {{ sectionHead("availability", "Availability &amp; constraints", "fa-calendar-check") }}
+      <div class="section-body" id="section-availability">
+        <label>Current status <span class="optional">optional</span>
+          <input type="text" data-path="extras.employmentStatus" placeholder="Final-year student, exchange semester in Germany">
+          <small>One line. Application forms ask for it.</small>
+        </label>
+        <label>Constraints <span class="optional">optional</span>
+          <textarea rows="3" data-path="extras.constraints" placeholder="Available from March 2027 for 6 months, full time. Residence permit until September 2027."></textarea>
+          <small>Dates, hours, permits, relocation. Form answers are written from this and nothing is assumed beyond it.</small>
+        </label>
+      </div>
+    </fieldset>
   </form>
 
   <section class="editor-help">
@@ -288,10 +358,11 @@ pageScript: /assets/editor.js
     <p>
       <strong>Download .json</strong> gives you one file containing everything, images
       included. To publish it, run <code>npm run import-data -- &lt;file&gt;</code> in the
-      repository, then commit and push — the site rebuilds from it.
+      repository, then commit and push — the site rebuilds from it. Documents you upload stay
+      in <code>src/assets/Student-data/documents</code> on your computer.
     </p>
     <p data-local-help hidden>
-      Because you are running <code>npm run editor</code>, <strong>Save to data/</strong> is
+      Because you are running <code>npm run editor</code>, <strong>Save profile</strong> is
       available and skips the download entirely: it writes
       <code>data/profile.json</code>, <code>data/experience.json</code>,
       <code>data/projects.json</code>, <code>data/certificates.json</code> and the images

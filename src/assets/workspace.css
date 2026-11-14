@@ -1,5 +1,6 @@
 @import url("./board.css");
 @import url("./mail-dialog.css");
+@import url("./ws-theme.css");
 
 /* Workspace only — loaded via `pageStyles` in src/workspace.njk, on top of
    assets/style.css. Presentation only; every number on this page comes from
@@ -350,84 +351,9 @@
   .tracker-dialog-header, .tracker-dialog-footer, .tracker-dialog .tracker-row-actions { padding: 1rem; }
 }
 
-/* ----------------------------------------------------------------- Journey */
+.sx-sites-link { margin: .3rem 0 0 1.9rem; font-size: .8rem; }
 
-.journey { margin: 0 0 var(--s6); }
-
-.journey-steps {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: var(--s3);
-}
-
-.journey-steps li {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: var(--s1);
-  padding: var(--s4);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-}
-
-.journey-steps small { color: var(--muted); font-size: 0.8125rem; }
-
-.journey-dot {
-  display: grid;
-  place-items: center;
-  width: 1.9rem;
-  height: 1.9rem;
-  margin-bottom: var(--s1);
-  border-radius: var(--radius-full);
-  background: var(--surface-2);
-  border: 1px solid var(--border-strong);
-  color: var(--muted);
-  font: 600 0.8125rem/1 var(--font-body);
-}
-
-.journey-steps li[data-state="done"] .journey-dot {
-  background: var(--ok-soft);
-  border-color: var(--success);
-  color: var(--ok);
-}
-.journey-steps li[data-state="done"] .journey-dot::before { content: "\2713"; }
-.journey-steps li[data-state="done"] .journey-dot { font-size: 0; }
-.journey-steps li[data-state="done"] .journey-dot::before { font-size: 0.9rem; }
-
-.journey-steps li[data-state="current"] {
-  border-color: var(--color-hope);
-  box-shadow: var(--shadow-hope);
-}
-.journey-steps li[data-state="current"] .journey-dot {
-  background: var(--color-hope);
-  border-color: var(--color-hope);
-  color: var(--text-on-hope);
-}
-
-.journey-next {
-  margin: var(--s4) 0 0;
-  padding: var(--s4) var(--s5);
-  background: var(--warning-light);
-  border-left: 4px solid var(--color-hope);
-  border-radius: var(--radius-md);
-  max-width: none;
-  color: var(--text);
-}
-
-@media (max-width: 760px) {
-  .journey-steps { grid-template-columns: 1fr; }
-  .journey-steps li { flex-direction: row; align-items: center; gap: var(--s3); flex-wrap: wrap; }
-  .journey-dot { margin-bottom: 0; }
-}
 .overview-chart[hidden] { display: none; }
-
-.journey-steps strong a { color: inherit; text-decoration: none; }
-.journey-steps strong a:hover { text-decoration: underline; }
 
 /* ---------------------------------------------------------------- Insights */
 
@@ -447,7 +373,6 @@
 
 /* ------------------------------------------------------------------- Tabs
    One panel at a time, so the page stops scrolling forever (see workspace-tabs.js). */
-.workspace-panel[hidden] { display: none; }
 .flow-nav { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); margin: 0 0 var(--s5); }
 .flow-nav a { min-height: 64px; padding: .8rem 1rem; gap: .7rem; border-bottom: 3px solid transparent; }
 .flow-nav a[aria-current="true"] { background: var(--bg-subtle); border-bottom-color: var(--color-hope); }
@@ -455,20 +380,6 @@
 @media (max-width: 680px) {
   .flow-nav { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .flow-nav a { border-right: 1px solid var(--border-default); border-bottom: 3px solid transparent; }
-}
-
-/* The journey strip doubles as the tab bar: each step opens its panel. */
-.journey-steps { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
-.journey-steps li { padding: 0; }
-.journey-steps li > a { display: flex; flex-direction: column; gap: var(--s1); height: 100%; padding: var(--s4); color: inherit; text-decoration: none; border-radius: inherit; }
-.journey-steps li > a:hover { background: var(--bg-subtle); }
-.journey-steps li:has(> a[aria-current="true"]) { border-color: var(--color-hope); box-shadow: var(--shadow-hope); }
-.journey-steps li:has(> a[aria-current="true"]) .journey-dot { background: var(--color-hope); border-color: var(--color-hope); color: var(--text-on-hope); }
-.journey-steps li[data-state="done"]:has(> a[aria-current="true"]) .journey-dot { font-size: 0; }
-@media (max-width: 760px) {
-  .journey-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .journey-steps li > a { flex-direction: row; align-items: center; gap: var(--s2); flex-wrap: wrap; }
-  .journey-steps li > a small { display: none; }
 }
 
 /* ------------------------------------------------------------ Search services card (tabs) */
@@ -628,10 +539,23 @@ i.sx-logo { display: grid; place-items: center; color: var(--primary, #2563eb); 
 .sx-focus .sx-sources { grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: var(--s4); }
 @media (min-width: 62rem) { .sx-focus .sx-sources { grid-column: span 2; } }
 .sx-source { display: grid; align-content: start; gap: .5rem; min-width: 0; }
-.sx-source:has(input:disabled) .sx-sites { opacity: .5; }
+.sx-source:has(input:disabled) .sx-sites-wrap { opacity: .5; pointer-events: none; }
+.sx-legend-hint { display: inline; font-size: .72rem; font-weight: 450; text-transform: none; letter-spacing: 0; color: var(--muted); margin-left: .35rem; }
+.sx-sites-wrap { display: grid; gap: .3rem; }
+.sx-sites-bar { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+.sx-sites-count { font-size: .74rem; font-variant-numeric: tabular-nums; color: var(--muted); }
+.sx-sites-actions { display: inline-flex; gap: .25rem; }
+.sx-site-btn { padding: .1rem .45rem; border: 1px solid var(--border); border-radius: 5px; background: var(--surface-2, var(--bg-subtle)); color: var(--text); font: 600 .68rem/1.3 var(--font-body); cursor: pointer; transition: border-color 120ms ease, background 120ms ease; }
+.sx-site-btn:hover:not(:disabled), .sx-site-btn:focus-visible { border-color: var(--color-hope); background: var(--surface); }
+.sx-site-btn:disabled { opacity: .5; cursor: not-allowed; }
 .sx-sites { display: flex; flex-wrap: wrap; gap: .25rem; }
-.sx-site { display: grid; place-items: center; width: 28px; height: 28px; border: 1px solid var(--border); border-radius: 7px; background: var(--surface); font-size: .7rem; font-weight: 600; color: var(--muted); cursor: default; }
-.sx-site img { width: 18px; height: 18px; object-fit: contain; border-radius: 3px; }
+.sx-site { display: grid; place-items: center; width: 28px; height: 28px; padding: 0; border: 1px solid var(--border); border-radius: 7px; background: var(--surface); font-size: .7rem; font-weight: 600; color: var(--muted); cursor: pointer; transition: opacity 120ms ease, border-color 120ms ease, transform 120ms ease, box-shadow 120ms ease; }
+.sx-site[aria-pressed="true"] { border-color: color-mix(in srgb, var(--color-hope) 65%, var(--border)); box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-hope) 25%, transparent); color: var(--text); }
+.sx-site[aria-pressed="false"] { opacity: .32; filter: grayscale(1); border-style: dashed; }
+.sx-site:hover:not(:disabled) { transform: translateY(-1px); border-color: var(--color-hope); opacity: .9; }
+.sx-site:focus-visible { outline: 2px solid var(--color-hope); outline-offset: 1px; }
+.sx-site:disabled { cursor: not-allowed; }
+.sx-site img { width: 18px; height: 18px; object-fit: contain; border-radius: 3px; pointer-events: none; }
 .sx-focus small { display: block; color: var(--muted); font-size: .8rem; }
 .sx-focus label:has(input:disabled) { opacity: .6; }
 .sx-plan { grid-column: 1 / -1; margin: 0; color: var(--muted); font-size: .85rem; max-width: none; overflow-wrap: anywhere; }
@@ -664,30 +588,3 @@ html.tracker-fullscreen-open { overflow: hidden; }
 #flow-review.tracker-fullscreen #tracker-table .tracker-row-actions .btn { min-width: 0; padding: .15rem .45rem; font-size: .7rem; }
 #flow-review.tracker-fullscreen .tracker-actions { margin-top: .4rem; }
 
-/* ------------------------------------------------------------ The hero's theme, page-wide
-   The workspace wears the internship board's look (board.css): its blue, its surfaces and its light and dark pairs.
-   Re-pointing the site's tokens on .workspace recolours every component below without touching them. The header
-   stays the site's. The aliases (--accent, --surface, ...) are resolved where they are declared, on :root, so they
-   are repeated here to follow the new values. */
-:root { --ws-page: var(--gb-surface-2); --ws-card: var(--gb-surface); --ws-subtle: var(--gb-surface-2); --ws-on-primary: #fff; --ws-primary-hover: #175b92; }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) { --ws-page: var(--gb-surface); --ws-card: var(--gb-surface-2); --ws-subtle: var(--gb-surface-3); --ws-on-primary: #08243a; --ws-primary-hover: #8cc9ee; }
-}
-:root[data-theme="dark"] { --ws-page: var(--gb-surface); --ws-card: var(--gb-surface-2); --ws-subtle: var(--gb-surface-3); --ws-on-primary: #08243a; --ws-primary-hover: #8cc9ee; }
-
-body:has(.workspace) { background: var(--ws-page); }
-.workspace {
-  --bg-main: var(--ws-page); --bg-surface: var(--ws-card); --bg-subtle: var(--ws-subtle);
-  --border-default: var(--gb-border); --border-strong: var(--gb-border-strong);
-  --text-primary: var(--gb-text); --text-secondary: var(--gb-text-2); --text-muted: var(--gb-muted);
-  /* "hope" is the site's call-to-action amber; here it is the board's blue, with ink that keeps 5:1 or better. */
-  --color-hope: var(--gb-primary); --color-hope-light: var(--ws-primary-hover); --color-hope-dark: var(--ws-primary-hover);
-  --text-hope-strong: var(--gb-primary); --text-on-hope: var(--ws-on-primary);
-  --border-hope: var(--gb-primary); --shadow-hope: var(--gb-shadow-glow);
-  --text-link: var(--gb-primary); --text-link-hover: var(--ws-primary-hover);
-  --bg: var(--bg-main); --surface: var(--bg-surface); --surface-2: var(--bg-subtle);
-  --text: var(--text-primary); --muted: var(--text-secondary); --border: var(--border-default);
-  --accent: var(--text-link); --accent-hover: var(--text-link-hover); --accent-soft: var(--gb-surface-3);
-}
-/* Guidance, not a warning: the hero's soft blue-and-sun wash instead of the warning yellow. */
-.workspace .journey-next, .workspace .notice-empty { background: var(--gb-grad-soft); }

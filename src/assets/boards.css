@@ -667,3 +667,53 @@ html.has-sheet { overflow: hidden; } /* the page behind a phone dropdown sheet d
 
 /* The two-tone strip along the top of gju.edu.jo: amber on the left, blue on the right. */
 .topbar::after { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 4px; background: linear-gradient(90deg, #ffb844 0 34%, #1f8bcc 34% 100%); pointer-events: none; }
+
+/* ------------------------------------------------------------ Board directory extras and the company directory */
+.board-legend { margin: -4px 0 14px; }
+.board-manage { padding: 16px 18px; margin-bottom: 16px; }
+.board-manage[hidden], #companies-app[hidden], .co-progress[hidden] { display: none; }
+.board-methods { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px; }
+.board-scan { display: block; margin-top: 4px; font-size: 12px; color: var(--muted); }
+.board-scan-bad { color: var(--warn); }
+.board-remove { margin-inline-start: auto; }
+
+.co-lead { max-width: 80ch; margin: 0 0 16px; color: var(--text-2); }
+.co-panel { padding: 18px; margin-bottom: 16px; }
+.co-panel h3 { display: flex; align-items: center; gap: 10px; margin: 0 0 14px; font-size: 1.05rem; }
+.co-step { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--grad); color: #fff; font-size: 13px; font-weight: 700; }
+.co-go { justify-content: flex-end; }
+.co-go .btn { width: 100%; justify-content: center; }
+.co-check { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-size: 14px; color: var(--text-2); }
+.co-check[hidden], [data-for-source][hidden] { display: none; }
+.co-checks { justify-content: flex-end; gap: 4px; }
+.co-checks .co-check { margin-top: 0; }
+.co-progress { display: grid; grid-template-columns: minmax(120px, 1fr) auto auto; align-items: center; gap: 14px; margin-bottom: 14px; }
+.co-bar { height: 8px; border-radius: 999px; background: var(--surface-3); overflow: hidden; }
+.co-bar span { display: block; height: 100%; width: 0; border-radius: inherit; background: var(--grad); transition: width 0.3s ease; }
+.co-table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow-1); }
+.co-table { width: 100%; min-width: 1100px; border-collapse: collapse; font-size: 14px; }
+.co-table th { position: sticky; top: 0; padding: 12px 14px; background: var(--surface-2); color: var(--text-2); font-size: 12.5px; font-weight: 650; text-align: left; white-space: nowrap; }
+.co-table td { padding: 11px 14px; border-top: 1px solid var(--border); vertical-align: top; }
+.co-table td small { color: var(--muted); font-size: 12px; }
+.co-table tbody tr:hover { background: color-mix(in srgb, var(--primary) 4%, transparent); }
+.co-chip { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 650; white-space: nowrap; }
+.co-ok { background: var(--ok-bg); color: var(--ok); }
+.co-warn { background: var(--warn-bg); color: var(--warn); }
+.co-bad { background: var(--bad-bg); color: var(--bad); }
+.co-wait { background: var(--surface-3); color: var(--text-2); }
+.co-muted { color: var(--muted); }
+.co-note { display: block; max-width: 22ch; }
+.co-actions { display: flex; gap: 2px; white-space: nowrap; }
+.co-more { margin: 12px 0 16px; text-align: center; }
+.co-jobs { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 8px; }
+.co-job { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; padding: 12px 14px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); }
+.co-job-main { display: grid; gap: 4px; min-width: 0; flex: 1 1 320px; justify-items: start; }
+.co-job-title { font-weight: 650; overflow-wrap: anywhere; }
+.co-dialog { width: min(460px, calc(100vw - 32px)); padding: 22px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); color: var(--text); box-shadow: var(--shadow-3); }
+.co-dialog::backdrop { background: rgba(12, 26, 40, 0.5); }
+.co-dialog form { display: grid; gap: 12px; }
+.co-dialog h3 { margin: 0; }
+.co-dialog label { display: grid; gap: 5px; font-size: 13px; font-weight: 650; color: var(--text-2); }
+.co-dialog-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+.co-dialog-actions button:first-child { margin-inline-end: auto; }
+@media (max-width: 700px) { .co-progress { grid-template-columns: 1fr auto; } .co-bar { grid-column: 1 / -1; } }

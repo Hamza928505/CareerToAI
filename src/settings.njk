@@ -1,0 +1,249 @@
+---
+layout: base.njk
+pageTitle: Settings - keys, connectors and setup guide
+pageDescription: Connect the AI models, search services, email and MCP connectors the application platform uses, test each one, and follow the setup guide.
+permalink: /settings/
+noindex: true
+pageStyles: /assets/settings.css
+pageScript: /assets/settings.js
+eleventyExcludeFromCollections: true
+---
+
+{#- Everything on this page is built from src/_data/integrations.json: the status rows, the Test buttons and the setup guide.
+    The rows and the guide are plain HTML, so they read without JavaScript and on the published site; settings.js adds the
+    live state when the local editor server answers. -#}
+{% macro rows(groupId) %}
+<ul class="int-list">
+  {%- for item in integrations.items %}{% if item.group == groupId %}
+  <li class="int-row" data-int="{{ item.id }}" data-env="{{ item.env | join(',') }}" data-test="{{ item.test }}"{% if item.connector %} data-connector="{{ item.connector }}"{% endif %}{% if item.preset %} data-preset="{{ item.preset }}"{% endif %}>
+    <span class="int-state" data-state="unknown">Not checked</span>
+    <div class="int-main">
+      <strong>{{ item.name }}</strong>
+      <small>{{ item.why }}</small>
+    </div>
+    <div class="int-actions">
+      <span class="int-result" role="status" aria-live="polite"></span>
+      {%- if item.preset %}<button type="button" class="btn btn--sm" data-mcp-toggle="{{ item.preset }}" data-local-only hidden>Add</button>{% endif %}
+      {%- if item.test != "none" %}<button type="button" class="btn btn--sm" data-test-int="{{ 'mcp:' + item.preset if item.preset else item.id }}" data-local-only hidden{% if item.testNote %} title="{{ item.testNote }}"{% endif %}><i class="fa-solid fa-plug" aria-hidden="true"></i> Test</button>{% endif %}
+      <a class="int-link" href="#guide-{{ item.id }}">How to set up</a>
+      {%- if item.keyUrl %}<a class="int-link" href="{{ item.keyUrl }}" target="_blank" rel="noopener noreferrer">{{ "Open" if not item.env.length else "Get key" }} <span aria-hidden="true">↗</span></a>{% endif %}
+    </div>
+  </li>
+  {%- endif %}{% endfor %}
+</ul>
+{% endmacro %}
+
+<div class="settings-page">
+<h1 class="visually-hidden">Settings</h1>
+
+<div class="notice" id="published-notice" hidden>
+  <p><strong>You're in preview mode.</strong> The setup guide below is complete, but keys can only be saved and tested on your own computer.</p>
+  <p>Run <code>npm run editor</code> and open this page from there.</p>
+</div>
+
+<section class="gb gb-hero st-hero" aria-labelledby="settings-h">
+  <div class="gb-hero-bg" aria-hidden="true"><span class="gb-blob b1"></span><span class="gb-blob b2"></span><span class="gb-blob b3"></span></div>
+  <div class="gb-hero-inner">
+    <p class="gb-eyebrow"><i class="fa-solid fa-lock" aria-hidden="true"></i> Keys stay in <code>.env</code> on this computer. The browser only ever sees their last four characters.</p>
+    <h2 id="settings-h">Settings &amp; <span class="gb-grad-text">integrations</span></h2>
+    <p class="gb-lead">Connect the AI models, search services, email and connectors the platform uses, test each one, and follow the step-by-step guide for anything that is missing.</p>
+    <ul class="gb-stats" aria-label="Integrations at a glance">
+      <li class="gb-stat-tile"><i class="fa-solid fa-circle-check" aria-hidden="true"></i><strong id="st-configured">-</strong><span>set up</span></li>
+      <li class="gb-stat-tile"><i class="fa-solid fa-signal" aria-hidden="true"></i><strong id="st-working">-</strong><span>tested and working</span></li>
+      <li class="gb-stat-tile"><i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i><strong id="st-missing">-</strong><span>not set up</span></li>
+      <li class="gb-stat-tile"><i class="fa-solid fa-microchip" aria-hidden="true"></i><strong id="svc-stat-ai">Not set</strong><span>AI provider</span></li>
+    </ul>
+    <div class="gb-hero-cta">
+      <button type="button" class="gb-btn gb-btn-light" id="test-all" data-local-only hidden><i class="fa-solid fa-plug-circle-check" aria-hidden="true"></i> Test everything that is free to test</button>
+      <a class="gb-btn gb-btn-glass" href="#guide"><i class="fa-solid fa-book-open" aria-hidden="true"></i> Setup guide</a>
+    </div>
+    <p class="gb-hero-note" id="test-all-status" role="status" aria-live="polite"></p>
+  </div>
+</section>
+
+<div class="st-layout">
+  <nav class="st-nav" aria-label="Settings sections">
+    <ul>
+      <li><a href="#overview"><i class="fa-solid fa-gauge" aria-hidden="true"></i> Overview</a></li>
+      {%- for group in integrations.groups %}
+      <li><a href="#{{ group.id }}"><i class="fa-solid {{ group.icon }}" aria-hidden="true"></i> {{ group.label }}</a></li>
+      {%- endfor %}
+      <li><a href="#other-keys"><i class="fa-solid fa-key" aria-hidden="true"></i> Other API keys</a></li>
+      <li><a href="#applying"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i> Applying</a></li>
+      <li><a href="#tools"><i class="fa-solid fa-screwdriver-wrench" aria-hidden="true"></i> Tools &amp; commands</a></li>
+      <li><a href="#guide"><i class="fa-solid fa-book-open" aria-hidden="true"></i> Setup guide</a></li>
+    </ul>
+  </nav>
+
+  <form class="st-main" id="settings-form" autocomplete="off">
+
+    <section class="st-card" id="overview" aria-labelledby="credits-h">
+      <header class="st-head">
+        <div><h2 id="credits-h">Overview</h2><p class="muted" id="credits-note">What is left on each search service, read live with your own keys. Only numbers show here, never the keys.</p></div>
+        <button class="btn" type="button" id="credits-refresh"><i class="fa-solid fa-rotate" aria-hidden="true"></i> Refresh</button>
+      </header>
+      <div id="credits"><ul class="credit-list" id="credit-list"></ul></div>
+    </section>
+
+    {%- for group in integrations.groups %}
+    <section class="st-card" id="{{ group.id }}" aria-labelledby="{{ group.id }}-h">
+      <header class="st-head">
+        <div><h2 id="{{ group.id }}-h"><i class="fa-solid {{ group.icon }}" aria-hidden="true"></i> {{ group.label }}</h2><p class="muted">{{ group.intro }}</p></div>
+      </header>
+      {{ rows(group.id) }}
+
+      {%- if group.id == "ai" %}
+      <h3 class="st-sub">Provider, model and keys</h3>
+      <div id="settings-ai" class="settings-rows"><p class="settings-empty">Run <code>npm run editor</code> to choose a provider and save keys.</p></div>
+      {%- elif group.id == "claude" %}
+      <p class="muted st-note" id="claude-status" role="status" aria-live="polite"></p>
+      {%- elif group.id == "search" %}
+      <h3 class="st-sub">Keys</h3>
+      <div id="settings-search" class="settings-rows"></div>
+      {%- elif group.id == "jobapis" %}
+      <h3 class="st-sub">Keys</h3>
+      <div id="settings-jobapis" class="settings-rows"></div>
+      {%- elif group.id == "email" %}
+      <h3 class="st-sub">Details</h3>
+      <div id="settings-email" class="settings-rows"></div>
+      {%- elif group.id == "mcp" %}
+      <div data-local-only hidden>
+        <h3 class="st-sub">Other servers on this computer</h3>
+        <p class="muted">Servers found in the Antigravity configuration or added below. Only the host or program name is shown, never an address or a key.</p>
+        <ul class="int-list" id="mcp-others"><li class="settings-empty">None.</li></ul>
+        <h3 class="st-sub">Add another remote server</h3>
+        <p class="muted">For a server that is a web address. If it needs a key, save the key under Other API keys first and name it here: the address keeps only the name, the key stays in <code>.env</code>. A server that runs a program on your computer is added by hand in <code>data/mcp-servers.json</code>, so that no web page can ever choose a program to start.</p>
+        <div class="mcp-add" id="mcp-add">
+          <label>Name <input id="mcp-name" type="text" placeholder="my-server" spellcheck="false" autocomplete="off"></label>
+          <label>Address <input id="mcp-url" type="url" placeholder="https://mcp.example.com/mcp" spellcheck="false" autocomplete="off"></label>
+          <label>Key header <span class="optional">optional</span> <input id="mcp-header" type="text" placeholder="Authorization" spellcheck="false" autocomplete="off"></label>
+          <label>Saved key name <span class="optional">optional</span> <input id="mcp-key" type="text" placeholder="MY_SERVICE_API_KEY" spellcheck="false" autocomplete="off"></label>
+          <button type="button" class="btn" id="mcp-add-btn"><i class="fa-solid fa-plus" aria-hidden="true"></i> Add server</button>
+        </div>
+        <p class="st-note" id="mcp-status" role="status" aria-live="polite"></p>
+      </div>
+      {%- endif %}
+    </section>
+    {%- endfor %}
+
+    <section class="st-card" id="other-keys" aria-labelledby="other-keys-h">
+      <header class="st-head"><div><h2 id="other-keys-h"><i class="fa-solid fa-key" aria-hidden="true"></i> Other API keys</h2>
+        <p class="muted">Keys for services this page has no field for. Tools and MCP servers that read <code>${NAME}</code> pick them up.</p></div></header>
+      <div id="settings-custom" class="settings-rows"><p class="settings-empty">No other keys yet.</p></div>
+      <div class="settings-add" data-local-only hidden>
+        <input id="custom-name" type="text" autocomplete="off" spellcheck="false" placeholder="Name, e.g. SERPER_API_KEY" aria-label="Name of the new key">
+        <input id="custom-value" type="password" autocomplete="off" spellcheck="false" placeholder="Paste the key" aria-label="Value of the new key">
+        <button type="button" class="btn" id="custom-add"><i class="fa-solid fa-plus" aria-hidden="true"></i> Add key</button>
+      </div>
+      <small class="settings-help">A name must end in <code>_API_KEY</code>, <code>_KEY</code>, <code>_TOKEN</code> or <code>_SECRET</code>.</small>
+    </section>
+
+    <section class="st-card" id="applying" aria-labelledby="applying-h">
+      <header class="st-head"><div><h2 id="applying-h"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i> Applying</h2>
+        <p class="muted">How the assistant sends an application. Whichever way is used, you see the application first and nothing is submitted without your approval.</p></div></header>
+      <ul class="int-list" id="apply-providers"><li class="settings-empty">Run <code>npm run editor</code> to see which ways are ready.</li></ul>
+      <div id="settings-apply" class="settings-rows"></div>
+    </section>
+
+    <div class="st-savebar" data-local-only hidden>
+      <p id="settings-status" role="status" aria-live="polite">Type a key to add or replace it. Nothing changes until you save.</p>
+      <button class="btn btn--primary" type="submit" id="settings-save"><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> Save changes</button>
+    </div>
+
+    <section class="st-card" id="tools" aria-labelledby="tasks-h">
+      <header class="st-head"><div><h2 id="tasks-h"><i class="fa-solid fa-screwdriver-wrench" aria-hidden="true"></i> Tools &amp; commands</h2>
+        <p class="muted">The steps that rebuild generated files from <code>data/</code>, and the AI commands to run in your assistant. Run a step here, or copy a command.</p></div></header>
+      {%- set tasks = [
+        ["profile", "npm run profile", "Rebuild candidate profile", "Regenerates the candidate profile the job-search commands read, from your profile data."],
+        ["tracker", "npm run tracker", "Rebuild workbook", "Renders job_search_tracker.xlsx from your tracker rows."],
+        ["skills", "npm run skills:harvest", "Harvest advert skills", "Pulls the requirements out of every tracked posting into your skill pool."],
+        ["build", "npm run build", "Rebuild site", "Regenerates the pages so the published profile matches your data."],
+        ["profile:check", "npm run profile:check", "Check candidate profile", "Fails when the generated candidate profile is older than your data."],
+        ["skills:import", "npm run skills:import", "Import ESCO skills", "Imports the standard skills catalogue the editor suggests from."]
+      ] %}
+      {%- set commands = [
+        ["/apply ", "Checks eligibility, scores fit, drafts the Anschreiben and records the row."],
+        ["/rank", "What deserves attention today: overdue follow-ups, the best unsent application."],
+        ["/outcome ", "Records a result and draws the lesson from it."],
+        ["/interview ", "Builds a preparation pack from the posting and what you submitted."],
+        ["/upskill", "The gap between what adverts ask for and your profile, as a learning plan."],
+        ["/scrape", "Searches the installed job-portal tools for matching postings."],
+        ["/gmail-sync", "Brings application status over from Gmail."],
+        ["/html-report", "An HTML dashboard of your application progress."]
+      ] %}
+      <div class="grid task-grid">
+        {%- for task in tasks %}
+        <article class="card task" data-task="{{ task[0] }}">
+          <span class="eyebrow">{{ task[1] }}</span>
+          <h3>{{ task[2] }}</h3>
+          <p>{{ task[3] }}</p>
+          <div class="task-actions">
+            <button class="btn btn--primary" type="button" data-run="{{ task[0] }}"><i class="fa-solid fa-play btn-icon-spacing" aria-hidden="true"></i>Run</button>
+            <button class="btn" type="button" data-copy="{{ task[1] }}"><i class="fa-regular fa-copy btn-icon-spacing" aria-hidden="true"></i>Copy</button>
+          </div>
+        </article>
+        {%- endfor %}
+        {%- for command in commands %}
+        <article class="card task" data-task="{{ command[0] | trim }}">
+          <span class="eyebrow">AI command</span>
+          <h3>{{ command[0] | trim }}</h3>
+          <p>{{ command[1] }}</p>
+          <div class="task-actions">
+            <button class="btn" type="button" data-copy="{{ command[0] }}"><i class="fa-regular fa-copy btn-icon-spacing" aria-hidden="true"></i>Copy</button>
+          </div>
+        </article>
+        {%- endfor %}
+      </div>
+      <div class="log-wrap" id="log-wrap" hidden>
+        <div class="log-head"><span class="eyebrow" id="log-title">Output</span>
+          <button class="btn" type="button" id="log-close"><i class="fa-solid fa-xmark btn-icon-spacing" aria-hidden="true"></i>Close</button></div>
+        <pre class="log" id="log" tabindex="0" aria-live="polite" aria-atomic="false"></pre>
+      </div>
+    </section>
+
+    <section class="st-card st-guide" id="guide" aria-labelledby="guide-h">
+      <header class="st-head"><div><h2 id="guide-h"><i class="fa-solid fa-book-open" aria-hidden="true"></i> Setup guide</h2>
+        <p class="muted">Each entry answers the same seven questions: what it is, why the platform needs it, where to get it, how to set it up, how it connects, how to check that it works, and what usually goes wrong. You do not need all of them. A good start is one AI provider and the Claude connectors.</p></div></header>
+      <details class="guide-basics">
+        <summary>New to keys and connectors? Read this first</summary>
+        <dl>
+          <dt>What is an API key?</dt>
+          <dd>A long password that lets this program use a service in your name. You create it on the service's website and paste it here once. Anyone who has it can spend your allowance, so never post it or send it to anyone.</dd>
+          <dt>Where do keys go?</dt>
+          <dd>Into a file called <code>.env</code> in this project's folder on your computer. This page writes it for you. The file is never uploaded to GitHub and never sent to your browser.</dd>
+          <dt>What is a connector?</dt>
+          <dd>A link between your Claude account and another service, such as Indeed or Gmail. You switch it on inside Claude, under Settings, then Connectors. There is no key: you sign in to the other service once.</dd>
+          <dt>What is an MCP server?</dt>
+          <dd>MCP (Model Context Protocol) is a standard way to give an AI program extra tools. An MCP server is either a web address or a small program on your computer that offers those tools, for example a web search or a browser.</dd>
+          <dt>What does Test do?</dt>
+          <dd>It makes the smallest real request that proves the connection works, and tells you in a sentence what happened. Where a test would use up part of a small allowance, the button says so.</dd>
+        </dl>
+      </details>
+      {%- for group in integrations.groups %}
+      <h3 class="st-sub">{{ group.label }}</h3>
+      {%- for item in integrations.items %}{% if item.group == group.id %}
+      <details class="guide-item" id="guide-{{ item.id }}">
+        <summary><strong>{{ item.name }}</strong><span>{{ item.what }}</span></summary>
+        <ol class="guide-steps">
+          <li><h4>What it does</h4><p>{{ item.what }}</p></li>
+          <li><h4>Why the platform needs it</h4><p>{{ item.why }}</p></li>
+          <li><h4>Where to get it</h4><ul>{% for step in item.get %}<li>{{ step }}</li>{% endfor %}</ul>
+            {%- if item.keyUrl %}<p><a href="{{ item.keyUrl }}" target="_blank" rel="noopener noreferrer">Open the page <span aria-hidden="true">↗</span></a></p>{% endif %}</li>
+          <li><h4>How to set it up</h4><ul>{% for step in item.configure %}<li>{{ step }}</li>{% endfor %}</ul>
+            {%- if item.env.length %}<p class="muted">Saved in <code>.env</code> as {% for name in item.env %}<code>{{ name }}</code>{% if not loop.last %}, {% endif %}{% endfor %}.</p>{% endif %}</li>
+          <li><h4>How it connects to the platform</h4><p>{{ item.connect }}</p></li>
+          <li><h4>How to check that it works</h4><p>{{ item.verify }}</p>{% if item.testNote %}<p class="muted">{{ item.testNote }}</p>{% endif %}</li>
+          <li><h4>Common problems</h4><dl>{% for problem in item.problems %}<dt>{{ problem[0] }}</dt><dd>{{ problem[1] }}</dd>{% endfor %}</dl></li>
+        </ol>
+        {%- if item.docsUrl %}<p class="guide-docs"><a href="{{ item.docsUrl }}" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-book" aria-hidden="true"></i> Official documentation <span aria-hidden="true">↗</span></a></p>{% endif %}
+      </details>
+      {%- endif %}{% endfor %}
+      {%- endfor %}
+    </section>
+  </form>
+</div>
+</div>
+
+<script src="{{ '/assets/thinking-orbs.js' | url }}"></script>
+<script src="{{ '/assets/ai-status.js' | url }}"></script>
+<script src="{{ '/assets/opencharts/lib/chart.umd.min.js' | url }}"></script>

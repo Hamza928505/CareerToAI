@@ -74,17 +74,19 @@ test("the headless run gets only ToolSearch and the Indeed tools, and never an A
   try {
     let seen;
     const fake = (file, args, options, done) => ({ stdin: { end: (input) => { seen = { file, args, options, input }; done(null, "events", ""); } } });
-    assert.equal(await runClaude("PROMPT", { cwd: "C:/Internships", execFileImpl: fake }), "events");
+    assert.equal(await runClaude("PROMPT", { cwd: "C:/Internships", execFileImpl: fake, wait: 0 }), "events");
     const flag = (name) => seen.args[seen.args.indexOf(name) + 1];
     assert.equal(seen.file, "claude");
-    assert.equal(seen.input, "PROMPT");
+    // The prompt goes in as one stream-json message, sent after the connectors have had time to connect.
+    assert.equal(flag("--input-format"), "stream-json");
+    assert.deepEqual(JSON.parse(seen.input), { type: "user", message: { role: "user", content: "PROMPT" } });
     assert.equal(seen.options.cwd, "C:/Internships");
     assert.equal(flag("--tools"), "ToolSearch");
     assert.equal(flag("--allowedTools"), "ToolSearch,mcp__claude_ai_Indeed__search_jobs,mcp__claude_ai_Indeed__get_job_details");
     assert.equal(flag("--permission-mode"), "dontAsk");
     assert.equal(seen.options.env.ANTHROPIC_API_KEY, undefined);
     const missing = (file, args, options, done) => ({ stdin: { end: () => done(Object.assign(new Error("spawn claude ENOENT"), { code: "ENOENT" }), "", "") } });
-    await assert.rejects(runClaude("PROMPT", { execFileImpl: missing }), /Claude Code is not installed/);
+    await assert.rejects(runClaude("PROMPT", { execFileImpl: missing, wait: 0 }), /Claude Code is not installed/);
   } finally {
     if (saved === undefined) delete process.env.ANTHROPIC_API_KEY; else process.env.ANTHROPIC_API_KEY = saved;
   }

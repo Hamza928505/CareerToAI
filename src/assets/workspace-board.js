@@ -213,7 +213,7 @@ function facetCounts(postings, f, dim) {
  * statusField(row) -> the tracker's Status select for that row; info(row) opens every field of the row;
  * onFiltered(rows, reset) gets the filtered rows after every change, for the spreadsheet views.
  */
-export function createBoard({ Swal, dialog, rules, statusField, info, onFiltered }) {
+export function createBoard({ Swal, dialog, rules, statusField, info, onFiltered, onPick }) {
   const state = { all: [], byId: new Map(), f: defaultFilters(), sort: "new", view: "table", filtered: [], shown: 0, selected: new Set(), body: null, cityNames: {}, loaded: false };
   const combos = {};
   const view = $("tracker-column-view");
@@ -600,7 +600,15 @@ export function createBoard({ Swal, dialog, rules, statusField, info, onFiltered
     b.type = "button"; b.dataset.action = "info"; b.title = "All information";
     b.setAttribute("aria-label", `All information: ${p.title}, ${p.company || "company not stated"}`);
     b.append(icon("fa-circle-info"));
-    return b;
+    // From a posting straight to its tailored CV and cover letter: the CVs & CLs page reads ?job=.
+    const docs = el("a", "gb-row-info gb-row-docs");
+    docs.href = new URL(`../documents/?job=${encodeURIComponent(p.id)}`, location.href).href;
+    docs.title = "Write the CV and cover letter for this posting";
+    docs.setAttribute("aria-label", `Write the CV and cover letter for ${p.title}, ${p.company || "company not stated"}`);
+    docs.append(icon("fa-file-signature"));
+    const box = el("span", "gb-row-acts");
+    box.append(docs, b);
+    return box;
   }
   function pick(p) {
     const box = el("input", "gb-check");
@@ -728,6 +736,7 @@ export function createBoard({ Swal, dialog, rules, statusField, info, onFiltered
     all.indeterminate = inView > 0 && inView < state.filtered.length;
     $("board-ticked").hidden = state.selected.size === 0;
     $("board-ticked").textContent = String(state.selected.size);
+    onPick?.(state.selected.size);
   }
 
   // ---------------------------------------------------------- downloads
@@ -852,5 +861,8 @@ export function createBoard({ Swal, dialog, rules, statusField, info, onFiltered
       refresh(false);
     },
     clear: clearAll,
+    /** The tracker rows of the ticked postings (the CVs & CLs page takes them to its workbench). */
+    ticked: () => state.all.filter((p) => state.selected.has(p.id)).map((p) => p.row),
+    unpick: () => [...state.selected].forEach((id) => setPicked(id, false)),
   };
 }

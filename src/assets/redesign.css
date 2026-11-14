@@ -35,22 +35,29 @@ main section[id], main section[aria-labelledby], article[id] { scroll-margin-top
 }
 .wordmark { gap: 0; }
 .wordmark span { color: var(--text-hope-strong); }
-.site-header nav { margin-left: auto; }
-.site-header nav ul { gap: clamp(.3rem, 1.5vw, 1.7rem); flex-wrap: nowrap; }
+.site-header nav { margin-left: auto; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+.site-header nav::-webkit-scrollbar { display: none; }
+.site-header nav ul { gap: clamp(.2rem, 1.1vw, 1.3rem); flex-wrap: nowrap; }
 .site-header nav a {
   min-height: 70px;
   padding: 0 .35rem;
   border-radius: 0;
-  font-size: .91rem;
+  font-size: .9rem;
   white-space: nowrap;
+  gap: .45rem;
   border-bottom: 2px solid transparent;
 }
+.site-header nav a i { font-size: .82rem; opacity: .75; }
 .site-header nav a:hover { background: none; color: var(--text-primary); }
 .site-header a[aria-current="page"] {
   background: none;
   color: var(--text-primary);
   border-bottom-color: var(--color-hope);
 }
+.site-header a[aria-current="page"] i { opacity: 1; color: var(--text-hope-strong); }
+.site-header .theme-toggle { flex: none; }
+/* Seven links do not fit beside the wordmark on a laptop-width window: the icons go first, the row scrolls after that. */
+@media (max-width: 1080px) { .site-header nav a i { display: none; } .site-header .bar { gap: 1.2rem; } }
 .theme-toggle { border: 0; background: none; border-radius: 50%; }
 .theme-toggle:hover { background: var(--bg-subtle); border: 0; }
 
@@ -230,12 +237,13 @@ a { text-underline-offset: .22em; }
   .stat-grid { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 680px) {
-  .site-header .bar { flex-wrap: wrap; gap: .1rem 1rem; padding-top: .7rem; }
-  .site-header nav { width: 100%; order: 2; margin: 0; }
-  .site-header nav ul { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); width: 100%; gap: 0; }
-  .site-header nav a { min-height: 52px; justify-content: center; text-align: center; white-space: normal; line-height: 1.15; padding: .25rem; font-size: .78rem; }
-  .site-header nav li:last-child { position: absolute; right: 1rem; top: .65rem; }
-  .site-header nav li:last-child .theme-toggle { width: 36px; height: 36px; }
+  .site-header .bar { flex-wrap: wrap; gap: 0 1rem; padding-top: .5rem; }
+  .site-header .wordmark { margin-right: auto; }
+  .site-header .theme-toggle { width: 36px; height: 36px; }
+  .site-header nav { width: 100%; order: 3; margin: 0; }
+  .site-header nav ul { gap: 1.1rem; }
+  .site-header nav a { min-height: 46px; font-size: .86rem; }
+  .site-header nav a i { display: inline-block; }
   .shell { padding-top: 2rem; }
   .profile-hero h1 { font-size: clamp(3.7rem, 14vw, 5.2rem); }
   .profile-about, .profile > section:not(.profile-projects):not(.profile-about) { display: block; }

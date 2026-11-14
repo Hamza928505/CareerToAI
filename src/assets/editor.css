@@ -712,3 +712,54 @@
 /* Skills radar */
 .skills-radar { min-height: 120px; max-width: 640px; margin: 0 auto 1rem; }
 .radar-notes p { margin: .3rem 0; }
+
+/* ------------------------------------------------------------ Import from documents */
+.editor [data-documents][hidden] { display: none; }
+.doc-list { display: grid; gap: .5rem; margin-top: var(--s3); }
+.doc-row { display: grid; grid-template-columns: 9.5rem minmax(0, 1fr) auto; align-items: center; gap: .5rem 1rem; padding: .7rem .9rem; border: 1px solid var(--border-default); border-radius: 10px; background: var(--bg-surface); }
+.doc-state { justify-self: start; padding: .2rem .6rem; border-radius: var(--radius-full); font-size: .72rem; font-weight: 650; white-space: nowrap; background: var(--bg-muted); color: var(--text-secondary); }
+.doc-state[data-state="analysed"] { background: var(--warning-light); color: var(--warning-text); }
+.doc-state[data-state="approved"] { background: var(--success-light); color: var(--success-text); }
+.doc-info { display: grid; gap: .15rem; min-width: 0; }
+.doc-info strong { overflow-wrap: anywhere; }
+.doc-info small { color: var(--text-secondary); }
+.doc-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .4rem; }
+@media (max-width: 760px) { .doc-row { grid-template-columns: 1fr; } .doc-actions { justify-content: flex-start; } }
+.entry-verified { margin-left: .6rem; padding: .15rem .55rem; border-radius: var(--radius-full); background: var(--success-light); color: var(--success-text); font: 650 .7rem/1.4 var(--font-body); white-space: nowrap; vertical-align: middle; }
+
+/* The review dialog: every value carries where it comes from. */
+.review-swal .swal2-html-container { text-align: left; max-height: 70vh; overflow-y: auto; }
+.review { display: grid; gap: var(--s3); font-size: .92rem; }
+.review p { margin: 0; max-width: none; }
+.review-warning { padding: .6rem .8rem; border-radius: 8px; background: var(--warning-light); color: var(--warning-text); }
+.origin { display: inline-block; padding: .1rem .5rem; border-radius: var(--radius-full); font: 650 .7rem/1.5 var(--font-body); white-space: nowrap; }
+.origin-document { background: var(--success-light); color: var(--success-text); }
+.origin-research { background: var(--info-light); color: var(--info-text); }
+.origin-suggestion { background: var(--warning-light); color: var(--warning-text); }
+.origin-check { background: var(--error-light); color: var(--error-text); }
+.origin-key { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: .4rem 1.2rem; font-size: .8rem; color: var(--text-secondary); }
+.proposal { display: grid; gap: .6rem; padding: .9rem 1rem; border: 1px solid var(--border-default); border-radius: 10px; background: var(--bg-main); }
+.proposal-head { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; font-size: 1rem; cursor: pointer; }
+.proposal-head input { width: 1.1rem; height: 1.1rem; }
+.proposal-kind { padding: .1rem .5rem; border-radius: 6px; background: var(--bg-muted); color: var(--text-secondary); font-size: .72rem; font-weight: 650; text-transform: uppercase; letter-spacing: .04em; }
+.proposal-facts { margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: .3rem 1.2rem; }
+.proposal-facts dt { color: var(--text-secondary); font-size: .76rem; }
+.proposal-facts dd { margin: 0; overflow-wrap: anywhere; }
+.proposal-descriptions { display: grid; gap: .4rem; }
+.proposal-description { display: grid; grid-template-columns: auto 1fr; gap: .5rem; align-items: start; font-weight: 400; cursor: pointer; }
+.proposal-sources { color: var(--text-secondary); font-size: .82rem; }
+.skill-picks { display: flex; flex-wrap: wrap; gap: .35rem; margin-top: .3rem; }
+.skill-pick { display: inline-flex; align-items: center; gap: .3rem; padding: .2rem .55rem; border: 1px solid var(--border-default); border-radius: var(--radius-full); font-size: .8rem; font-weight: 500; cursor: pointer; }
+.skill-pick.origin-document { background: var(--success-light); color: var(--success-text); border-color: transparent; }
+.skill-pick.origin-research { background: var(--info-light); color: var(--info-text); border-color: transparent; }
+.skill-pick.origin-suggestion { background: var(--warning-light); color: var(--warning-text); border-color: transparent; }
+.proposal-quotes blockquote { margin: .3rem 0 0; padding: .3rem .7rem; border-left: 3px solid var(--border-strong); color: var(--text-secondary); font-size: .85rem; }
+
+/* A fieldset is as wide as its widest content unless told otherwise, which pushed the form past a phone's edge. */
+.editor-form fieldset { min-width: 0; }
+.editor-form input, .editor-form textarea, .editor-form select { max-width: 100%; }
+/* Grid tracks are as wide as their widest content unless given a zero minimum: a long entry title pushed the list past a phone's edge. */
+.entry-editor-list { grid-template-columns: minmax(0, 1fr); }
+.entry-editor, .entry-editor-head h3 { min-width: 0; }
+.entry-editor-head h3 .entry-toggle { max-width: 100%; text-align: left; overflow-wrap: anywhere; }
+@media (max-width: 38rem) { .grid-2, .field-grid { grid-template-columns: minmax(0, 1fr); } }

@@ -119,3 +119,8 @@ test("the editor server's search no longer searches or opens job sites itself", 
   assert.doesNotMatch(server, /searchPlatforms/);
   assert.match(server, /searchWithEngine\(/);
 });
+
+test("requestsFor maps chosen board names to JobSearchEngine source IDs", () => {
+  const requests = requestsFor({ keywords: ["Informatik"], days: 7, sources: ["Arbeitnow", "Remote OK"] });
+  assert.deepEqual(requests[0].sources, ["arbeitnow", "remoteok"]);
+});

@@ -1,0 +1,71 @@
+/* Settings page. It wears the workspace's service cards, key rows and task cards (workspace.css) and adds its own
+   layout: a side list of sections, one card per section, status rows (int-) and the setup guide (guide-). */
+@import url("./workspace.css");
+
+.settings-page [hidden] { display: none !important; }
+.st-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s5); margin-top: var(--s5); }
+.st-nav ul { list-style: none; margin: 0; padding: 0; display: flex; gap: .35rem; overflow-x: auto; scrollbar-width: thin; }
+.st-nav a { display: flex; align-items: center; gap: .55rem; padding: .55rem .8rem; border-radius: 8px; color: var(--text-secondary); text-decoration: none; font-size: .88rem; font-weight: 500; white-space: nowrap; }
+.st-nav a:hover { background: var(--bg-subtle); color: var(--text-primary); }
+.st-nav a i { width: 1.1rem; text-align: center; opacity: .8; }
+@media (min-width: 62rem) {
+  .st-layout { grid-template-columns: 14.5rem minmax(0, 1fr); align-items: start; }
+  .st-nav { position: sticky; top: 5.5rem; }
+  .st-nav ul { flex-direction: column; overflow: visible; }
+}
+.st-main { display: grid; gap: var(--s5); min-width: 0; }
+.st-card { padding: var(--s5); background: var(--bg-surface); border: 1px solid var(--border-default); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); scroll-margin-top: 6rem; min-width: 0; }
+.st-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: var(--s3); margin-bottom: var(--s4); }
+.st-head h2 { margin: 0; font: 650 1.2rem/1.3 var(--font-body); letter-spacing: 0; }
+.st-head h2 i { color: var(--text-hope-strong); margin-right: .35rem; font-size: 1rem; }
+.st-head p { margin: .3rem 0 0; max-width: 78ch; font-size: .9rem; }
+.st-sub { margin: var(--s5) 0 var(--s2); font-size: .95rem; }
+.st-note { margin: var(--s3) 0 0; font-size: .88rem; max-width: none; }
+.st-hero .gb-eyebrow code { background: rgba(255, 255, 255, .18); color: inherit; }
+
+/* One row per integration: its state, what it is for, and what you can do with it. */
+.int-list { list-style: none; margin: 0; padding: 0; display: grid; gap: .5rem; }
+.int-row { display: grid; grid-template-columns: 7.2rem minmax(0, 1fr) auto; align-items: center; gap: .5rem 1rem; padding: .75rem .9rem; border: 1px solid var(--border-default); border-radius: 10px; background: var(--bg-main); }
+.int-state { justify-self: start; padding: .2rem .6rem; border-radius: var(--radius-full); font-size: .72rem; font-weight: 650; white-space: nowrap; background: var(--bg-muted); color: var(--text-secondary); }
+.int-state[data-state="ok"] { background: var(--success-light); color: var(--success-text); }
+.int-state[data-state="part"] { background: var(--warning-light); color: var(--warning-text); }
+.int-state[data-state="missing"] { background: var(--error-light); color: var(--error-text); }
+.int-main { display: grid; gap: .15rem; min-width: 0; }
+.int-main small { color: var(--text-secondary); font-size: .82rem; }
+.int-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: .4rem .8rem; max-width: 26rem; }
+.int-actions .btn { min-height: 34px; padding: .25rem .7rem; font-size: .8rem; }
+.int-link { font-size: .82rem; white-space: nowrap; }
+.int-result { flex-basis: 100%; text-align: right; font-size: .8rem; color: var(--text-secondary); overflow-wrap: anywhere; }
+.int-result:empty { display: none; }
+.int-result[data-state="ok"] { color: var(--success-text); }
+.int-result[data-state="error"] { color: var(--error-text); }
+@media (max-width: 760px) {
+  .int-row { grid-template-columns: 1fr; }
+  .int-actions { justify-content: flex-start; max-width: none; }
+  .int-result { text-align: left; }
+}
+
+.mcp-add { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: .6rem; align-items: end; }
+.mcp-add label { display: grid; gap: .25rem; font-size: .82rem; font-weight: 600; }
+.mcp-add input { min-height: 40px; min-width: 0; padding: .5rem .7rem; border: 1px solid var(--border-control); border-radius: 8px; background: var(--bg-surface); color: var(--text-primary); font: inherit; }
+.mcp-add .optional { font-weight: 400; color: var(--text-secondary); }
+
+/* Save stays in reach while you scroll through the key fields. */
+.st-savebar { position: sticky; bottom: .75rem; z-index: 5; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s3); padding: .7rem 1rem; border: 1px solid var(--border-strong); border-radius: 12px; background: var(--bg-surface); box-shadow: var(--shadow-lg); }
+.st-savebar p { margin: 0; font-size: .88rem; color: var(--text-secondary); max-width: none; }
+.st-savebar p[data-state="error"] { color: var(--error-text); }
+
+.st-card .task-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: var(--s3); margin-top: 0; }
+
+/* Setup guide */
+.guide-basics, .guide-item { border: 1px solid var(--border-default); border-radius: 10px; padding: .7rem 1rem; margin-bottom: .5rem; background: var(--bg-main); scroll-margin-top: 6rem; }
+.guide-basics > summary, .guide-item > summary { cursor: pointer; display: flex; flex-wrap: wrap; gap: .2rem .8rem; align-items: baseline; font-weight: 600; }
+.guide-item > summary span { color: var(--text-secondary); font-size: .86rem; font-weight: 400; }
+.guide-item:target { border-color: var(--color-hope); box-shadow: var(--shadow-hope); }
+.guide-steps { margin: var(--s4) 0 0; padding-left: 1.3rem; display: grid; gap: var(--s3); }
+.guide-steps h4 { margin: 0 0 .2rem; font-size: .92rem; }
+.guide-steps p, .guide-steps ul, .guide-steps dl { margin: 0 0 .3rem; font-size: .9rem; max-width: 80ch; }
+.guide-steps ul { padding-left: 1.1rem; }
+.guide-steps dt, .guide-basics dt { font-weight: 650; margin-top: .5rem; }
+.guide-steps dd, .guide-basics dd { margin: 0 0 .3rem; color: var(--text-secondary); max-width: 80ch; }
+.guide-docs { margin: var(--s3) 0 0; font-size: .9rem; }

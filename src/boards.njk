@@ -85,6 +85,15 @@ Follow https://hamza928505.github.io/GJUYearKit/.claude/skills/gju-internships/S
         <p class="result-count" id="boards-count" role="status" aria-live="polite">43 of 43 shown</p>
       </div>
     </div>
+    <p class="result-count board-legend">Each board says how the platform can search it: through a <b>Claude connector</b>, the <b>NVIDIA NIM search</b>, a <b>free API</b>, or only by opening it yourself. <span id="boards-scan-note"></span></p>
+    <div class="panel board-manage" id="boards-manage" hidden>
+      <div class="filter-grid">
+        <div class="field s4"><label class="field-label" for="board-name"><i class="fa-solid fa-tag" aria-hidden="true"></i>Add a board: name</label><input id="board-name" class="control" type="text" autocomplete="off" placeholder="e.g. Karriereportal meiner Stadt"></div>
+        <div class="field s4"><label class="field-label" for="board-url"><i class="fa-solid fa-link" aria-hidden="true"></i>Web address</label><input id="board-url" class="control" type="url" autocomplete="off" placeholder="https://"></div>
+        <div class="field s2 co-go"><button type="button" class="btn" id="board-add"><i class="fa-solid fa-plus" aria-hidden="true"></i>Add board</button></div>
+      </div>
+      <p class="result-count" id="board-add-status" role="status" aria-live="polite"></p>
+    </div>
     <div class="board-grid">
       <a class="card-item board-link" data-search-item href="https://www.meinpraktikum.de/" target="_blank" rel="noopener noreferrer"><span class="chip-icon soft board-logo"><img src="{{ ('/assets/boards/meinpraktikum.de.png') | url }}" alt="" width="24" height="24" loading="lazy"></span><span class="who"><span class="title">meinpraktikum</span><span class="sub">https://www.meinpraktikum.de/</span></span><i class="fa-solid fa-arrow-up-right-from-square out" aria-hidden="true"></i></a>
       <a class="card-item board-link" data-search-item href="https://www.praktikumsstellen.de/" target="_blank" rel="noopener noreferrer"><span class="chip-icon soft board-logo"><img src="{{ ('/assets/boards/praktikumsstellen.de.png') | url }}" alt="" width="24" height="24" loading="lazy"></span><span class="who"><span class="title">praktikumsstellen</span><span class="sub">https://www.praktikumsstellen.de/</span></span><i class="fa-solid fa-arrow-up-right-from-square out" aria-hidden="true"></i></a>
@@ -111,6 +120,103 @@ Follow https://hamza928505.github.io/GJUYearKit/.claude/skills/gju-internships/S
     </div>
   </section>
 
+  <section id="companies" aria-labelledby="companies-title">
+    <div class="toolbar reveal">
+      <div class="toolbar-title">
+        <span class="chip-icon"><i class="fa-solid fa-building" aria-hidden="true"></i></span>
+        <div><h2 id="companies-title">Company directory</h2><p class="result-count" id="companies-count">Companies in Germany, their careers pages and the platforms behind them.</p></div>
+      </div>
+    </div>
+    <p class="co-lead">Many internships are only ever advertised on the company's own website. This directory starts from the companies: it finds who operates in Germany, checks each official website, finds the careers page on it and the recruitment platform behind it, and then searches the vacancies there.</p>
+    <p class="notice" id="companies-offline" hidden><i class="fa-solid fa-circle-info" aria-hidden="true"></i> The company directory is built and kept on your own computer. Run <code>npm run editor</code> and open this page from there.</p>
+
+    <div id="companies-app" hidden>
+      <div class="panel co-panel">
+        <h3><span class="co-step">1</span> Find companies</h3>
+        <div class="filter-grid">
+          <div class="field s4"><label class="field-label" for="co-source"><i class="fa-solid fa-compass" aria-hidden="true"></i>Where to look</label><select id="co-source" class="control"></select></div>
+          <div class="field s2" data-for-source="wikidata"><label class="field-label" for="co-min"><i class="fa-solid fa-users" aria-hidden="true"></i>At least (employees)</label><input id="co-min" class="control" type="number" inputmode="numeric" value="250" min="0" step="50"></div>
+          <div class="field s2" data-for-source="wikidata"><label class="field-label" for="co-city"><i class="fa-solid fa-location-dot" aria-hidden="true"></i>Head office in</label><input id="co-city" class="control" type="text" placeholder="Any city, e.g. München" autocomplete="off"></div>
+          <div class="field s2" data-for-source="wikidata"><label class="field-label" for="co-limit"><i class="fa-solid fa-list-ol" aria-hidden="true"></i>How many</label><input id="co-limit" class="control" type="number" inputmode="numeric" value="100" min="10" max="300" step="10"></div>
+          <div class="field s4" data-for-source="manual"><label class="field-label" for="co-name"><i class="fa-solid fa-building" aria-hidden="true"></i>Company name</label><input id="co-name" class="control" type="text" autocomplete="off"></div>
+          <div class="field s4" data-for-source="manual"><label class="field-label" for="co-website"><i class="fa-solid fa-link" aria-hidden="true"></i>Website <span class="opt">optional</span></label><input id="co-website" class="control" type="url" placeholder="https://" autocomplete="off"></div>
+          <div class="field s2 co-go"><button type="button" class="btn btn-primary" id="co-discover"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>Find companies</button></div>
+        </div>
+        <label class="co-check" data-for-source="wikidata"><input type="checkbox" id="co-continue" checked> Continue after the companies Wikidata already gave (largest first)</label>
+        <p class="result-count" id="co-discover-status" role="status" aria-live="polite"></p>
+        <p class="result-count" id="co-lookup-note" hidden>A company that comes without a website is looked up by name with Exa. Add an Exa key in Settings to switch that on.</p>
+      </div>
+
+      <div class="panel co-panel">
+        <h3><span class="co-step">2</span> Filter the directory</h3>
+        <div class="filter-grid">
+          <div class="field s4"><label class="field-label" for="co-q"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>Search</label><input id="co-q" class="control" type="search" placeholder="Company, industry or place" autocomplete="off"></div>
+          <div class="field s2"><label class="field-label" for="co-industry"><i class="fa-solid fa-industry" aria-hidden="true"></i>Industry</label><select id="co-industry" class="control"></select></div>
+          <div class="field s2"><label class="field-label" for="co-city-filter"><i class="fa-solid fa-location-dot" aria-hidden="true"></i>Place</label><input id="co-city-filter" class="control" type="text" placeholder="Any" autocomplete="off"></div>
+          <div class="field s2"><label class="field-label" for="co-size"><i class="fa-solid fa-users" aria-hidden="true"></i>Employees</label><select id="co-size" class="control"></select></div>
+          <div class="field s2"><label class="field-label" for="co-platform"><i class="fa-solid fa-server" aria-hidden="true"></i>Platform</label><select id="co-platform" class="control"></select></div>
+          <div class="field s4"><label class="field-label" for="co-status"><i class="fa-solid fa-list-check" aria-hidden="true"></i>State</label>
+            <select id="co-status" class="control"><option value="">Any state</option><option value="todo">Not checked yet</option><option value="careers">Careers page found</option><option value="api">Searchable through its platform</option><option value="problem">Broken, blocked or no careers page</option></select></div>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <p class="result-count" id="co-shown" role="status" aria-live="polite"></p>
+        <div class="toolbar-tools">
+          <button type="button" class="btn btn-sm" id="co-verify" title="For each company shown: check the website answers, find its careers page and the recruitment platform. About 8 seconds a company."><i class="fa-solid fa-rotate" aria-hidden="true"></i>Check websites &amp; careers pages</button>
+          <button type="button" class="btn btn-sm btn-primary" id="co-jobs"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>Search vacancies</button>
+          <button type="button" class="btn btn-sm btn-ghost" id="co-remove"><i class="fa-solid fa-trash-can" aria-hidden="true"></i>Remove shown</button>
+        </div>
+      </div>
+      <div class="co-progress" id="co-progress" hidden>
+        <div class="co-bar" aria-hidden="true"><span id="co-bar-fill"></span></div>
+        <p class="result-count" id="co-progress-text" role="status" aria-live="polite"></p>
+        <button type="button" class="btn btn-sm" id="co-stop">Stop</button>
+      </div>
+
+      <p class="dropzone" id="co-empty">No companies yet. Choose where to look above and press <b>Find companies</b>. The employers in your ATS manuals and in your tracker are a quick start; Wikidata adds companies with their head office in Germany, largest first.</p>
+      <div class="co-table-wrap" id="co-table-wrap" tabindex="0" role="region" aria-label="Company directory. Scroll sideways to see every column." hidden>
+        <table class="co-table">
+          <thead><tr><th scope="col">Company</th><th scope="col">Industry</th><th scope="col">Employees</th><th scope="col">Head office</th><th scope="col">Website</th><th scope="col">Careers page</th><th scope="col">Platform</th><th scope="col">How to apply</th><th scope="col">Checked</th><th scope="col"><span class="sr">Actions</span></th></tr></thead>
+          <tbody id="co-body"></tbody>
+        </table>
+      </div>
+      <p class="co-more"><button type="button" class="btn btn-sm" id="co-more" hidden>Show more</button></p>
+
+      <div class="panel co-panel">
+        <h3><span class="co-step">3</span> Search their vacancies</h3>
+        <div class="filter-grid">
+          <div class="field s4"><label class="field-label" for="co-words"><i class="fa-solid fa-font" aria-hidden="true"></i>Title words <span class="opt">optional</span></label><input id="co-words" class="control" type="text" placeholder="e.g. Software, Data, Informatik" autocomplete="off"></div>
+          <div class="field s4 co-checks"><label class="co-check"><input type="checkbox" id="co-interns" checked> Internships and student roles only</label><label class="co-check"><input type="checkbox" id="co-germany" checked> In Germany only</label></div>
+        </div>
+        <p class="result-count">Press <b>Search vacancies</b> above for the companies shown, or <b>Vacancies</b> on one row. A company whose platform has a job-board API is asked directly and its postings come with their dates. For the others, links on the careers page that name an internship are listed for you to open.</p>
+        <div id="co-results" hidden>
+          <p class="result-count" id="co-results-note" role="status" aria-live="polite"></p>
+          <ul class="co-jobs" id="co-results-list"></ul>
+        </div>
+      </div>
+    </div>
+
+    <dialog id="co-edit" class="co-dialog">
+      <form method="dialog">
+        <h3>Edit company</h3>
+        <label>Name <input name="name" class="control" required></label>
+        <label>Industry <input name="industry" class="control"></label>
+        <label>Head office <input name="hq" class="control"></label>
+        <label>Employees <input name="employees" class="control" inputmode="numeric"></label>
+        <label>Website <input name="website" class="control" type="url" placeholder="https://"></label>
+        <label>Careers page <input name="careersUrl" class="control" type="url" placeholder="https://"></label>
+        <p class="result-count">A changed address is marked as not checked until you press Check on its row.</p>
+        <p class="result-count" id="co-edit-status" role="status"></p>
+        <div class="co-dialog-actions">
+          <button class="btn btn-sm btn-ghost" value="remove">Remove company</button>
+          <button class="btn btn-sm" value="cancel" formnovalidate>Cancel</button>
+          <button class="btn btn-sm btn-primary" value="save">Save</button>
+        </div>
+      </form>
+    </dialog>
+  </section>
+
   <section id="feeds" aria-labelledby="feeds-title">
     <div class="section-head reveal">
       <span class="chip-icon"><i class="fa-solid fa-rss" aria-hidden="true"></i></span>
@@ -120,4 +226,5 @@ Follow https://hamza928505.github.io/GJUYearKit/.claude/skills/gju-internships/S
       <header class="chart-head"><span class="chip-icon"><i class="fa-solid fa-circle-info" aria-hidden="true"></i></span><div><h3 id="rss-what-title">These are RSS feeds, not websites</h3><p>What they are and how to use them</p></div>
 </div>
 <div class="menu" id="menu" role="menu" aria-label="Actions" hidden></div>
+<script type="application/json" id="search-sources">{{ searchSources | dump | safe }}</script>
 <script src="{{ '/assets/board-logic.js' | url }}"></script>

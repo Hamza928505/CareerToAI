@@ -23,6 +23,17 @@ data/tracker.csv
 # the committed candidate profile must not carry.
 data/profile-private.json
 
+# The student's whole profile stays on this computer. A checkout without these files
+# (the GitHub Pages build, a fresh clone) reads data/<name>.example.json, which holds
+# placeholders only (readable() in lib/content.mjs). The candidate profile is generated
+# from them by `npm run profile`, so it is the student's data too.
+data/profile.json
+data/experience.json
+data/projects.json
+data/certificates.json
+data/profile-extras.json
+.claude/skills/job-application-assistant/01-candidate-profile.md
+
 # The last AI skills analysis: derived from the profile, regenerated on demand.
 data/skills-analysis.json
 
@@ -179,11 +190,24 @@ job-search/.agents/usage/
 # Brainstorm mockups (superpowers visual companion) - never ship
 job-search/.superpowers/
 
-# The student's own files: contact details, CV and cover letter, and the
-# per-application copies made from them. Local only; never published.
+# The student's own files: contact details, CV and cover letter, the per-application
+# copies made from them, uploaded certificates and references (documents/) and the ATS
+# manuals (ats/). Local only; never published. Everything in the folder is ignored, so a
+# new kind of file can never slip into a commit (.gitkeep is already tracked, so it stays);
+# the three named rules stay because
+# job-search/tools/security_guards.py checks for them.
+src/assets/Student-data/*
 src/assets/Student-data/student.json
 src/assets/Student-data/*.docx
 src/assets/Student-data/tailored/
+
+# Local state of the app: the MCP servers added on the Settings page (an address can hold a key),
+# the company directory, what the last searches found per source, boards added by hand, studio settings.
+data/mcp-servers.json
+data/companies.json
+data/search-runs.json
+data/job-boards.json
+data/internships-settings.json
 
 # Public-board runner: rotation state and credit log are local only
 data/board-state.json

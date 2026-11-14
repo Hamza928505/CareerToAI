@@ -46,7 +46,7 @@ import { extractAdSkills } from "../lib/extract-skills.mjs";
 import { resolveSite } from "../lib/site.mjs";
 import { buildApplyPack } from "../lib/apply-pack.mjs";
 import { SCHEMA, jobMatchKey } from "../lib/tracker.mjs";
-import { getApplicationCapabilities, runBrowserApplication } from "../lib/job-search.mjs";
+import { getApplicationCapabilities } from "../lib/job-search.mjs";
 import { engineDir, enginePython, searchWithEngine } from "../lib/engine-search.mjs";
 import { readField, searchPlan } from "../lib/search-focus.mjs";
 import { searchIndeed } from "../lib/indeed-agent.mjs";
@@ -54,27 +54,39 @@ import { searchApify } from "../lib/apify-agent.mjs";
 import { searchNim } from "../lib/nim-agent.mjs";
 import { findCompanySites } from "../lib/company-site.mjs";
 import { applyAssignments, decideApplicants } from "../lib/assign-applicant.mjs";
-import { runLocalApplication } from "../lib/local-browser.mjs";
+import { applyOnWeb, providerStates, webProvider, PROVIDERS as APPLY_PROVIDERS } from "../lib/apply-providers.mjs";
 import { draftEmail, emailRecipient, gmailConfig, sendApplicationEmail, smtpConfig } from "../lib/send-email.mjs";
 import { readApplicationWorkbook, saveApplicationWorkbook } from "../lib/application-workbook.mjs";
 import { NEW_DAYS, applicationRoute, applicationTarget, assistantQueue, knownAddress, mergeSearchResults, newEligible } from "../lib/application-flow.mjs";
 import { readSettings, saveSettings } from "../lib/env-settings.mjs";
+import { canTest, claudeConnectors, testIntegration } from "../lib/integration-tests.mjs";
+import { SIZE_BANDS, normalizeCompany, readCompanies, sizeBand, upsertCompanies, writeCompanies } from "../lib/company-directory.mjs";
+import { SOURCES as COMPANY_SOURCES, createReader, discoverCompanies, findCareers, findWebsite } from "../lib/company-discovery.mjs";
+import { APIS as BOARD_APIS, boardSize, canSearch, companyJobs, searchCompanySites } from "../lib/company-jobs.mjs";
+import { addCustomBoard, readCustomBoards, readRuns, recordRuns, removeCustomBoard } from "../lib/search-runs.mjs";
+import { PRESETS, addServer, describeServers, removeServer, setEnabled } from "../lib/mcp-config.mjs";
 import { chatJson, geminiConfig, llmConfig, llmOverview, llmStatus } from "../lib/llm.mjs";
 import { readConfig as mailReadConfig } from "../lib/gmail-read.mjs";
 import { applyProposals, candidates as mailCandidates, mailQuery, logMail, markProcessed, readLog as readMailLog, readState as readMailState, tally as tallyMail, validate as validateMail } from "../lib/mail-sync.mjs";
 import { readWithAgy, readWithClaude, readWithGemini } from "../lib/mail-readers.mjs";
 import { agyJson, agyModel, agyStatus } from "../lib/agy.mjs";
 import { analyseSkills, scoreJobs } from "../lib/profile-ai.mjs";
-import { hasStudentFiles, readStudent, TAILORED_DIRS, tailoredPaths } from "../lib/student-files.mjs";
+import { hasStudentFiles, readProfileFile, readStudent, STUDENT_DIR, TAILORED_DIRS, tailoredPaths } from "../lib/student-files.mjs";
+import { analyseDocument, getDocument, listDocuments, markDocument, readers as documentReaders, removeDocument, saveDocument } from "../lib/document-intake.mjs";
 import { slug, tailorDocuments } from "../lib/tailor-docs.mjs";
 import {
   evaluatePostings,
   generateDocumentsForPosting,
   getStudioState,
+  readDocParagraphs,
   runAtsCheckOnPdf,
+  saveEditedDoc,
   saveStudioSettings,
   studioDirs,
+  tailorModel,
 } from "../lib/internships-studio.mjs";
+import { assessPosting } from "../lib/ats-assess.mjs";
+import { buildApplicationBrief } from "../lib/application-brief.mjs";
 
 const execFileAsync = promisify(execFile);
 
@@ -197,6 +209,11 @@ function resolveStatic(pathname) {
 async function handleSave(req, res) {
   const payload = await readBody(req);
   const result = await applyPayload(payload);
+  // The same save keeps the private twin: the whole editor state, images and private sections included, in Student-data.
+  // Every module reads the profile from it (readUserProfile), so the published data/ and the private copy cannot drift.
+  fs.mkdirSync(STUDENT_DIR, { recursive: true });
+  fs.writeFileSync(path.join(STUDENT_DIR, "student.json"), JSON.stringify(payload, null, 2));
+  result.written.push("src/assets/Student-data/student.json (private)");
   await build();
   console.log(
     `  saved — ${result.counts.experience} role(s), ${result.counts.projects} project(s), ` +
@@ -288,7 +305,12 @@ async function handleApplicationsWrite(req, res) {
 
 // What each search source needs, for the page to show before anything is spent. Claude's connectors cannot be checked
 // without running them, so that source is always offered and a failure shows up as a warning.
-const searchSources = () => ({ claude: true, nim: Boolean(process.env.NVIDIA_API_KEY), apis: Boolean(enginePython(engineDir())) });
+// One page reader for the whole server: its pauses between requests and its robots.txt answers are shared, so two
+// open tabs cannot double the pace at which a company's website is read.
+const siteReader = createReader();
+const hasBoardApi = (company) => Boolean(company.platform.token && Object.hasOwn(BOARD_APIS, company.platform.name));
+
+const searchSources = () => ({ claude: true, nim: Boolean(process.env.NVIDIA_API_KEY), apis: Boolean(enginePython(engineDir())), companies: readCompanies().some(hasBoardApi) });
 
 // GET /__editor/search-plan?mode=profile|global: the words a search would use, with no AI call and no search.
 async function handleSearchPlan(req, res) {
@@ -299,10 +321,20 @@ async function handleSearchPlan(req, res) {
 }
 
 async function handleSearch(req, res) {
-  const { useProfile, mode = 'profile', sources = {} } = await readBody(req);
+  const { useProfile, mode = 'profile', sources = {}, boards = {} } = await readBody(req);
   if (!['profile', 'global'].includes(mode)) return sendJson(res, 400, { error: 'Choose a search by your major (profile) or a global search.' });
-  const use = { claude: sources.claude !== false, nim: sources.nim !== false, apis: sources.apis !== false };
-  if (!Object.values(use).some(Boolean)) return sendJson(res, 400, { error: 'Choose at least one search source.' });
+  const claudeBoards = Array.isArray(boards.claude) ? boards.claude : ['Indeed', 'StepStone', 'Arbeitsagentur'];
+  const apifyBoards = claudeBoards.filter((b) => b === 'StepStone' || b === 'Arbeitsagentur');
+  const nimBoards = Array.isArray(boards.nim) ? boards.nim : undefined;
+  const apiBoards = Array.isArray(boards.apis) ? boards.apis : undefined;
+  const use = {
+    claude: sources.claude !== false && claudeBoards.length > 0,
+    nim: sources.nim !== false && (!nimBoards || nimBoards.length > 0),
+    apis: sources.apis !== false && (!apiBoards || apiBoards.length > 0),
+    // The careers platforms of the companies in the directory (lib/company-jobs.mjs). Off when no company has one yet.
+    companies: sources.companies !== false && searchSources().companies,
+  };
+  if (!Object.values(use).some(Boolean)) return sendJson(res, 400, { error: 'Choose at least one search source and job board.' });
   if (useProfile && !llmConfig()) return sendJson(res, 400, { error: 'Set up an AI provider in .env to score jobs with your profile files.' });
   if (useProfile && !hasStudentFiles()) return sendJson(res, 400, { error: 'Upload student.json and both base documents in the editor first.' });
   if (progress.search?.running) return sendJson(res, 409, { error: 'A search is already running. Its progress is in the top-right corner.' });
@@ -310,16 +342,18 @@ async function handleSearch(req, res) {
   try {
     const plan = await searchPlan({ mode }); // the major's words (or every field's); fails with a clear message when the profile has no field of study
     track('search', { stage: `Searching for ${plan.label.toLowerCase()}` });
-    // The student chooses the sources. The JobSearchEngine decides what each free source permits; this page never searches or
+    // The student chooses the sources and boards. The JobSearchEngine decides what each free source permits; this page never searches or
     // opens job sites itself. Indeed comes through the student's Claude connector (lib/indeed-agent.mjs) and
     // StepStone/Arbeitsagentur through Claude's Apify connector: those two are Claude's, they need its connectors.
     // Everything an NVIDIA NIM model can reach through plain search APIs (LinkedIn and the other boards) goes to it instead
     // (lib/nim-agent.mjs), so Claude spends no tokens there. Any may fail alone; that is a warning.
     const tasks = [
-      use.apis && ['apis', 'Free job sources', searchWithEngine({ days: NEW_DAYS, keywords: plan.engineKeywords })],
-      use.claude && ['claude', 'Indeed', searchIndeed({ days: NEW_DAYS, searches: plan.indeedSearches })],
-      use.claude && ['claude', 'Apify', searchApify({ days: NEW_DAYS, searches: plan.apifySearches })],
-      use.nim && ['nim', 'NVIDIA NIM', searchNim({ days: NEW_DAYS, plan, isKnown: knownAddress((await readApplicationWorkbook()).rows) })],
+      use.apis && ['apis', 'Free job sources', searchWithEngine({ days: NEW_DAYS, keywords: plan.engineKeywords, sources: apiBoards })],
+      use.claude && claudeBoards.includes('Indeed') && ['claude', 'Indeed', searchIndeed({ days: NEW_DAYS, searches: plan.indeedSearches })],
+      use.claude && apifyBoards.length > 0 && ['claude', 'Apify', searchApify({ days: NEW_DAYS, searches: plan.apifySearches, boards: apifyBoards })],
+      use.nim && ['nim', 'NVIDIA NIM', searchNim({ days: NEW_DAYS, plan, sites: nimBoards, isKnown: knownAddress((await readApplicationWorkbook()).rows) })],
+      // By major: internships whose title has one of the major's words. Global: every internship those companies list in Germany.
+      use.companies && ['companies', 'Company websites', searchCompanySites({ companies: readCompanies(), read: siteReader, words: mode === 'profile' ? [...plan.de, ...plan.en, ...plan.engineKeywords] : [] })],
     ].filter(Boolean);
     const sources = Object.fromEntries(tasks.map(([, name]) => [name, 'searching…']));
     track('search', { sources });
@@ -330,9 +364,10 @@ async function handleSearch(req, res) {
     if (settled.every((r) => r.status === 'rejected')) throw settled[0].reason;
     const result = { jobs: [], warnings: [] };
     const bySource = {};
+    const failed = {}; // source name -> why it failed, so the page and the Job Boards record can say so
     settled.forEach((r, i) => {
       const [group, name] = tasks[i];
-      if (r.status === 'rejected') return result.warnings.push(`${name} was not searched: ${r.reason.message}`);
+      if (r.status === 'rejected') { failed[name] = r.reason.message; return result.warnings.push(`${name} was not searched: ${r.reason.message}`); }
       result.jobs.push(...r.value.jobs);
       result.warnings.push(...r.value.warnings);
       bySource[group] = (bySource[group] || 0) + r.value.jobs.length;
@@ -374,7 +409,20 @@ async function handleSearch(req, res) {
     const { Meets = 0, Check = 0 } = merged.gju;
     if (merged.added) result.warnings.push(`GJU check of the ${merged.added} new jobs: meets the rules ${Meets}, check by hand ${Check}.`);
     track('search', { running: false, stage: 'Done', added: merged.added });
-    sendJson(res, 200, { ok: true, found: result.jobs.length, added: merged.added, unverified: jobs.filter((job) => job.verified === false).length, rows: merged.rows.length, bySource, plan: { mode, label: plan.label }, warnings: result.warnings });
+    // For the Job Boards page: when each board was last searched and what it returned. A board whose source failed keeps its last good scan.
+    try {
+      const ran = Object.fromEntries(tasks.map(([, name], i) => [name, settled[i].status === 'fulfilled']));
+      const count = (board) => result.jobs.filter((job) => `${job.source || ''} ${job.data_source || ''} ${job.url || ''}`.toLowerCase().includes(board.toLowerCase().replace(/\s+/g, ''))).length;
+      const boardsRun = {};
+      const note = (names, task, via) => { if (task in ran) for (const board of names) boardsRun[board] = { ok: ran[task], found: count(board), via: ran[task] ? via : `${task} failed: ${failed[task]}` }; };
+      note(claudeBoards.includes('Indeed') ? ['Indeed'] : [], 'Indeed', 'Claude connector');
+      note(apifyBoards, 'Apify', 'Claude connector (Apify)');
+      note(nimBoards || [], 'NVIDIA NIM', 'NVIDIA NIM search');
+      note(apiBoards || [], 'Free job sources', 'JobSearchEngine');
+      for (const name of ['Free job sources', 'NVIDIA NIM', 'Company websites']) if (name in ran) boardsRun[name] = { ok: ran[name], found: bySource[{ 'Free job sources': 'apis', 'NVIDIA NIM': 'nim', 'Company websites': 'companies' }[name]] || 0, via: ran[name] ? name : `${name} failed: ${failed[name]}` };
+      recordRuns(boardsRun);
+    } catch (error) { console.error(`  the search record was not saved: ${error.message}`); }
+    sendJson(res, 200, { ok: true, found: result.jobs.length, added: merged.added, unverified: jobs.filter((job) => job.verified === false).length, rows: merged.rows.length, bySource, failed, plan: { mode, label: plan.label }, warnings: result.warnings });
   } catch (error) {
     track('search', { running: false, stage: 'Failed', error: error.message });
     throw error;
@@ -616,8 +664,10 @@ async function handleApply(req, res) {
       }
       const target = applicationTarget(row);
       const route = applicationRoute(row);
-      // Fill-only is for the local browser alone: nothing is sent or submitted, so e-mail and remote-browser jobs wait.
-      if (fillOnly === true && route !== 'upload') { counts.notRun++; continue; }
+      // Fill-only is for a browser on this computer: nothing is sent or submitted, so e-mail and remote-browser jobs wait.
+      // Claude in a browser only ever fills, so it runs either way and never submits.
+      const provider = route === 'email' ? 'email' : webProvider(route);
+      if (fillOnly === true && !['local', 'claude'].includes(provider)) { counts.notRun++; continue; }
       let outcome;
       if (target.kind === 'missing') {
         outcome = { status: 'Needs input', evidence: 'Add a valid application URL, or the employer e-mail address.' };
@@ -643,7 +693,7 @@ async function handleApply(req, res) {
             // The subject and text the student saw (and may have edited) in the preview; nothing else is ever sent.
             const edit = { ...drafts?.get(id), ...edits?.[id] };
             outcome = await sendApplicationEmail(row, profile, { subject: typeof edit.subject === 'string' ? edit.subject : undefined, body: typeof edit.body === 'string' ? edit.body : undefined });
-          } else outcome = await (route === 'upload' ? (r, p) => runLocalApplication(r, p, { fillOnly: fillOnly === true }) : runBrowserApplication)(row, profile);
+          } else outcome = await applyOnWeb(route, row, profile, { fillOnly: fillOnly === true }); // lib/apply-providers.mjs: the browser tool can be swapped there
         }
         catch { outcome = { status: 'Needs input', evidence: 'The application run stopped. Check the application portal or your Sent folder before retrying.' }; }
         finally { if (route !== 'email') nextBrowserAt = Date.now() + 30_000; }
@@ -743,11 +793,11 @@ async function handlePrivateProfile(req, res) {
 async function handleStudentData(req, res) {
   const dir = path.join(ROOT, "src", "assets", "Student-data");
   if (req.method === "GET") {
-    const studentJsonPath = path.join(dir, "student.json");
-    let data = null;
-    if (fs.existsSync(studentJsonPath)) {
-      data = JSON.parse(fs.readFileSync(studentJsonPath, "utf8"));
-    }
+    // The newest saved profile: student.json, or the export in the Internships folder while that one is newer.
+    const saved = readProfileFile();
+    const data = saved.source === "data/" ? null : saved.data;
+    // A profile saved before the editor had these sections takes them from data/profile-extras.json.
+    if (data && !data.extras) data.extras = readData("profile-extras");
     const existingDocs = [];
     if (fs.existsSync(dir)) {
       const files = fs.readdirSync(dir);
@@ -757,25 +807,21 @@ async function handleStudentData(req, res) {
         }
       }
     }
-    sendJson(res, 200, { ok: true, data, existingDocs });
+    sendJson(res, 200, { ok: true, data, existingDocs, source: saved.source, savedAt: saved.savedAt });
   } else if (req.method === "POST") {
     const payload = await readBody(req);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    
+
     if (payload.data) {
       fs.writeFileSync(path.join(dir, "student.json"), JSON.stringify(payload.data, null, 2));
     }
-    
-    if (payload.files) {
-      for (const [name, base64] of Object.entries(payload.files)) {
-        if (!base64) continue;
-        const match = /^data:([^;,]+)?(;base64)?,(.*)$/s.exec(base64);
-        if (match) {
-          fs.writeFileSync(path.join(dir, name), Buffer.from(match[3], "base64"));
-        }
-      }
+
+    // Only the two base documents can be written here, under their own names: a name from the browser is never a path.
+    for (const [name, base64] of Object.entries(payload.files || {})) {
+      if (!/^base_(cv|cover_letter)_en\.(docx|pdf)$/.test(name)) return sendJson(res, 400, { error: "Only the base CV and the base cover letter are saved here." });
+      const match = /^data:([^;,]+)?(;base64)?,(.*)$/s.exec(String(base64 || ""));
+      if (match) fs.writeFileSync(path.join(dir, name), Buffer.from(match[3], "base64"));
     }
-    await build();
     sendJson(res, 200, { ok: true });
   }
 }
@@ -808,8 +854,102 @@ async function handleInternshipsGenerate(req, res) {
   if (!posting || typeof posting !== "object") {
     return sendJson(res, 400, { error: "Provide the posting object to generate CV & Cover Letter for." });
   }
-  const result = await generateDocumentsForPosting({ posting, settings: body.settings || {} });
+  // With an assessment, the tailoring uses the terms it found the profile to support and leaves the gaps out.
+  const result = await generateDocumentsForPosting({ posting, settings: body.settings || {}, assessment: body.assessment && typeof body.assessment === "object" ? body.assessment : null });
   sendJson(res, 200, { ...result, studio: await getStudioState() });
+}
+
+// POST /__editor/internships/brief { postings, settings }: one text file with the profile, the base CV and letter, and each
+// posting with its GJU check and ATS assessment, for the student to give to an AI of their own. Calls no AI of ours.
+async function handleInternshipsBrief(req, res) {
+  const body = await readBody(req);
+  const postings = Array.isArray(body.postings) ? body.postings.filter((p) => p && typeof p === "object") : [];
+  if (!postings.length) return sendJson(res, 400, { error: "Add at least one internship posting first." });
+  sendJson(res, 200, { ok: true, text: await buildApplicationBrief({ postings, settings: body.settings && typeof body.settings === "object" ? body.settings : {} }) });
+}
+
+const studioFolder = (key) => { const dirs = studioDirs(); return { CVs: dirs.cvs, CLs: dirs.cls, "Input Data": dirs.inputData }[key] || null; };
+
+// POST /__editor/internships/ats-assess { posting: { company, title, url, text }, folder?, name? }: the posting against the
+// profile by the ATS manuals, and against a CV PDF when one is named. Run it as often as the documents change.
+async function handleInternshipsAssess(req, res) {
+  const body = await readBody(req);
+  const posting = body.posting && typeof body.posting === "object" ? body.posting : {};
+  // The AI picked by the Phase 2 button (tailorModel: Claude Opus unless the student chose otherwise) reads the advert here too.
+  const model = tailorModel(String(body.tailorModel || ""));
+  if (!model.config) return sendJson(res, 400, { error: `${model.label} has no key yet. Add it in Settings, or pick a Claude model by the Phase 2 button.` });
+  let pdfPath = "";
+  if (body.name) {
+    const folder = studioFolder(String(body.folder || "CVs"));
+    const name = path.basename(String(body.name));
+    if (!folder || !name.toLowerCase().endsWith(".pdf")) return sendJson(res, 400, { error: "Choose a .pdf file to check." });
+    pdfPath = path.join(folder, name);
+    if (!fs.existsSync(pdfPath)) return sendJson(res, 404, { error: `PDF not found: ${name}` });
+  }
+  console.log(`  ATS assessment for ${String(posting.company || "a posting").slice(0, 60)}…`);
+  const assessment = await assessPosting({ posting: { company: String(posting.company || ""), title: String(posting.title || posting.position || ""), url: String(posting.url || ""), text: String(posting.text || posting.rawText || "") }, pdfPath }, { chat: (request) => chatJson({ ...request, config: model.config }) });
+  sendJson(res, 200, { ok: true, assessment, checked: pdfPath ? path.basename(pdfPath) : "" });
+}
+
+const PAGE_ENTITIES = { nbsp: " ", "#160": " ", amp: "&", lt: "<", gt: ">", quot: '"', "#39": "'", apos: "'" };
+const INTERNSHIPS_POSTING_TEXT_ALLOWED_HOSTS = [
+  "linkedin.com",
+  "indeed.com",
+  "stepstone.de",
+  "glassdoor.com",
+  "xing.com",
+  "greenhouse.io",
+  "lever.co",
+  "workable.com",
+];
+
+function isAllowedPostingTextHost(hostname) {
+  const host = String(hostname || "").toLowerCase();
+  return INTERNSHIPS_POSTING_TEXT_ALLOWED_HOSTS.some((allowed) => host === allowed || host.endsWith(`.${allowed}`));
+}
+
+// POST /__editor/internships/posting-text { url }: the advert's text from its own page, through the polite reader
+// (robots.txt, the source policy, no private addresses). A job board that may not be read answers with the reason.
+async function handleInternshipsPostingText(req, res) {
+  const { url } = await readBody(req);
+  let parsed;
+  try {
+    parsed = new URL(String(url || ""));
+  } catch {
+    return sendJson(res, 200, { ok: false, reason: "That is not a public web address." });
+  }
+  if (!["http:", "https:"].includes(parsed.protocol) || !isAllowedPostingTextHost(parsed.hostname)) {
+    return sendJson(res, 200, { ok: false, reason: "That web address is not allowed here. Open the advert and paste its text." });
+  }
+  const page = await siteReader(parsed.href);
+  if (!page.ok) {
+    const why = page.blocked === "policy" ? "This job board does not allow its pages to be read automatically. Open the advert and paste its text."
+      : page.blocked === "robots" ? "The site's robots.txt does not allow this page to be read automatically. Open the advert and paste its text."
+        : page.blocked ? "That is not a public web address." : "The page did not answer. Open the advert and paste its text.";
+    return sendJson(res, 200, { ok: false, reason: why });
+  }
+  const text = page.text.replace(/<(script|style|noscript|svg|head)[\s\S]*?<\/\1>/gi, " ").replace(/<\/(p|div|li|h[1-6]|tr|section)>|<br\s*\/?>/gi, "\n").replace(/<[^>]+>/g, " ")
+    // One pass, so "&amp;lt;" becomes "&lt;" and never "<" (CodeQL js/double-escaping).
+    .replace(/&(nbsp|#160|amp|lt|gt|quot|#39|apos);/g, (_, name) => PAGE_ENTITIES[name])
+    .replace(/[ \t]+/g, " ").replace(/\n\s*\n+/g, "\n\n").trim();
+  // A page that draws its advert with a script has almost no text of its own.
+  if (text.length < 300) return sendJson(res, 200, { ok: false, reason: "The page has no advert text a program can read (it is drawn by a script). Open the advert and paste its text." });
+  sendJson(res, 200, { ok: true, text: text.slice(0, 15_000) });
+}
+
+// GET /__editor/internships/doc-text?folder=&name= : the paragraphs of a generated .docx.
+// POST { folder, name, edits: { "<paragraph>": "text" } }: saves a new version (the original is kept) and checks its PDF again.
+async function handleInternshipsDocText(req, res) {
+  const query = new URL(req.url, `http://${HOST}`).searchParams;
+  const body = req.method === "POST" ? await readBody(req) : { folder: query.get("folder"), name: query.get("name") };
+  const folder = ["CVs", "CLs"].includes(body.folder) ? studioFolder(body.folder) : null;
+  const name = path.basename(String(body.name || ""));
+  if (!folder || !/\.docx$/i.test(name)) return sendJson(res, 400, { error: "Choose a generated .docx from CVs or CLs." });
+  if (!fs.existsSync(path.join(folder, name))) return sendJson(res, 404, { error: `File not found: ${name}` });
+  if (req.method === "GET") return sendJson(res, 200, { ok: true, name, paragraphs: await readDocParagraphs(path.join(folder, name)) });
+  const saved = await saveEditedDoc({ folder, name, edits: body.edits && typeof body.edits === "object" ? body.edits : {} });
+  const report = saved.pdfPath && body.folder === "CVs" ? await runAtsCheckOnPdf({ pdfPath: saved.pdfPath, keywords: Array.isArray(body.keywords) ? body.keywords.filter((k) => typeof k === "string").slice(0, 60) : [] }) : null;
+  sendJson(res, 200, { ok: true, folder: body.folder, files: { docx: saved.docx, pdf: saved.pdf, pages: saved.pages }, changed: saved.changed, report: report?.ok ? { fails: report.fails, warns: report.warns, mustCoverage: report.mustCoverage, reportMd: report.reportMd } : null, studio: await getStudioState() });
 }
 
 async function handleInternshipsAtsCheck(req, res) {
@@ -908,6 +1048,163 @@ async function handleInternshipsTemplateUpload(req, res) {
   sendJson(res, 200, { ok: true, targetName, ...(await getStudioState()) });
 }
 
+// ---------------------------------------------------------------------------
+// Job Boards page: the last scan of each board, the boards added by hand, and the company directory with its
+// discovery steps. Every step that reads a website goes through siteReader (robots.txt, pauses, size and time limits).
+// ---------------------------------------------------------------------------
+
+async function handleBoards(req, res) {
+  if (req.method === "POST") {
+    const { action, name, url } = await readBody(req);
+    if (action === "add") addCustomBoard({ name, url });
+    else if (action === "remove") removeCustomBoard(String(name || ""));
+    else return sendJson(res, 400, { error: "Choose add or remove." });
+  }
+  sendJson(res, 200, { ok: true, runs: readRuns().boards, custom: readCustomBoards() });
+}
+
+const companyView = (company) => ({ ...company, size: sizeBand(company.employees), searchable: canSearch(company), hasApi: hasBoardApi(company) });
+const idList = (value, max) => (Array.isArray(value) ? value.filter((id) => typeof id === "string").slice(0, max) : []);
+
+/** Write back only the records a slow step changed: the file may have gained companies while the step was reading websites. */
+function saveChanged(changed) {
+  const latest = readCompanies();
+  for (const company of changed) { const at = latest.findIndex((item) => item.id === company.id); if (at >= 0) latest[at] = company; }
+  writeCompanies(latest);
+}
+
+async function handleCompanies(req, res, pathname) {
+  const action = pathname.slice("/__editor/companies".length).replace(/^\//, "");
+  if (req.method === "GET" && !action) {
+    return sendJson(res, 200, { ok: true, companies: readCompanies().map(companyView), sources: Object.entries(COMPANY_SOURCES).map(([id, source]) => ({ id, label: source.label })), sizes: SIZE_BANDS, lookup: Boolean(process.env.EXA_API_KEY) });
+  }
+  if (req.method !== "POST") return sendJson(res, 404, { error: "Not found" });
+  const body = await readBody(req);
+
+  if (action === "discover") {
+    const source = String(body.source || "");
+    const options = source === "tracker" ? { rows: (await readApplicationWorkbook()).rows } : { limit: body.limit, offset: body.offset, minEmployees: body.minEmployees, city: body.city, name: body.name, website: body.website };
+    console.log(`  looking for companies (${source})…`);
+    const found = await discoverCompanies(source, options);
+    const result = upsertCompanies(readCompanies(), found);
+    writeCompanies(result.companies);
+    return sendJson(res, 200, { ok: true, found: found.length, added: result.added, merged: result.merged, companies: result.companies.map(companyView) });
+  }
+  if (action === "verify") {
+    // Website, then careers page and platform, for at most five companies a call: the page sends the next five itself, so
+    // progress shows and a closed tab stops the work.
+    const companies = readCompanies();
+    const done = [];
+    for (const id of idList(body.ids, 5)) {
+      const company = companies.find((item) => item.id === id);
+      if (!company) continue;
+      await findWebsite(company, { read: siteReader });
+      if (company.websiteStatus === "ok") await findCareers(company, { read: siteReader, check: boardSize(siteReader) });
+      done.push(company);
+    }
+    saveChanged(done);
+    return sendJson(res, 200, { ok: true, companies: done.map(companyView) });
+  }
+  if (action === "jobs") {
+    const companies = readCompanies();
+    const words = idList(body.words, 12).map((word) => word.trim()).filter((word) => word.length > 1);
+    const results = [];
+    for (const id of idList(body.ids, 8)) {
+      const company = companies.find((item) => item.id === id);
+      if (!company) continue;
+      const found = await companyJobs(company, { read: siteReader, words, internshipsOnly: body.internshipsOnly !== false, germanyOnly: body.germanyOnly !== false });
+      results.push({ id, name: company.name, ...found });
+    }
+    return sendJson(res, 200, { ok: true, results });
+  }
+  if (action === "shortlist") {
+    // The same merge a search uses (GJU check, Fit, no duplicate), for postings the student picked by hand. Text fields only.
+    const clean = (value, max) => String(value ?? "").replace(/\s+/g, " ").trim().slice(0, max);
+    const hits = (Array.isArray(body.jobs) ? body.jobs : []).slice(0, 50).map((job) => ({
+      url: clean(job.url, 600), title: clean(job.title, 200), company: clean(job.company, 120), location: clean(job.location, 120), date_posted: /^\d{4}-\d{2}-\d{2}$/.test(job.date_posted || "") ? job.date_posted : "",
+      snippet: clean(job.snippet, 400), source: clean(job.source, 120), data_source: clean(job.data_source, 120), website: clean(job.website, 300), industry: clean(job.industry, 120), ...(job.verified === false ? { verified: false } : {}),
+    })).filter((hit) => /^https?:\/\//.test(hit.url) && hit.title);
+    const merged = await whenFree("companies", async () => {
+      const snapshot = await readApplicationWorkbook();
+      const result = mergeSearchResults(snapshot.rows, hits, { scoring: { keepLow: true } });
+      if (result.added) await saveApplicationWorkbook(result.rows, { revision: snapshot.revision });
+      return result;
+    });
+    return sendJson(res, 200, { ok: true, added: merged.added });
+  }
+  if (action === "update") {
+    const companies = readCompanies();
+    const company = companies.find((item) => item.id === body.id);
+    if (!company) return sendJson(res, 404, { error: "That company is no longer in the directory." });
+    const next = normalizeCompany({ ...company, ...Object.fromEntries(["name", "industry", "hq", "employees", "website", "careersUrl"].filter((field) => field in body).map((field) => [field, body[field]])) });
+    if (!next.name) return sendJson(res, 400, { error: "A company needs a name." });
+    // An address typed by hand has not answered yet: it is checked again before it counts.
+    if (next.website !== company.website) next.websiteStatus = "unverified";
+    if (next.careersUrl !== company.careersUrl) { next.careersStatus = "unverified"; next.platform = { name: "", token: "", boardUrl: "" }; }
+    Object.assign(company, next);
+    writeCompanies(companies);
+    return sendJson(res, 200, { ok: true, company: companyView(company) });
+  }
+  if (action === "remove") {
+    const ids = new Set(idList(body.ids, 5000));
+    writeCompanies(readCompanies().filter((company) => !ids.has(company.id)));
+    return sendJson(res, 200, { ok: true, removed: ids.size });
+  }
+  sendJson(res, 404, { error: "Not found" });
+}
+
+// ---------------------------------------------------------------------------
+// Uploaded documents (Profile / Editor). A document is read and turned into proposals; nothing reaches the profile
+// until the student approves it in the editor and saves. Files stay in Student-data/documents and are served from
+// this server only.
+// ---------------------------------------------------------------------------
+
+async function handleDocuments(req, res, pathname) {
+  const action = pathname.slice("/__editor/documents".length).replace(/^\//, "");
+  if (req.method === "GET" && !action) return sendJson(res, 200, { ok: true, documents: listDocuments(), readers: documentReaders() });
+  if (req.method === "GET" && action === "file") {
+    const doc = getDocument(String(new URL(req.url, `http://${HOST}`).searchParams.get("id") || ""));
+    if (!fs.existsSync(doc.path)) return sendJson(res, 404, { error: "The file is missing from the documents folder." });
+    res.writeHead(200, { "Content-Type": doc.type, "Cache-Control": "no-store", "Content-Disposition": `inline; filename="${encodeURIComponent(doc.name)}"`, "X-Content-Type-Options": "nosniff" });
+    return fs.createReadStream(doc.path).pipe(res);
+  }
+  if (req.method !== "POST") return sendJson(res, 404, { error: "Not found" });
+  const body = await readBody(req);
+  if (action === "upload") return sendJson(res, 200, { ok: true, document: saveDocument(body) });
+  if (action === "analyse") {
+    console.log("  reading an uploaded document…");
+    const { analysis, ...doc } = await analyseDocument(String(body.id || ""));
+    return sendJson(res, 200, { ok: true, document: { ...doc, analysis: { ...analysis, extractedText: undefined } }, extractedText: analysis.extractedText });
+  }
+  if (action === "update") return sendJson(res, 200, { ok: true, document: markDocument(String(body.id || ""), body) });
+  if (action === "remove") { removeDocument(String(body.id || "")); return sendJson(res, 200, { ok: true }); }
+  sendJson(res, 404, { error: "Not found" });
+}
+
+// ---------------------------------------------------------------------------
+// Settings page: test one integration, and manage the MCP connectors. The browser names an integration id or a preset;
+// it never sends a command to run (lib/mcp-config.mjs), and no answer holds a key.
+// ---------------------------------------------------------------------------
+
+async function handleIntegrationTest(req, res) {
+  const { id } = await readBody(req);
+  if (typeof id !== "string" || !canTest(id)) return sendJson(res, 400, { error: "There is no test for this integration." });
+  console.log(`  testing ${id}…`);
+  sendJson(res, 200, await testIntegration(id));
+}
+
+async function handleMcp(req, res) {
+  if (req.method === "POST") {
+    const { action, name, preset, url, headerName, headerEnv } = await readBody(req);
+    if (action === "add") addServer({ name, preset, url, headerName, headerEnv });
+    else if (action === "remove") removeServer(String(name || ""));
+    else if (action === "enable" || action === "disable") setEnabled(String(name || ""), action === "enable");
+    else return sendJson(res, 400, { error: "Choose add, remove, enable or disable." });
+    capabilitiesCache = null; // which browser tool is available depends on these servers
+  }
+  sendJson(res, 200, { ok: true, servers: describeServers(), presets: Object.keys(PRESETS) });
+}
+
 const server = http.createServer(async (req, res) => {
   let pathname = new URL(req.url, `http://${HOST}`).pathname;
 
@@ -946,15 +1243,22 @@ const server = http.createServer(async (req, res) => {
     if (pathname === "/__editor/skills" && req.method === "POST") return await handleSkills(req, res);
     if (pathname === "/__editor/run" && req.method === "POST") return await handleRun(req, res);
     if (pathname === "/__editor/student-data") return await handleStudentData(req, res);
+    if (pathname === "/__editor/documents" || pathname.startsWith("/__editor/documents/")) return await handleDocuments(req, res, pathname);
     if (pathname === "/__editor/search" && req.method === "POST") return await handleSearch(req, res);
     if (pathname === "/__editor/search-plan" && req.method === "GET") return await handleSearchPlan(req, res);
     if (pathname === "/__editor/settings") return await handleSettings(req, res);
     if (pathname === "/__editor/llm-test" && req.method === "POST") return await handleLlmTest(res);
+    if (pathname === "/__editor/integration-test" && req.method === "POST") return await handleIntegrationTest(req, res);
+    if (pathname === "/__editor/mcp") return await handleMcp(req, res);
+    if (pathname === "/__editor/boards") return await handleBoards(req, res);
+    if (pathname === "/__editor/companies" || pathname.startsWith("/__editor/companies/")) return await handleCompanies(req, res, pathname);
+    if (pathname === "/__editor/claude-connectors" && req.method === "GET") return sendJson(res, 200, await claudeConnectors({ fresh: new URL(req.url, `http://${HOST}`).searchParams.has("fresh") }));
     if (pathname === "/__editor/tailor" && req.method === "POST") return await handleTailor(req, res);
     if (pathname === "/__editor/assign-applicant" && req.method === "POST") return await handleAssignApplicant(req, res);
     if (pathname === "/__editor/apply-pack" && req.method === "GET") return handleApplyPack(res);
     if (pathname === "/__editor/apply-preview" && req.method === "GET") return await handleApplyPreview(res);
     if (pathname === "/__editor/apply" && req.method === "POST") return await handleApply(req, res);
+    if (pathname === "/__editor/apply-providers" && req.method === "GET") return sendJson(res, 200, { ok: true, ...(await providerStates()), choices: Object.keys(APPLY_PROVIDERS) });
     if (pathname === "/__editor/mail" && req.method === "GET") return await handleMailStatus(res);
     if (pathname === "/__editor/gemini-test" && req.method === "POST") return await handleGeminiTest(res);
     if (pathname === "/__editor/mail/scan" && req.method === "POST") return await handleMailScan(req, res);
@@ -985,12 +1289,17 @@ const server = http.createServer(async (req, res) => {
     if (pathname === "/__editor/internships/settings" && req.method === "POST") return await handleInternshipsSettings(req, res);
     if (pathname === "/__editor/internships/evaluate" && req.method === "POST") return await handleInternshipsEvaluate(req, res);
     if (pathname === "/__editor/internships/generate" && req.method === "POST") return await handleInternshipsGenerate(req, res);
+    if (pathname === "/__editor/internships/brief" && req.method === "POST") return await handleInternshipsBrief(req, res);
     if (pathname === "/__editor/internships/ats-check" && req.method === "POST") return await handleInternshipsAtsCheck(req, res);
+    if (pathname === "/__editor/internships/ats-assess" && req.method === "POST") return await handleInternshipsAssess(req, res);
+    if (pathname === "/__editor/internships/posting-text" && req.method === "POST") return await handleInternshipsPostingText(req, res);
+    if (pathname === "/__editor/internships/doc-text") return await handleInternshipsDocText(req, res);
     if (pathname === "/__editor/internships/ats-manual" && req.method === "GET") return handleInternshipsManual(req, res);
     if (pathname === "/__editor/internships/file" && req.method === "GET") return handleInternshipsFile(req, res);
     if (pathname === "/__editor/internships/template" && req.method === "POST") return await handleInternshipsTemplateUpload(req, res);
 
-    if (pathname === "/") {
+    // The app opens on Search. The public profile page itself is at /?public (the Profile / Editor links to it).
+    if (pathname === "/" && !new URL(req.url, `http://${HOST}`).searchParams.has("public")) {
       res.writeHead(302, { Location: `${prefix}workspace/` });
       return res.end();
     }
@@ -1017,12 +1326,10 @@ await build();
 
 server.listen(PORT, HOST, () => {
   console.log(`
-Old draft export: http://${HOST}:${PORT}${prefix}editor/
-Workspace ready:  http://${HOST}:${PORT}${prefix}workspace/
-Site preview:     http://${HOST}:${PORT}${prefix}
-
-  Profile editor: serve ../GJUBoard and open editor.html.
-  Import its JSON here with npm run import-data -- <file>.
+Search:           http://${HOST}:${PORT}${prefix}workspace/
+Profile / Editor: http://${HOST}:${PORT}${prefix}editor/
+Settings:         http://${HOST}:${PORT}${prefix}settings/
+Public profile:   http://${HOST}:${PORT}${prefix}?public
 
 Press Ctrl+C to stop.
 `);

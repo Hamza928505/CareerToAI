@@ -52,6 +52,23 @@ test("no NVIDIA key is a clear error", async () => {
   await assert.rejects(searchNim({ env: {} }), /NVIDIA_API_KEY/);
 });
 
+// One slow answer used to throw away the whole NIM search; now it ends only the model's part. A refused key still fails.
+test("a model that times out mid-search ends the model's part, not the search", async () => {
+  const ok = (body) => ({ ok: true, status: 200, json: async () => body, text: async () => "" });
+  let nvidia = 0;
+  const fetchImpl = async (url) => {
+    if (new URL(String(url)).hostname !== "integrate.api.nvidia.com") return ok({ results: [] });
+    if (++nvidia === 1) return ok({ usage: {}, choices: [{ message: { content: "", tool_calls: [{ id: "c1", function: { name: "exa_search", arguments: '{"query":"Praktikum"}' } }] } }] });
+    throw Object.assign(new Error("The operation was aborted due to timeout"), { name: "TimeoutError" });
+  };
+  const { jobs, warnings } = await searchNim({ env: { NVIDIA_API_KEY: "k", EXA_API_KEY: "k" }, fetchImpl, now: NOW, sweep: false });
+  assert.deepEqual(jobs, []);
+  assert.equal(nvidia, 2); // no third "reply with JSON" call after the failure
+  assert.ok(warnings.some((w) => /stopped early \(The operation was aborted due to timeout\)/.test(w)));
+  const refused = async () => ({ ok: false, status: 401, json: async () => ({}), text: async () => "" });
+  await assert.rejects(searchNim({ env: { NVIDIA_API_KEY: "k" }, fetchImpl: refused, now: NOW, sweep: false }), /refused the key/);
+});
+
 const reply = (body) => ({ ok: true, status: 200, json: async () => body, text: async () => "" });
 const answerWith = (postings) => reply({ usage: {}, choices: [{ message: { content: JSON.stringify({ postings }) } }] });
 
@@ -295,4 +312,15 @@ test("a date after today is no posting date: the row becomes an undated lead", a
   });
   const { jobs } = await searchNim({ env: { NVIDIA_API_KEY: "k", EXA_API_KEY: "k" }, fetchImpl, now: NOW });
   assert.deepEqual(jobs.map((j) => [j.url, j.date_posted, j.site_lead]), [[url, "", true]]);
+});
+
+test("choosing specific boards restricts both the NIM prompt and the site sweep to those boards", async () => {
+  const { fetchImpl, log } = world({
+    rounds: nothing,
+    exa: (d) => d === "stepstone.de" ? [{ title: "Praktikum Informatik (m/w/d)", url: STEP, text: "Acme GmbH in Berlin", publishedDate: "2026-11-06" }] : [],
+  });
+  const { jobs, stats } = await searchNim({ env: { NVIDIA_API_KEY: "k", EXA_API_KEY: "k" }, fetchImpl, now: NOW, sites: ["StepStone"] });
+  assert.deepEqual(jobs.map((j) => j.url), [STEP]);
+  assert.deepEqual(log.exa, ["stepstone.de"]);
+  assert.equal(stats.sweep.sites, 1);
 });
