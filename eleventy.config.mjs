@@ -1,6 +1,7 @@
 import fs from "node:fs";
+import path from "node:path";
 
-import { formatDate } from "./lib/content.mjs";
+import { formatDate, readable, ROOT } from "./lib/content.mjs";
 import { personGraph } from "./lib/jsonld.mjs";
 import { resolveSite } from "./lib/site.mjs";
 
@@ -23,10 +24,10 @@ export default function (eleventyConfig) {
   eleventyConfig.addPassthroughCopy({ "node_modules/xlsx/xlsx.mjs": "assets/xlsx.mjs" });
   // Publish the raw data too — an AI agent that would rather parse JSON than
   // HTML can fetch /data/certificates.json directly.
-  eleventyConfig.addPassthroughCopy({ "data/certificates.json": "data/certificates.json" });
-  eleventyConfig.addPassthroughCopy({ "data/profile.json": "data/profile.json" });
-  eleventyConfig.addPassthroughCopy({ "data/experience.json": "data/experience.json" });
-  eleventyConfig.addPassthroughCopy({ "data/projects.json": "data/projects.json" });
+  // Without the student's own (git-ignored) file, its placeholder is published under the same name (readable()).
+  for (const name of ["certificates", "profile", "experience", "projects"]) {
+    eleventyConfig.addPassthroughCopy({ [path.relative(ROOT, readable(path.join(ROOT, "data", `${name}.json`))).replaceAll("\\", "/")]: `data/${name}.json` });
+  }
   // Optional: written by `npm run skills:import`. The editor fetches it lazily
   // and works without it, so its absence must not fail the build.
   if (fs.existsSync("data/skill-taxonomy.json")) {

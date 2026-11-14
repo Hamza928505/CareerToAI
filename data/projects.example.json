@@ -1,0 +1,21 @@
+[
+  {
+    "id": "careertoai-machine-readable-profile",
+    "name": "CareerToAI",
+    "role": "Author",
+    "organization": "",
+    "url": "",
+    "sourceUrl": "https://github.com/example/careertoai",
+    "startDate": "2025-11",
+    "endDate": "",
+    "description": "Sample entry so the Projects section renders on a fresh clone. A static profile built to be read by machines: Eleventy renders the same data/*.json into semantic HTML, schema.org JSON-LD and a plain-text summary at /llms.txt, so an assistant needs one fetch rather than a scrape.",
+    "skills": [
+      "Eleventy",
+      "Node.js",
+      "schema.org",
+      "Static Site Generation"
+    ],
+    "attachmentImage": "",
+    "addedAt": "2025-11-01"
+  }
+]

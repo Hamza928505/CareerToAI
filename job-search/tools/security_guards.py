@@ -114,6 +114,13 @@ REQUIRED_IGNORE_RULES = [
     "applications.xlsx",
     "data/tracker.csv",
     "data/profile-private.json",
+    # The student's profile itself (the site builds from data/*.example.json without it).
+    "data/profile.json",
+    "data/experience.json",
+    "data/projects.json",
+    "data/certificates.json",
+    "data/profile-extras.json",
+    ".claude/skills/job-application-assistant/01-candidate-profile.md",
     "src/assets/Student-data/*",
     "src/assets/Student-data/student.json",
     "src/assets/Student-data/*.docx",

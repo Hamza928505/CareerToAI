@@ -45,7 +45,14 @@ Rules that follow from that:
   reads them locally to score jobs and tailor documents (the search itself reads the field of study from `data/profile.json`, then from `student.json`); the AI provider is
   chosen in `.env` (`LLM_PROVIDER`, see `.env.example`). The phone number lives in
   `data/profile-private.json`, also gitignored: never put it in `profile-extras.json`,
-  because that file and the generated candidate profile are committed.
+  because that file is published on the site.
+- **The profile stays out of git as well.** `data/profile.json`, `experience.json`, `projects.json`,
+  `certificates.json`, `profile-extras.json` and the generated `01-candidate-profile.md` are
+  gitignored (the student asked, 2026-11-15) and live only on this computer. A checkout without
+  them, the GitHub Pages build included, reads `data/<name>.example.json` instead (placeholders,
+  no personal data) through `readable()` in `lib/content.mjs`, so the published site shows
+  placeholders. Reads only fall back: `writeJson` and every save write the real file. Never put
+  real data in an `.example.json`, and never `git add -f` the real files.
 - **The tracker stays out of git.** It holds employers' contact names, e-mails and
   phone numbers, and this repo publishes a public site. `data/applications.csv`
   and `job_search_tracker.xlsx` are gitignored; `data/applications.example.csv`

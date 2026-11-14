@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { filterCompanies, nameKey, normalizeCompany, sizeBand, upsertCompanies } from "../lib/company-directory.mjs";
-import { confirmBoard, createReader, detectPlatform, findCareers, findWebsite, pageLinks, parseRobots, pickCareersLink, robotsAllows } from "../lib/company-discovery.mjs";
+import { confirmBoard, createReader, detectPlatform, findCareers, findWebsite, isPrivateAddress, pageLinks, parseRobots, pickCareersLink, robotsAllows } from "../lib/company-discovery.mjs";
 import { companyJobs, inGermany, matchesSearch, searchCompanySites } from "../lib/company-jobs.mjs";
 
 test("a company found twice is one record, whatever its legal form or source, and nothing known is overwritten", () => {
@@ -35,19 +35,45 @@ test("robots.txt is obeyed: the longest rule decides, and our own group wins ove
   assert.equal(robotsAllows(parseRobots("User-agent: *\nAllow: /\n\nUser-agent: CareerToAI\nDisallow: /"), "/jobs"), false);
 });
 
-/** A fake web: { url: body | { status } }. Counts requests and records the pauses the reader asked for. */
-function fakeWeb(pages) {
+/**
+ * A fake web: { url: body | { status, location? } } and a fake DNS: { host: [addresses] }, every other name being public.
+ * Counts requests and records the pauses the reader asked for.
+ */
+function fakeWeb(pages, names = {}) {
   const seen = [], waits = [];
   let clock = 0;
   const fetchImpl = async (url) => {
     seen.push(url);
     if (!(url in pages)) { if (url.endsWith("/robots.txt")) return { ok: false, status: 404, url, text: async () => "" }; throw new Error("ENOTFOUND"); }
     const page = pages[url];
-    return typeof page === "string" ? { ok: true, status: 200, url, text: async () => page } : { ok: false, status: page.status, url, text: async () => "" };
+    return typeof page === "string" ? { ok: true, status: 200, url, text: async () => page }
+      : { ok: false, status: page.status, url, headers: { get: (name) => (name === "location" ? page.location : null) }, text: async () => "" };
   };
-  const read = createReader({ fetchImpl, now: () => clock, wait: async (ms) => { waits.push(ms); clock += ms; } });
+  const resolve = async (host) => names[host] || ["93.184.216.34"];
+  const read = createReader({ fetchImpl, resolve, now: () => clock, wait: async (ms) => { waits.push(ms); clock += ms; } });
   return { read, seen, waits };
 }
+
+test("a public name that points at this computer, or a redirect to a private address, is never read", async () => {
+  const web = fakeWeb({
+    "https://firma.example/robots.txt": "User-agent: *\nAllow: /",
+    "https://firma.example/alt": { status: 301, location: "/neu" },
+    "https://firma.example/neu": "neu",
+    "https://firma.example/weiter": { status: 302, location: "http://127.0.0.1:8081/__editor/tracker" },
+    "https://firma.example/umweg": { status: 307, location: "https://intern.example/" },
+    "https://rebind.example/": "secret",
+  }, { "rebind.example": ["127.0.0.1"], "intern.example": ["10.0.0.5"] });
+  const moved = await web.read("https://firma.example/alt");
+  assert.equal(moved.text, "neu");
+  assert.equal(moved.url, "https://firma.example/neu"); // a redirect on a public site is still followed
+  assert.deepEqual(await web.read("https://rebind.example/"), { ok: false, blocked: "private" });
+  assert.deepEqual(await web.read("https://firma.example/weiter"), { ok: false, blocked: "private" });
+  assert.deepEqual(await web.read("https://firma.example/umweg"), { ok: false, blocked: "private" });
+  assert.equal(web.seen.some((url) => /127\.0|rebind|intern\./.test(url)), false);
+
+  for (const address of ["127.0.0.1", "10.1.2.3", "100.64.0.1", "169.254.169.254", "::1", "::ffff:127.0.0.1", "fd00::1", "fe80::1", "not an address"]) assert.equal(isPrivateAddress(address), true, address);
+  for (const address of ["93.184.216.34", "2a00:1450:4001:80b::200e"]) assert.equal(isPrivateAddress(address), false, address);
+});
 
 test("a site is read slowly and only where it allows; private addresses and prohibited job boards are never read", async () => {
   const web = fakeWeb({ "https://firma.example/robots.txt": "User-agent: *\nDisallow: /privat", "https://firma.example/": "home", "https://firma.example/karriere": "jobs" });

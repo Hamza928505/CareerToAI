@@ -23,6 +23,17 @@ data/tracker.csv
 # the committed candidate profile must not carry.
 data/profile-private.json
 
+# The student's whole profile stays on this computer. A checkout without these files
+# (the GitHub Pages build, a fresh clone) reads data/<name>.example.json, which holds
+# placeholders only (readable() in lib/content.mjs). The candidate profile is generated
+# from them by `npm run profile`, so it is the student's data too.
+data/profile.json
+data/experience.json
+data/projects.json
+data/certificates.json
+data/profile-extras.json
+.claude/skills/job-application-assistant/01-candidate-profile.md
+
 # The last AI skills analysis: derived from the profile, regenerated on demand.
 data/skills-analysis.json
 

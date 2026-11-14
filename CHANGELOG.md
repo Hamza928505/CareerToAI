@@ -20,6 +20,11 @@ per-file diff commands.
   letter, and per application the full advert, the GJU check and, when run, the ATS assessment (terms to use, gaps never to claim).
   `lib/application-brief.mjs`, `POST /__editor/internships/brief`; no AI of ours is called. It uses what Phase 1 produced when it has
   been run, else it evaluates the postings itself. The file holds your contact details, as the profile does.
+- **Your profile data stays on your computer.** `data/profile.json`, `experience.json`, `projects.json`, `certificates.json`,
+  `profile-extras.json` and the generated `01-candidate-profile.md` are git-ignored and no longer tracked (`security_guards.py` keeps the
+  rules in place). A checkout without them, such as the GitHub Pages build, reads `data/<name>.example.json`, placeholders with no
+  personal data (`readable()` in `lib/content.mjs`), so the published site shows placeholders; locally everything uses your real files,
+  and every save still writes them. The files stay in the history of earlier commits.
 - **CVs & CLs: choose the AI that writes the CVs and letters and runs the ATS assessment.** A picker beside the Phase 2 button lists
   every AI the app knows: Claude Opus (default), Sonnet or Haiku through your Claude subscription, and by name the Claude API, NVIDIA
   NIM, Gemini API, OpenRouter, GitHub Models and Ollama, each with its own key from Settings (greyed out while the key is missing),
@@ -30,6 +35,12 @@ per-file diff commands.
 
 ### Fixed
 
+- **The page reader can no longer be pointed at this computer or the home network** (CodeQL js/request-forgery). It checked only the
+  typed host name; now every hop is checked by the addresses its name resolves to (`isPrivateAddress`, `lib/company-discovery.mjs`), and
+  redirects are followed by the reader, each one checked again, the source policy included. Also: the advert text of
+  `/__editor/internships/posting-text` decodes HTML entities in one pass (js/double-escaping), and the NIM search compares its domain
+  list exactly (js/incomplete-url-substring-sanitization). CI generates the candidate profile from the placeholders instead of
+  comparing a file that is no longer committed.
 - **CVs & CLs: the CV is tailored to the advert by Claude Opus, and the page says what happened.** The AI pass was optional, depended on
   `LLM_PROVIDER` and failed silently, which left only the address, profile line and date changed. `generateDocumentsForPosting`
   (`lib/internships-studio.mjs`) now always asks Claude Opus (the subscription, no key) with the form's fields, the advert and shortlist

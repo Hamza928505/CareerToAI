@@ -891,6 +891,8 @@ async function handleInternshipsAssess(req, res) {
   sendJson(res, 200, { ok: true, assessment, checked: pdfPath ? path.basename(pdfPath) : "" });
 }
 
+const PAGE_ENTITIES = { nbsp: " ", "#160": " ", amp: "&", lt: "<", gt: ">", quot: '"', "#39": "'", apos: "'" };
+
 // POST /__editor/internships/posting-text { url }: the advert's text from its own page, through the polite reader
 // (robots.txt, the source policy, no private addresses). A job board that may not be read answers with the reason.
 async function handleInternshipsPostingText(req, res) {
@@ -903,7 +905,8 @@ async function handleInternshipsPostingText(req, res) {
     return sendJson(res, 200, { ok: false, reason: why });
   }
   const text = page.text.replace(/<(script|style|noscript|svg|head)[\s\S]*?<\/\1>/gi, " ").replace(/<\/(p|div|li|h[1-6]|tr|section)>|<br\s*\/?>/gi, "\n").replace(/<[^>]+>/g, " ")
-    .replace(/&nbsp;|&#160;/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'")
+    // One pass, so "&amp;lt;" becomes "&lt;" and never "<" (CodeQL js/double-escaping).
+    .replace(/&(nbsp|#160|amp|lt|gt|quot|#39|apos);/g, (_, name) => PAGE_ENTITIES[name])
     .replace(/[ \t]+/g, " ").replace(/\n\s*\n+/g, "\n\n").trim();
   // A page that draws its advert with a script has almost no text of its own.
   if (text.length < 300) return sendJson(res, 200, { ok: false, reason: "The page has no advert text a program can read (it is drawn by a script). Open the advert and paste its text." });
