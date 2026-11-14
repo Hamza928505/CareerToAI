@@ -245,6 +245,24 @@ function render() {
     ),
     "",
     listSection(
+      "Courses and Training", extras.courses,
+      (c) => `- ${real(c.title)}${real(c.provider) ? ` - ${real(c.provider)}` : ""}${real(c.date) ? ` (${real(c.date)})` : ""}${c.verifiedBy ? " [evidenced by a document]" : ""}${c.skills?.length ? `: ${c.skills.join(", ")}` : ""}`,
+      "No courses listed. Add them in the Profile editor.",
+    ),
+    "",
+    listSection(
+      "Soft Skills", extras.softSkills,
+      (skill) => `- ${skill}`,
+      "No soft skills listed. Add them in the Profile editor.",
+    ),
+    "",
+    listSection(
+      "Professional Interests", extras.interests,
+      (interest) => `- ${interest}`,
+      "No professional interests listed. Add them in the Profile editor.",
+    ),
+    "",
+    listSection(
       "References", extras.references,
       (r) => `- ${real(r.name)}, ${real(r.title)}, ${real(r.company)} (${real(r.email)})`,
       "No references listed. Add them to data/profile-extras.json.",

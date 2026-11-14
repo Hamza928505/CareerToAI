@@ -93,6 +93,8 @@ function blankState() {
     experience: [],
     projects: [],
     certificates: [],
+    // What the public profile does not model but applications need (data/profile-extras.json).
+    extras: { employmentStatus: "", constraints: "", softSkills: [], interests: [], courses: [], awards: [] },
   };
 }
 
@@ -265,6 +267,37 @@ const LISTS = {
     image: { label: "Certificate image", hint: "Published at 1200px wide with metadata stripped. Crop anything private first.", extract: true },
   },
 
+  courses: {
+    target: () => state.extras.courses,
+    label: "course",
+    plural: "courses",
+    sortKey: (e) => `${dateKey(e.date)}-1`,
+    heading: (e) => [e.title, e.provider].filter(Boolean).join(" — ") || "New course",
+    blank: () => ({ _key: uid(), title: "", provider: "", date: "", description: "", skills: [] }),
+    fields: [
+      { name: "title", label: "Course or training", type: "text", full: true },
+      { name: "provider", label: "Provider", type: "text", placeholder: "Coursera, Udemy, your university" },
+      { name: "date", label: "Completed", type: "month" },
+      { name: "description", label: "What it covered", type: "textarea", rows: 3, full: true },
+    ],
+    skills: true,
+  },
+
+  awards: {
+    target: () => state.extras.awards,
+    label: "achievement",
+    plural: "achievements",
+    sortKey: (e) => `${dateKey(e.year)}-1`,
+    heading: (e) => e.title || "New achievement",
+    blank: () => ({ _key: uid(), title: "", event: "", year: "", description: "" }),
+    fields: [
+      { name: "title", label: "Achievement", type: "text", full: true, placeholder: "Dean's list, hackathon prize, scholarship" },
+      { name: "event", label: "Event or awarding body", type: "text" },
+      { name: "year", label: "Year", type: "text", placeholder: "2025" },
+      { name: "description", label: "Description", type: "textarea", rows: 2, full: true },
+    ],
+  },
+
   links: {
     target: () => state.profile.links,
     label: "link",
@@ -342,6 +375,14 @@ function adoptState(incoming) {
     experience: withKeys(incoming.experience),
     projects: withKeys(incoming.projects),
     certificates: withKeys(incoming.certificates),
+    extras: {
+      ...base.extras,
+      ...(incoming.extras && typeof incoming.extras === "object" ? incoming.extras : {}),
+      softSkills: Array.isArray(incoming.extras?.softSkills) ? incoming.extras.softSkills : [],
+      interests: Array.isArray(incoming.extras?.interests) ? incoming.extras.interests : [],
+      courses: withKeys(incoming.extras?.courses),
+      awards: withKeys(incoming.extras?.awards),
+    },
   };
 }
 
@@ -463,6 +504,7 @@ function ownSkills() {
   for (const role of state.experience) add(role.skills);
   for (const project of state.projects) add(project.skills);
   for (const cert of state.certificates) add(cert.skills);
+  for (const course of state.extras.courses) add(course.skills);
   return [...seen.values()];
 }
 
@@ -1109,6 +1151,8 @@ function renderList(listName) {
         },
       }, [chevron(), el("span", { textContent: config.heading(item) })]),
     ]);
+    // An entry that came from an uploaded document says so: it is evidenced, not only declared.
+    if (item.evidence?.documentId) heading.append(el("span", { className: "entry-verified", textContent: "From a document", title: `Evidence: ${item.evidence.file}` }));
     const toggle = heading.firstChild;
     toggle.setAttribute("aria-expanded", String(open));
     toggle.setAttribute("aria-controls", bodyId);
@@ -1241,7 +1285,7 @@ function renderCounts() {
   // One strip with every count, so you can see what is loaded without opening a section.
   const summary = root.querySelector("[data-summary]");
   if (summary) {
-    const order = ["education", "experience", "projects", "certificates", "links", "languages", "skills", "student-data"];
+    const order = ["education", "experience", "projects", "certificates", "courses", "awards", "links", "languages", "skills", "student-data"];
     summary.replaceChildren(...order.filter((k) => counts[k]).map((k) => {
       const { n, one, many } = counts[k];
       const li = document.createElement("li");
@@ -1556,6 +1600,14 @@ function renderProfileFields() {
   }
   const skillsHost = root.querySelector("[data-skills='profile.skills']");
   if (skillsHost) renderSkills(skillsHost, state.profile.skills, "profile.skills");
+  for (const control of root.querySelectorAll("[data-path^='extras.']")) {
+    const value = state.extras[control.dataset.path.split(".")[1]];
+    if (typeof value === "string") control.value = value;
+  }
+  for (const key of ["softSkills", "interests"]) {
+    const host = root.querySelector(`[data-skills='extras.${key}']`);
+    if (host) renderSkills(host, state.extras[key], `extras.${key}`);
+  }
 }
 
 function renderAll() {
@@ -1573,6 +1625,10 @@ function setByPath(path, value) {
 
   if (head === "profile") {
     state.profile[rest[0]] = value;
+    return;
+  }
+  if (head === "extras") {
+    state.extras[rest[0]] = value;
     return;
   }
 
@@ -1933,6 +1989,7 @@ async function buildPayload() {
     experience: state.experience,
     projects: state.projects,
     certificates: state.certificates,
+    extras: state.extras,
     images,
   };
 }
@@ -2058,14 +2115,14 @@ async function detectLocalMode() {
   root.querySelector("[data-action='save-server']").hidden = !localMode.available;
   const saveStudentDataBtn = root.querySelector("[data-action='save-student-data']");
   if (saveStudentDataBtn) saveStudentDataBtn.hidden = !localMode.available;
-  if (localMode.available) { loadStudentData(); initPrivatePhone(); enableAiRadar(aiStatus); }
+  if (localMode.available) { loadStudentData(); loadDocuments(); initPrivatePhone(); enableAiRadar(aiStatus); }
   root.querySelector("[data-local-help]").hidden = !localMode.available;
 
   if (note) {
     note.textContent = localMode.available
       ? localMode.hasApiKey
-        ? "Running locally. You can save straight into the repository, and extract certificate details with AI."
-        : "Running locally. You can save straight into the repository. Add ANTHROPIC_API_KEY to .env to enable AI extraction."
+        ? "Running on your computer. Save profile writes your data files, and uploaded documents are read with AI."
+        : "Running on your computer. Save profile writes your data files. Uploaded documents are read with Claude through your subscription."
       : "Running from the published site. Your edits stay in this browser until you download the .json and import it.";
   }
 }
@@ -2088,13 +2145,13 @@ async function saveToServer(button) {
     await Swal.fire({
       ...dialog,
       icon: "success",
-      title: "Saved to the repository",
+      title: "Profile saved",
       html:
         bullets([
           ...result.written,
           ...(result.images ? [`${result.images} image(s) into src/certs/ and src/media/`] : []),
         ]) +
-        "<p class=\"swal-note\">Nothing is live yet — commit and push to publish.</p>",
+        "<p class=\"swal-note\">Search, CVs &amp; CLs and applications use this profile from now on. The public site changes only when you commit and push.</p>",
       confirmButtonText: "OK",
     });
   } catch (error) {
@@ -2169,6 +2226,7 @@ function init() {
   form.addEventListener("submit", (event) => event.preventDefault());
 
   setupDropzones();
+  initDocuments();
   initAiRadar();
 
   for (const button of root.querySelectorAll("[data-add]")) {
@@ -2291,13 +2349,10 @@ function init() {
   });
 }
 
-async function saveStudentData(button) {
-  if (!(await passesValidation("saved"))) return;
-
-  button.disabled = true;
-  busy("Saving to Student-data...");
+/** Saves a chosen base CV or cover letter into Student-data. The profile itself is saved by Save profile. */
+async function saveStudentData() {
+  busy("Saving your document…");
   try {
-    const payload = await buildPayload();
     const fileInputs = document.querySelectorAll("[data-doc-upload]");
     const files = {};
     for (const input of fileInputs) {
@@ -2315,7 +2370,7 @@ async function saveStudentData(button) {
         files[saveName] = base64;
       }
     }
-    const reqBody = { data: payload, files };
+    const reqBody = { files };
 
     const response = await fetch(`${apiBase()}__editor/student-data`, {
       method: "POST",
@@ -2324,11 +2379,10 @@ async function saveStudentData(button) {
     });
     const result = await response.json();
     if (!response.ok) throw new Error(result.error || `HTTP ${response.status}`);
-    await Swal.fire({ ...dialog, icon: "success", title: "Saved to Student-data", confirmButtonText: "OK" });
+    await Swal.fire({ ...dialog, icon: "success", title: "Saved to your documents", confirmButtonText: "OK" });
+    loadStudentData({ adopt: false });
   } catch (e) {
     Swal.close(); await alertError("Failed to save", e.message);
-  } finally {
-    button.disabled = false;
   }
 }
 
@@ -2375,15 +2429,17 @@ async function initPrivatePhone() {
   input.addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(save, 600); });
 }
 
-async function loadStudentData() {
+async function loadStudentData({ adopt = true } = {}) {
   try {
     const response = await fetch(`${apiBase()}__editor/student-data`);
     const result = await response.json();
     if (result.ok) {
-      if (result.data) {
+      if (adopt && result.data) {
         adoptState(result.data);
         renderAll();
-        setStatus("Loaded from Student-data");
+        // The newest saved copy wins. An export in the Internships folder that is newer than the editor's own file is
+        // loaded and named, so saving here is what makes it the one profile every page uses.
+        setStatus(/Internships/.test(result.source || "") ? `Loaded the newer export from your Internships folder (${String(result.savedAt).slice(0, 10)}). Save profile to keep it.` : "Loaded your saved profile");
       }
       if (result.existingDocs) {
         document.querySelectorAll(".current-doc").forEach(el => el.innerHTML = "");
@@ -2464,8 +2520,7 @@ function setupDropzones() {
         });
 
         if (isConfirmed) {
-          const btn = document.querySelector("[data-action='save-student-data']");
-          if (btn) saveStudentData(btn);
+          saveStudentData();
         } else {
           input.value = "";
           nameDisplay.innerHTML = "";
@@ -2476,6 +2531,264 @@ function setupDropzones() {
     });
   });
 }
+// ---------------------------------------------------------------------------
+// Import from documents
+//
+// Upload a certificate, a reference, a transcript or an old CV; an AI reads it
+// and proposes entries (lib/document-intake.mjs). Nothing joins the profile
+// until it is ticked in the review, and nothing is published until Save profile.
+// Every proposed value says where it comes from: the document itself, online
+// research on the provider, or the AI's own suggestion.
+// ---------------------------------------------------------------------------
+
+let documents = [];
+
+const DOC_STATE = { uploaded: "Not read yet", analysed: "Needs your review", approved: "Added to profile", dismissed: "Set aside" };
+const KIND_LABEL = { certificate: "Certificate", course: "Course or training", experience: "Experience", education: "Education", project: "Project", language: "Language", achievement: "Achievement" };
+const ORIGIN_LABEL = { document: "In the document", research: "Online research", suggestion: "AI suggestion" };
+
+async function docRequest(action, body) {
+  const response = await fetch(`${apiBase()}__editor/documents${action ? `/${action}` : ""}`,
+    body ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) } : { cache: "no-store" });
+  const result = await response.json();
+  if (!response.ok) throw new Error(result.error || `HTTP ${response.status}`);
+  return result;
+}
+
+function renderDocuments() {
+  const list = root.querySelector("[data-documents-list]");
+  if (!list) return;
+  const badge = root.querySelector('[data-section-count="documents"]');
+  if (badge) {
+    badge.textContent = documents.length ? String(documents.length) : "";
+    badge.hidden = !documents.length;
+  }
+  if (!documents.length) {
+    list.replaceChildren(el("p", { className: "muted empty", textContent: "No documents uploaded yet." }));
+    return;
+  }
+  list.replaceChildren(...documents.map((doc) => {
+    const count = doc.analysis?.proposals?.length || 0;
+    const state = el("span", { className: "doc-state", textContent: DOC_STATE[doc.status] || doc.status });
+    state.dataset.state = doc.status;
+    const detail = [
+      doc.analysis?.summary,
+      doc.reader && `Read by ${doc.reader}`,
+      doc.status === "approved" && `${doc.approved?.length || 0} of ${count} entries added`,
+    ].filter(Boolean).join(" · ") || `${Math.max(1, Math.round(doc.size / 1024))} KB · uploaded ${doc.uploadedAt.slice(0, 10)}`;
+    const info = el("div", { className: "doc-info" }, [el("strong", { textContent: doc.name }), el("small", { textContent: detail })]);
+    const actions = el("div", { className: "doc-actions" }, [
+      doc.analysis ? el("button", { type: "button", className: `btn btn-small${doc.status === "analysed" ? " btn-primary" : ""}`, textContent: `Review ${count} proposal${count === 1 ? "" : "s"}`, onclick: () => reviewDocument(doc) }) : null,
+      el("button", { type: "button", className: `btn btn-small${doc.status === "uploaded" ? " btn-primary" : ""}`, textContent: doc.analysis ? "Read again" : "Read with AI", onclick: () => analyseDocument(doc) }),
+      el("a", { className: "btn btn-small", textContent: "Open", href: `${apiBase()}__editor/documents/file?id=${encodeURIComponent(doc.id)}`, target: "_blank", rel: "noopener" }),
+      el("button", { type: "button", className: "btn btn-small btn-danger", textContent: "Remove", onclick: () => removeDocument(doc) }),
+    ]);
+    return el("article", { className: "doc-row" }, [state, info, actions]);
+  }));
+}
+
+async function loadDocuments() {
+  const box = root.querySelector("[data-documents]");
+  if (!box) return;
+  try {
+    const result = await docRequest("");
+    documents = result.documents;
+    box.hidden = false;
+    const note = root.querySelector("[data-documents-note]");
+    if (note) {
+      note.textContent = (result.readers.anthropic
+        ? "PDFs and pictures are read by Claude with your Anthropic key."
+        : "PDFs and pictures are read by Claude through your subscription (the claude command), which can take a few minutes each. Word and text files are read by your AI provider.")
+        + (result.readers.research ? " A certificate's provider is then looked up online." : " Add a Tavily or Exa key in Settings to have a certificate's provider looked up online.");
+    }
+    renderDocuments();
+  } catch {
+    box.hidden = true;
+  }
+}
+
+async function uploadDocuments(files) {
+  for (const file of files) {
+    if (file.size > 20 * 1024 * 1024) {
+      await alertError("That file is too large", `${file.name} is over 20 MB.`);
+      continue;
+    }
+    try {
+      setStatus(`Uploading ${file.name}…`);
+      const { document: doc } = await docRequest("upload", { name: file.name, dataUrl: await blobToDataUrl(file) });
+      documents.unshift(doc);
+      renderDocuments();
+      setStatus(`${file.name} is in your documents`, "ok");
+    } catch (error) {
+      await alertError("Could not upload", error.message);
+    }
+  }
+}
+
+async function analyseDocument(doc) {
+  aiBusy(`Reading ${doc.name}…`, "solving");
+  try {
+    const result = await docRequest("analyse", { id: doc.id });
+    documents = documents.map((item) => (item.id === doc.id ? result.document : item));
+    renderDocuments();
+    Swal.close();
+    reviewDocument(result.document);
+  } catch (error) {
+    Swal.close();
+    alertError("The document could not be read", error.message);
+  }
+}
+
+async function removeDocument(doc) {
+  const { isConfirmed } = await Swal.fire({
+    ...dialog, icon: "warning", title: "Remove this document?",
+    text: `${doc.name} is deleted from your documents folder. Entries you already added to your profile stay.`,
+    showCancelButton: true, confirmButtonText: "Remove", cancelButtonText: "Keep it", focusCancel: true,
+  });
+  if (!isConfirmed) return;
+  try {
+    await docRequest("remove", { id: doc.id });
+    documents = documents.filter((item) => item.id !== doc.id);
+    renderDocuments();
+  } catch (error) {
+    alertError("Could not remove", error.message);
+  }
+}
+
+/** The profile entry a ticked proposal becomes. `evidence` ties it to the document; only skills found in the document's text count as verified. */
+function entryFromProposal(doc, p, description, skills) {
+  const month = (value) => String(value || "").slice(0, 7);
+  const evidence = { documentId: doc.id, file: doc.name, verifiedSkills: p.skills.filter((s) => s.origin === "document" && skills.includes(s.name)).map((s) => s.name) };
+  switch (p.kind) {
+    case "certificate":
+      return ["certificates", { ...LISTS.certificates.blank(), title: p.title, issuer: p.organization, dateIssued: p.endDate, credentialId: p.credentialId, credentialUrl: p.credentialUrl, description, skills, evidence }];
+    case "course":
+      return ["courses", { ...LISTS.courses.blank(), title: p.title, provider: p.organization, date: month(p.endDate || p.startDate), description, skills, evidence }];
+    case "experience":
+      return ["experience", { ...LISTS.experience.blank(), title: p.title, organization: p.organization, location: p.location, startDate: month(p.startDate), endDate: month(p.endDate), description, skills, evidence }];
+    case "education":
+      return ["education", { ...LISTS.education.blank(), school: p.organization, degree: p.title, startDate: month(p.startDate), endDate: month(p.endDate), description: [p.level && `Result: ${p.level}`, description].filter(Boolean).join("\n"), evidence }];
+    case "project":
+      return ["projects", { ...LISTS.projects.blank(), name: p.title, organization: p.organization, startDate: month(p.startDate), endDate: month(p.endDate), description, skills, evidence }];
+    case "language":
+      return ["languages", { ...LISTS.languages.blank(), language: p.title, level: p.level, notes: [p.organization, description].filter(Boolean).join(". ") }];
+    default:
+      return ["awards", { ...LISTS.awards.blank(), title: p.title, event: p.organization, year: String(p.endDate || p.startDate).slice(0, 4), description, evidence }];
+  }
+}
+
+/** One proposal as a card: what was read, where each part comes from, and what would be added. */
+function proposalCard(doc, proposal, index) {
+  const already = doc.approved?.includes(index);
+  const pick = el("input", { type: "checkbox", checked: !already });
+  const flag = (field) => (proposal.check.includes(field) ? el("span", { className: "origin origin-check", textContent: "Check this" }) : null);
+  const fact = (label, value, field) => (value ? el("div", {}, [el("dt", { textContent: label }), el("dd", {}, [value, " ", flag(field)])]) : null);
+  const dates = [proposal.startDate, proposal.endDate].filter(Boolean).join(" to ");
+
+  const head = el("label", { className: "proposal-head" }, [
+    pick,
+    el("span", { className: "proposal-kind", textContent: KIND_LABEL[proposal.kind] || proposal.kind }),
+    el("strong", { textContent: proposal.title }),
+    flag("title"),
+    already ? el("span", { className: "origin origin-document", textContent: "Already added" }) : null,
+  ]);
+  const facts = el("dl", { className: "proposal-facts" }, [
+    fact("Organisation", proposal.organization, "organization"),
+    fact("Dates", dates, proposal.check.includes("startDate") ? "startDate" : "endDate"),
+    fact("Location", proposal.location, "location"),
+    fact("Credential ID", proposal.credentialId, "credentialId"),
+    fact("Verification link", proposal.credentialUrl, "credentialUrl"),
+    fact("Level or result", proposal.level, "level"),
+  ]);
+
+  // The description: the document's own, or the provider's when research found one. The student chooses.
+  const group = `description-${index}`;
+  const choice = (value, origin, text, sources) => el("label", { className: "proposal-description" }, [
+    el("input", { type: "radio", name: group, value, checked: value === "document" }),
+    el("span", {}, [
+      el("span", { className: `origin origin-${origin}`, textContent: ORIGIN_LABEL[origin] }),
+      " ", text,
+      sources?.length ? el("span", { className: "proposal-sources" }, [" Sources: ", ...sources.flatMap((source, i) => [i ? ", " : "", el("a", { href: source.url, target: "_blank", rel: "noopener noreferrer", textContent: `${new URL(source.url).hostname}${source.official ? " (official)" : ""}` })])]) : null,
+    ]),
+  ]);
+  const descriptions = el("div", { className: "proposal-descriptions" }, [
+    proposal.description ? choice("document", doc.analysis.textTrusted ? "document" : "suggestion", proposal.description) : null,
+    proposal.research ? choice("research", "research", proposal.research.description, proposal.research.sources) : null,
+  ]);
+  if (!proposal.description && proposal.research) descriptions.querySelector("input").checked = true;
+
+  const skills = proposal.skills.map((skill) => {
+    const box = el("input", { type: "checkbox", checked: skill.origin === "document", value: skill.name });
+    return el("label", { className: `skill-pick origin-${skill.origin}`, title: ORIGIN_LABEL[skill.origin] }, [box, skill.name]);
+  });
+  const quotes = proposal.quotes.map((quote) => el("blockquote", { textContent: quote }));
+
+  const card = el("article", { className: "proposal" }, [
+    head, facts, descriptions,
+    skills.length ? el("div", { className: "proposal-skills" }, [el("p", { className: "muted", textContent: "Skills. Ticked ones are named in the document; tick a suggestion only if it is true of you." }), el("div", { className: "skill-picks" }, skills)]) : null,
+    quotes.length ? el("div", { className: "proposal-quotes" }, [el("p", { className: "muted", textContent: doc.analysis.textTrusted ? "Found in the document:" : "Read from the picture by the AI (check it against the document):" }), ...quotes]) : null,
+  ]);
+  const read = () => {
+    const from = card.querySelector(`input[name="${group}"]:checked`)?.value;
+    const description = from === "research" ? proposal.research.description : proposal.description;
+    return [description, [...card.querySelectorAll(".skill-pick input:checked")].map((box) => box.value)];
+  };
+  return { card, pick, read, proposal, index };
+}
+
+async function reviewDocument(doc) {
+  const proposals = doc.analysis?.proposals || [];
+  const cards = proposals.map((proposal, index) => proposalCard(doc, proposal, index));
+  const body = el("div", { className: "review" }, [
+    el("p", { className: "muted", textContent: `${doc.analysis.summary} Read by ${doc.reader}.` }),
+    el("ul", { className: "origin-key" }, [
+      el("li", {}, [el("span", { className: "origin origin-document", textContent: "In the document" }), " found in the document's own text"]),
+      el("li", {}, [el("span", { className: "origin origin-research", textContent: "Online research" }), " from the provider's pages, with sources"]),
+      el("li", {}, [el("span", { className: "origin origin-suggestion", textContent: "AI suggestion" }), " inferred, not confirmed"]),
+      el("li", {}, [el("span", { className: "origin origin-check", textContent: "Check this" }), " could not be confirmed in the text"]),
+    ]),
+    doc.analysis.textTrusted ? null : el("p", { className: "review-warning", textContent: "This file has no text a program can read, so the AI's reading could not be checked by code. Compare each value with the document before you add it." }),
+    proposals.length ? null : el("p", { className: "muted", textContent: "Nothing that belongs in a profile was found in this document." }),
+    ...cards.map((item) => item.card),
+  ]);
+  const result = await Swal.fire({
+    ...dialog, title: doc.name, html: body, width: "min(56rem, 96vw)",
+    showConfirmButton: proposals.length > 0, confirmButtonText: "Add ticked entries to my profile",
+    showDenyButton: true, denyButtonText: "Set this document aside", showCancelButton: true, cancelButtonText: "Close",
+    customClass: { ...dialog.customClass, popup: "editor-swal review-swal" },
+  });
+  if (result.isDismissed) return;
+  try {
+    let added = [];
+    if (result.isConfirmed) {
+      for (const item of cards.filter((entry) => entry.pick.checked)) {
+        const [listName, entry] = entryFromProposal(doc, item.proposal, ...item.read());
+        LISTS[listName].target().push(entry);
+        added.push(item.index);
+      }
+      if (!added.length) return;
+      renderAll();
+      scheduleSave();
+    }
+    const { document: updated } = await docRequest("update", { id: doc.id, status: result.isConfirmed ? "approved" : "dismissed", approved: [...new Set([...(doc.approved || []), ...added])] });
+    documents = documents.map((item) => (item.id === doc.id ? { ...item, ...updated, analysis: item.analysis } : item));
+    renderDocuments();
+    if (added.length) toast("success", `Added ${added.length} entr${added.length === 1 ? "y" : "ies"}. Check them, then press Save profile.`);
+  } catch (error) {
+    alertError("Could not record your decision", error.message);
+  }
+}
+
+function initDocuments() {
+  const zone = root.querySelector("[data-documents-drop]");
+  const input = root.querySelector("[data-documents-input]");
+  if (!zone || !input) return;
+  for (const name of ["dragenter", "dragover"]) zone.addEventListener(name, (event) => { event.preventDefault(); zone.classList.add("active"); });
+  for (const name of ["dragleave", "drop"]) zone.addEventListener(name, (event) => { event.preventDefault(); zone.classList.remove("active"); });
+  zone.addEventListener("drop", (event) => uploadDocuments([...(event.dataTransfer?.files || [])]));
+  input.addEventListener("change", () => { uploadDocuments([...input.files]); input.value = ""; });
+}
+
 // Everything above is declaration; this is the only statement that runs on load.
 // It must stay last: init() reads state, LISTS, statusEl and dialog, and those
 // are let/const bindings that are in the temporal dead zone until their line runs.

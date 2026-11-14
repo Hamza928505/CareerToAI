@@ -1,7 +1,7 @@
 ---
 layout: base.njk
-title: Workspace - shortlist, apply
-description: Search for internships, edit your workbook, and decide who applies from one workspace.
+pageTitle: Search - internships, shortlist, apply
+pageDescription: Search for internships, edit your workbook, and decide who applies from one workspace.
 permalink: /workspace/
 noindex: true
 pageStyles: /assets/workspace.css
@@ -10,7 +10,7 @@ eleventyExcludeFromCollections: true
 ---
 
 <div class="workspace">
-<h1 class="visually-hidden">Workspace</h1>
+<h1 class="visually-hidden">Search</h1>
 
 <div class="notice" id="published-notice" hidden>
   <p>
@@ -47,100 +47,12 @@ eleventyExcludeFromCollections: true
   </div>
 </div>
 
-<form class="svc-card" id="settings-form" autocomplete="off" aria-labelledby="credits-h">
-  <header class="svc-head">
-    <div class="svc-title">
-      <h2 id="credits-h">Search &amp; AI services</h2>
-      <p class="muted" id="credits-note">Checked live from your own keys in <code>.env</code>. Only numbers show here, never the keys.</p>
-    </div>
-    <div class="svc-tabs" role="tablist" aria-label="Search services sections">
-      <button type="button" role="tab" id="svc-tab-overview" aria-controls="svc-panel-overview" aria-selected="true" data-tab="overview">Overview</button>
-      <button type="button" role="tab" id="svc-tab-keys" aria-controls="svc-panel-keys" aria-selected="false" tabindex="-1" data-tab="keys" data-local-only hidden>Keys</button>
-      <button type="button" role="tab" id="svc-tab-ai" aria-controls="svc-panel-ai" aria-selected="false" tabindex="-1" data-tab="ai" data-local-only hidden>AI provider</button>
-    </div>
-  </header>
-
-  <div class="svc-body" id="credits">
-    <div role="tabpanel" id="svc-panel-overview" aria-labelledby="svc-tab-overview" tabindex="0">
-      <div class="svc-status" id="svc-status" hidden>
-        <span class="svc-avatar" aria-hidden="true"><i class="fa-solid fa-signal"></i></span>
-        <div class="svc-status-text"><strong id="svc-status-title"></strong><small id="svc-status-desc"></small></div>
-        <span class="svc-badge" id="svc-status-badge"></span>
-      </div>
-      <div class="svc-meter" id="svc-meter" hidden>
-        <div class="svc-meter-label"><span>Keys saved</span><span id="svc-meter-value"></span></div>
-        <div class="credit-bar" role="meter" aria-valuemin="0" aria-valuemax="100" aria-label="Keys saved"><div class="credit-fill" id="svc-meter-fill" data-level="ok"></div></div>
-      </div>
-      <ul class="credit-list" id="credit-list"></ul>
-      <div class="svc-stats" id="svc-stats" hidden>
-        <div class="svc-stat"><span>Services answering</span><strong id="svc-stat-ok">-</strong></div>
-        <div class="svc-stat"><span>AI provider</span><strong id="svc-stat-ai">Not set</strong></div>
-      </div>
-    </div>
-
-    <div role="tabpanel" id="svc-panel-keys" aria-labelledby="svc-tab-keys" tabindex="0" hidden>
-      <p class="muted">Keys are saved to <code>.env</code> on this computer. They are never shown again, and never sent to your browser or to GitHub. Type a new key to replace one, or remove it.</p>
-      <h3 class="svc-sub">Search services</h3>
-      <div id="settings-search" class="settings-rows"></div>
-      <h3 class="svc-sub">Free job APIs (real postings in Germany)</h3>
-      <p class="muted">The search asks these for internships in Germany. Each is free; without its key it is skipped. Saved keys apply to the next search.</p>
-      <details class="settings-how">
-        <summary>How to get each key</summary>
-        <ol>
-          <li><strong>Adzuna</strong> (250 searches a day): <a href="https://developer.adzuna.com/signup" target="_blank" rel="noopener noreferrer">sign up</a>, create an application, then copy its <em>app ID</em> and <em>app key</em> into the two Adzuna rows.</li>
-          <li><strong>Jooble</strong> (500 requests per key, ever): <a href="https://de.jooble.org/api/about" target="_blank" rel="noopener noreferrer">fill the request form on the Germany site</a>. The key arrives by e-mail. A key from jooble.org covers US listings only. A search uses about 6 requests, so search when you need to.</li>
-          <li><strong>Careerjet</strong>: <a href="https://www.careerjet.com/partners/api/" target="_blank" rel="noopener noreferrer">open a publisher account</a> and copy the key from its API page. Then fill <em>Your IP address</em> with your public IP (search "what is my IP"); Careerjet refuses searches without it.</li>
-        </ol>
-        <p class="muted">Adzuna, Jooble and Careerjet answer with their own listings; nothing is read from other sites.</p>
-      </details>
-      <div id="settings-jobapis" class="settings-rows"></div>
-      <h3 class="svc-sub">Connectors (MCP, no key)</h3>
-      <p class="muted">These come through your Claude account, so there is nothing to paste here. Connect them in Claude under Settings, Connectors.</p>
-      <div class="settings-rows">
-        <div class="settings-row"><label>Indeed</label><span>Connected through Claude. Searched by the workspace search.</span></div>
-        <div class="settings-row"><label>Apify</label><span>Connected through Claude. Searched by the workspace search for StepStone and Arbeitsagentur, through community Actors billed per result on your Apify account. Private tracker only. To see how much of your monthly Apify usage is left, add <code>APIFY_TOKEN</code> (from the same account) in the Keys tab, under Search services.</span></div>
-        <div class="settings-row"><label>NVIDIA NIM</label><span>Searches LinkedIn and other boards through search APIs (Tavily, Exa, Firecrawl, Arbeitnow) with an NVIDIA model, so Claude spends no tokens there. Needs <code>NVIDIA_API_KEY</code> in <code>.env</code>. Search leads only, never opened. Private tracker only.</span></div>
-      </div>
-      <h3 class="svc-sub">Email sending (applications by email)</h3>
-      <div id="settings-email" class="settings-rows"></div>
-      <h3 class="svc-sub">Other API keys</h3>
-      <div id="settings-custom" class="settings-rows"></div>
-      <div class="settings-add">
-        <input id="custom-name" type="text" autocomplete="off" spellcheck="false" placeholder="Name, e.g. SERPER_API_KEY" aria-label="Name of the new key">
-        <input id="custom-value" type="password" autocomplete="off" spellcheck="false" placeholder="Paste the key" aria-label="Value of the new key">
-        <button type="button" class="btn" id="custom-add"><i class="fa-solid fa-plus" aria-hidden="true"></i> Add key</button>
-      </div>
-      <small class="settings-help">A name must end in <code>_API_KEY</code>, <code>_KEY</code>, <code>_TOKEN</code> or <code>_SECRET</code>. Tools and MCP servers that read <code>${NAME}</code> pick it up.</small>
-    </div>
-
-    <div role="tabpanel" id="svc-panel-ai" aria-labelledby="svc-tab-ai" tabindex="0" hidden>
-      <p class="muted">Used for suggestions, job scoring and CV/letter tailoring. Pick one provider and add its key.</p>
-      <div id="settings-ai" class="settings-rows"></div>
-    </div>
-  </div>
-
-  <footer class="svc-foot">
-    <p id="settings-status" role="status" aria-live="polite"></p>
-    <div class="svc-foot-actions">
-      <button class="btn" type="button" id="credits-refresh" data-for="overview"><i class="fa-solid fa-rotate" aria-hidden="true"></i> Refresh</button>
-      <button class="btn" type="button" id="settings-test" data-for="ai" hidden><i class="fa-solid fa-plug" aria-hidden="true"></i> Test AI provider</button>
-      <button class="btn btn--primary" type="submit" id="settings-save" data-for="keys ai" hidden><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> Save changes</button>
-    </div>
-  </footer>
-</form>
-
-<section class="journey" aria-labelledby="journey-h">
-  <h2 id="journey-h" class="visually-hidden">Your journey and workspace sections</h2>
-  <ol class="journey-steps" id="journey-steps">
-    <li data-stage="toapply" data-state="todo"><a href="#flow-review"><span class="journey-dot">1</span><strong>Shortlist</strong><small>Search and your board</small></a></li>
-    <li data-stage="documents" data-state="todo"><a href="{{ '/documents/' | url }}"><span class="journey-dot">2</span><strong>CVs &amp; CLs</strong><small>Lebenslauf &amp; Anschreiben</small></a></li>
-    <li data-stage="applied" data-state="todo"><a href="#flow-apply"><span class="journey-dot">3</span><strong>Apply</strong><small>You or your assistant</small></a></li>
-    <li data-stage="insights" data-state="todo"><a href="#flow-insights"><span class="journey-dot">4</span><strong>Insights</strong><small>Charts</small></a></li>
-    <li data-stage="tools" data-state="todo"><a href="#flow-tools"><span class="journey-dot">5</span><strong>Tools</strong><small>Commands</small></a></li>
-    <li data-stage="mail" data-state="todo"><a href="{{ '/mail/' | url }}"><span class="journey-dot">6</span><strong>Mail</strong><small>What employers wrote</small></a></li>
-  </ol>
-  <p class="journey-next" id="journey-next" role="status" aria-live="polite"><strong>Start with a search.</strong> <span>On the Shortlist, one search finds new internships for your major all over Germany, or in every field, and checks each against the GJU rules for you.</span></p>
-</section>
+<nav class="ws-tabs" id="journey-steps" aria-label="Sections of the Search page">
+  <a href="#flow-review" data-stage="toapply" data-state="todo"><i class="fa-solid fa-table-list" aria-hidden="true"></i><span><strong>Shortlist</strong><small>Search and your board</small></span></a>
+  <a href="#flow-apply" data-stage="applied" data-state="todo"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i><span><strong>Apply</strong><small>You or your assistant</small></span></a>
+  <a href="#flow-insights"><i class="fa-solid fa-chart-column" aria-hidden="true"></i><span><strong>Insights</strong><small>Charts from your tracker</small></span></a>
+</nav>
+<p class="journey-next" id="journey-next" role="status" aria-live="polite"><strong>Start with a search.</strong> <span>One search finds new internships for your major all over Germany, or in every field, and checks each against the GJU rules for you.</span></p>
 
 <!-- ----------------------------------------------------------- Review workspace -->
 <section class="workspace-flow review-flow workspace-panel" id="flow-review" aria-labelledby="tracker-ui-h">
@@ -153,13 +65,14 @@ eleventyExcludeFromCollections: true
         <label><input type="radio" name="search-mode" value="global"> <span>Everything in Germany <small>Internships in every field, not only my major</small></span></label>
       </fieldset>
       {#- The sites a source covers, each with its bundled logo (assets/service-logos); the data is src/_data/searchSources.json. -#}
-      {#- One small tile per site: the logo, with the name as its tooltip and alt text. A site with no logo file (or one that fails to load) shows its first letter. -#}
-      {% macro siteLogos(list) %}<span class="sx-sites" role="list" aria-label="Sites searched">{% for s in list %}<span class="sx-site" role="listitem" title="{{ s.name }}">{% if s.logo %}<img src="{{ ('/assets/service-logos/' + s.logo + '.png') | url }}" alt="{{ s.name }}" width="18" height="18" loading="lazy" onerror="this.replaceWith(this.alt.charAt(0).toUpperCase())">{% else %}{{ s.name | first | upper }}{% endif %}</span>{% endfor %}</span>{% endmacro %}
+      {#- One small tile per site: click to toggle individual job boards on or off (Shift/Alt+click to solo one board for fast debugging). -#}
+      {% macro siteLogos(list, group) %}<div class="sx-sites-wrap"><div class="sx-sites-bar"><small class="sx-sites-count" data-board-count="{{ group }}">{{ list | length }}/{{ list | length }} boards</small><span class="sx-sites-actions"><button type="button" class="sx-site-btn" data-board-action="all" data-group="{{ group }}" title="Select all boards in this group">All</button><button type="button" class="sx-site-btn" data-board-action="none" data-group="{{ group }}" title="Deselect all boards in this group">None</button></span></div><div class="sx-sites" role="group" aria-label="Job boards for {{ group }}">{% for s in list %}<button type="button" class="sx-site" data-group="{{ group }}" data-board="{{ s.name }}" aria-pressed="true" title="{{ s.name }} — click to toggle, Shift/Alt+click to solo">{% if s.logo %}<img src="{{ ('/assets/service-logos/' + s.logo + '.png') | url }}" alt="{{ s.name }}" width="18" height="18" loading="lazy" onerror="this.replaceWith(this.alt.charAt(0).toUpperCase())">{% else %}{{ s.name | first | upper }}{% endif %}</button>{% endfor %}</div></div>{% endmacro %}
       <fieldset class="sx-sources">
-        <legend>Search with</legend>
-        <div class="sx-source"><label><input type="checkbox" name="search-source" value="claude" checked> <img class="sx-logo" src="{{ '/assets/service-logos/anthropic.png' | url }}" alt="" width="20" height="20" onerror="this.remove()"> <span>Claude <small data-source-hint="claude">Indeed, StepStone and Arbeitsagentur through your Claude connectors</small></span></label>{{ siteLogos(searchSources.claude) }}</div>
-        <div class="sx-source"><label><input type="checkbox" name="search-source" value="nim" checked> <img class="sx-logo" src="{{ '/assets/service-logos/nvidia.png' | url }}" alt="" width="20" height="20" onerror="this.remove()"> <span>NVIDIA NIM <small data-source-hint="nim">LinkedIn and other boards through search APIs, no Claude tokens</small></span></label>{{ siteLogos(searchSources.nim) }}</div>
-        <div class="sx-source"><label><input type="checkbox" name="search-source" value="apis" checked> <i class="fa-solid fa-rss sx-logo" aria-hidden="true"></i> <span>Free job sources <small data-source-hint="apis">Free job APIs and feeds through the JobSearchEngine</small></span></label>{{ siteLogos(searchSources.apis) }}</div>
+        <legend>Search with <small class="sx-legend-hint">(click any board icon to toggle, or Shift/Alt+click to solo one board)</small></legend>
+        <div class="sx-source"><label><input type="checkbox" name="search-source" value="claude" checked> <img class="sx-logo" src="{{ '/assets/service-logos/anthropic.png' | url }}" alt="" width="20" height="20" onerror="this.remove()"> <span>Claude <small data-source-hint="claude">Indeed, StepStone and Arbeitsagentur through your Claude connectors</small></span></label>{{ siteLogos(searchSources.claude, 'claude') }}</div>
+        <div class="sx-source"><label><input type="checkbox" name="search-source" value="nim" checked> <img class="sx-logo" src="{{ '/assets/service-logos/nvidia.png' | url }}" alt="" width="20" height="20" onerror="this.remove()"> <span>NVIDIA NIM <small data-source-hint="nim">LinkedIn and other boards through search APIs, no Claude tokens</small></span></label>{{ siteLogos(searchSources.nim, 'nim') }}</div>
+        <div class="sx-source"><label><input type="checkbox" name="search-source" value="apis" checked> <i class="fa-solid fa-rss sx-logo" aria-hidden="true"></i> <span>Free job sources <small data-source-hint="apis">Free job APIs and feeds through the JobSearchEngine</small></span></label>{{ siteLogos(searchSources.apis, 'apis') }}</div>
+        <div class="sx-source"><label><input type="checkbox" name="search-source" value="companies" checked> <i class="fa-solid fa-building sx-logo" aria-hidden="true"></i> <span>Company websites <small data-source-hint="companies">The job boards of the companies in your directory, asked directly</small></span></label><p class="sx-sites-link"><a href="{{ '/boards/' | url }}#companies">Open the company directory <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a></p></div>
       </fieldset>
       <p class="sx-plan" id="search-plan" role="status" aria-live="polite">Reading your profile…</p>
     </div>
@@ -176,64 +89,7 @@ eleventyExcludeFromCollections: true
 
   <div class="tracker-guidance"><i class="fa-regular fa-lightbulb" aria-hidden="true"></i><p>Open a job's <i class="fa-solid fa-circle-info" aria-hidden="true"></i> <strong>information</strong> to see every field. There, set <strong>Apply? = Yes</strong> for jobs you want, and under <strong>Who applies</strong> choose <strong>Me</strong> or <strong>Assistant</strong>.</p></div>
 
-  <details class="gb gb-panel" id="board-filter-panel" open>
-    <summary class="gb-panel-head">
-      <span class="gb-chip-icon"><i class="fa-solid fa-sliders" aria-hidden="true"></i></span>
-      <h3>Filters</h3>
-      <span class="gb-count-badge" id="board-active-count" hidden>0</span>
-      <span class="gb-hint">Search, pick from the lists, or set a range</span>
-      <i class="fa-solid fa-chevron-down gb-caret" aria-hidden="true"></i>
-    </summary>
-    <div class="gb-panel-body">
-      <div class="gb-filter-grid">
-        <div class="gb-field s4"><label class="gb-field-label" for="board-q"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>Search</label>
-          <input id="board-q" class="gb-control" type="search" placeholder="Title, company, city or skill" autocomplete="off" enterkeyhint="search"></div>
-        <div class="gb-field s4" id="board-f-skills"></div>
-        <div class="gb-field s4" id="board-f-status"></div>
-        <div class="gb-field" id="board-f-city"></div>
-        <div class="gb-field" id="board-f-kind"></div>
-        <div class="gb-field" id="board-f-gju"></div>
-        <div class="gb-field" id="board-f-apply"></div>
-        <div class="gb-field" id="board-f-german"></div>
-        <div class="gb-field" id="board-f-english"></div>
-        <div class="gb-field" id="board-f-applicant"></div>
-        <div class="gb-field" id="board-f-recent"></div>
-        <div class="gb-field" id="board-f-by"></div>
-        <div class="gb-field" id="board-f-sites"></div>
-        <div class="gb-field"><label class="gb-field-label" for="board-min-weeks"><i class="fa-solid fa-hourglass-half" aria-hidden="true"></i>At least (weeks)</label>
-          <input id="board-min-weeks" class="gb-control" type="number" inputmode="numeric" min="1" max="104" step="1" placeholder="e.g. 20"></div>
-        <div class="gb-field"><label class="gb-field-label" for="board-min-pay"><i class="fa-solid fa-euro-sign" aria-hidden="true"></i>Pay from (€/month)</label>
-          <input id="board-min-pay" class="gb-control" type="number" inputmode="numeric" min="0" max="20000" step="50" placeholder="e.g. 800"></div>
-        <div class="gb-field"><label class="gb-field-label" for="board-max-pay"><i class="fa-solid fa-euro-sign" aria-hidden="true"></i>Pay up to (€/month)</label>
-          <input id="board-max-pay" class="gb-control" type="number" inputmode="numeric" min="0" max="20000" step="50" placeholder="e.g. 1500"></div>
-        <div class="gb-field"><label class="gb-field-label" for="board-from"><i class="fa-solid fa-calendar-days" aria-hidden="true"></i>Posted from</label>
-          <input id="board-from" class="gb-control" type="date"></div>
-        <div class="gb-field"><label class="gb-field-label" for="board-to"><i class="fa-solid fa-calendar-check" aria-hidden="true"></i>Posted until</label>
-          <input id="board-to" class="gb-control" type="date"></div>
-      </div>
-      <div class="gb-active-row" id="board-active-row" aria-label="Active filters"></div>
-    </div>
-  </details>
-
-  <div class="gb gb-toolbar" id="board-results">
-    <div class="gb-toolbar-title">
-      <span class="gb-chip-icon"><i class="fa-solid fa-briefcase" aria-hidden="true"></i></span>
-      <div><h3>Internships</h3><p class="gb-result-count" id="board-result-count" aria-live="polite">Loading…</p></div>
-    </div>
-    <div class="gb-toolbar-tools">
-      <label class="gb-view-select" for="tracker-column-view"><span>Show</span> <select id="tracker-column-view" class="gb-control"><option value="results">Board</option><option value="review">Shortlist essentials</option><option value="all">All columns</option><option value="contact">Company &amp; contact</option><option value="requirements">Job requirements</option><option value="application">Application details</option></select></label>
-      <div class="gb-field gb-compact" id="board-f-sort"></div>
-      <div class="gb-view-toggle" id="board-view-toggle" role="group" aria-label="Board layout">
-        <button type="button" id="board-view-table" aria-pressed="true" aria-label="Table view" title="Table view"><i class="fa-solid fa-table-list" aria-hidden="true"></i></button>
-        <button type="button" id="board-view-cards" aria-pressed="false" aria-label="Card view" title="Card view"><i class="fa-solid fa-table-cells-large" aria-hidden="true"></i></button>
-      </div>
-      <label class="gb-pick-all" id="board-pick-label"><input type="checkbox" class="gb-check" id="board-pick-all"> <span>Tick all shown</span> <span class="gb-ticked" id="board-ticked" hidden>0</span></label>
-      <button type="button" class="gb-btn gb-btn-primary" id="board-dl" aria-haspopup="menu" aria-expanded="false"><i class="fa-solid fa-file-excel" aria-hidden="true"></i> Download Excel <i class="fa-solid fa-chevron-down" aria-hidden="true"></i></button>
-      <button class="gb-btn tracker-expand" id="tracker-expand" type="button" aria-pressed="false" title="Open the shortlist as a full-screen window (Esc closes it)"><i class="fa-solid fa-expand" aria-hidden="true"></i> <span>Open as window</span></button>
-    </div>
-  </div>
-  <div class="gb gb-results" id="board-list" aria-live="off"></div>
-  <div class="gb gb-more"><button type="button" class="gb-btn" id="board-more" hidden><i class="fa-solid fa-angles-down" aria-hidden="true"></i> Show more</button></div>
+  {% include "board.njk" %}
 
   <div class="shadcn-table-wrap" id="tracker-table-wrap" hidden>
     <div class="shadcn-table-scroll" tabindex="0" role="region" aria-label="Editable workbook. Scroll horizontally to see more columns.">
@@ -293,303 +149,6 @@ eleventyExcludeFromCollections: true
     </aside>
   </div>
   <div id="apply-queue" class="apply-queue" aria-label="Selected applications"></div>
-</section>
-
-<!-- ------------------------------------------------------------ Run a task or command -->
-<section class="workspace-utility workspace-panel" id="flow-tools" aria-labelledby="tasks-h">
-<details class="workspace-tools">
-  <summary><span>Tools & commands</span><small>Profile, workbook, and assistant utilities</small></summary>
-  <div class="utility-content">
-  <h2 id="tasks-h">Workspace tools</h2>
-  <p class="lede">
-    These are the AI commands to run in your assistant, and the deterministic steps that read <code>data/</code> and write generated files. You can copy the commands or try running them directly.
-  </p>
-
-  <div class="grid task-grid task-grid">
-    <!-- Tasks -->
-    <article class="card task" data-task="profile">
-      <span class="eyebrow">npm run profile</span>
-      <h3>Rebuild candidate profile</h3>
-      <p>Regenerates <code>01-candidate-profile.md</code> from your profile JSON.</p>
-      <div class="task-actions">
-        <button class="btn btn--primary" type="button" data-run="profile"><i class="fa-solid fa-play btn-icon-spacing"></i>Run</button>
-        <button class="btn" type="button" data-copy="npm run profile"><i class="fa-regular fa-copy btn-icon-spacing"></i>Copy</button>
-      </div>
-    </article>
-
-    <article class="card task" data-task="tracker">
-      <span class="eyebrow">npm run tracker</span>
-      <h3>Rebuild workbook</h3>
-      <p>Renders <code>job_search_tracker.xlsx</code> from your tracker rows.</p>
-      <div class="task-actions">
-        <button class="btn btn--primary" type="button" data-run="tracker"><i class="fa-solid fa-play btn-icon-spacing"></i>Run</button>
-        <button class="btn" type="button" data-copy="npm run tracker"><i class="fa-regular fa-copy btn-icon-spacing"></i>Copy</button>
-      </div>
-    </article>
-
-    <article class="card task" data-task="skills">
-      <span class="eyebrow">npm run skills:harvest</span>
-      <h3>Harvest advert skills</h3>
-      <p>Pulls the requirements out of every tracked posting into your skill pool.</p>
-      <div class="task-actions">
-        <button class="btn btn--primary" type="button" data-run="skills"><i class="fa-solid fa-play btn-icon-spacing"></i>Run</button>
-        <button class="btn" type="button" data-copy="npm run skills:harvest"><i class="fa-regular fa-copy btn-icon-spacing"></i>Copy</button>
-      </div>
-    </article>
-
-    <article class="card task" data-task="build">
-      <span class="eyebrow">npm run build</span>
-      <h3>Rebuild site</h3>
-      <p>Regenerates <code>_site/</code> so the published profile matches <code>data/</code>.</p>
-      <div class="task-actions">
-        <button class="btn btn--primary" type="button" data-run="build"><i class="fa-solid fa-play btn-icon-spacing"></i>Run</button>
-        <button class="btn" type="button" data-copy="npm run build"><i class="fa-regular fa-copy btn-icon-spacing"></i>Copy</button>
-      </div>
-    </article>
-
-
-    <!-- Tasks -->
-    <article class="card task" data-task="build:static">
-      <span class="eyebrow">npm run build:static</span>
-      <h3>Build static site</h3>
-      <p>Builds the static site using the custom script.</p>
-      <div class="task-actions">
-        <button class="btn btn--primary" type="button" data-run="build:static"><i class="fa-solid fa-play btn-icon-spacing"></i>Run</button>
-        <button class="btn" type="button" data-copy="npm run build:static"><i class="fa-regular fa-copy btn-icon-spacing"></i>Copy</button>
-      </div>
-    </article>
-
-    <article class="card task" data-task="serve">
-      <span class="eyebrow">npm run serve</span>
-      <h3>Serve the site locally</h3>
-      <p>Starts the Eleventy development server for live preview.</p>
-      <div class="task-actions">
-        <button class="btn btn--primary" type="button" data-run="serve"><i class="fa-solid fa-play btn-icon-spacing"></i>Run</button>
-        <button class="btn" type="button" data-copy="npm run serve"><i class="fa-regular fa-copy btn-icon-spacing"></i>Copy</button>
-      </div>
-    </article>
-
-    <article class="card task" data-task="editor">
-      <span class="eyebrow">npm run editor</span>
-      <h3>Start editor server</h3>
-      <p>Starts the local workspace editor server.</p>
-      <div class="task-actions">
-        <button class="btn btn--primary" type="button" data-run="editor"><i class="fa-solid fa-play btn-icon-spacing"></i>Run</button>
-        <button class="btn" type="button" data-copy="npm run editor"><i class="fa-regular fa-copy btn-icon-spacing"></i>Copy</button>
-      </div>
-    </article>
-
-    <article class="card task" data-task="clean">
-      <span class="eyebrow">npm run clean</span>
-      <h3>Clean output</h3>
-      <p>Removes the <code>_site/</code> folder.</p>
-      <div class="task-actions">
-        <button class="btn btn--primary" type="button" data-run="clean"><i class="fa-solid fa-play btn-icon-spacing"></i>Run</button>
-        <button class="btn" type="button" data-copy="npm run clean"><i class="fa-regular fa-copy btn-icon-spacing"></i>Copy</button>
-      </div>
-    </article>
-
-    <article class="card task" data-task="add-cert">
-      <span class="eyebrow">npm run add-cert</span>
-      <h3>Add certificate</h3>
-      <p>Runs the script to process a new certificate.</p>
-      <div class="task-actions">
-        <button class="btn btn--primary" type="button" data-run="add-cert"><i class="fa-solid fa-play btn-icon-spacing"></i>Run</button>
-        <button class="btn" type="button" data-copy="npm run add-cert"><i class="fa-regular fa-copy btn-icon-spacing"></i>Copy</button>
-      </div>
-    </article>
-
-    <article class="card task" data-task="import-data">
-      <span class="eyebrow">npm run import-data</span>
-      <h3>Import data</h3>
-      <p>Imports legacy or external profile data.</p>
-      <div class="task-actions">
-        <button class="btn btn--primary" type="button" data-run="import-data"><i class="fa-solid fa-play btn-icon-spacing"></i>Run</button>
-        <button class="btn" type="button" data-copy="npm run import-data"><i class="fa-regular fa-copy btn-icon-spacing"></i>Copy</button>
-      </div>
-    </article>
-
-    <article class="card task" data-task="make-samples">
-      <span class="eyebrow">npm run make-samples</span>
-      <h3>Make sample images</h3>
-      <p>Generates sample or thumbnail images.</p>
-      <div class="task-actions">
-        <button class="btn btn--primary" type="button" data-run="make-samples"><i class="fa-solid fa-play btn-icon-spacing"></i>Run</button>
-        <button class="btn" type="button" data-copy="npm run make-samples"><i class="fa-regular fa-copy btn-icon-spacing"></i>Copy</button>
-      </div>
-    </article>
-
-    <article class="card task" data-task="skills:import">
-      <span class="eyebrow">npm run skills:import</span>
-      <h3>Import ESCO skills</h3>
-      <p>Imports a standardized skills ontology into your database.</p>
-      <div class="task-actions">
-        <button class="btn btn--primary" type="button" data-run="skills:import"><i class="fa-solid fa-play btn-icon-spacing"></i>Run</button>
-        <button class="btn" type="button" data-copy="npm run skills:import"><i class="fa-regular fa-copy btn-icon-spacing"></i>Copy</button>
-      </div>
-    </article>
-
-    <article class="card task" data-task="profile:check">
-      <span class="eyebrow">npm run profile:check</span>
-      <h3>Check profile</h3>
-      <p>Validates the structure and content of your profile JSON.</p>
-      <div class="task-actions">
-        <button class="btn btn--primary" type="button" data-run="profile:check"><i class="fa-solid fa-play btn-icon-spacing"></i>Run</button>
-        <button class="btn" type="button" data-copy="npm run profile:check"><i class="fa-regular fa-copy btn-icon-spacing"></i>Copy</button>
-      </div>
-    </article>
-
-    <!-- AI Commands -->
-    <article class="card task" data-task="/scrape">
-      <span class="eyebrow">AI Command</span>
-      <h3>/scrape</h3>
-      <p>Searches all configured job portals and gathers matching postings.</p>
-      <div class="task-actions">
-        <button class="btn btn--primary" type="button" data-run="/scrape"><i class="fa-solid fa-play btn-icon-spacing"></i>Run</button>
-        <button class="btn" type="button" data-copy="/scrape"><i class="fa-regular fa-copy btn-icon-spacing"></i>Copy</button>
-      </div>
-    </article>
-
-    <article class="card task" data-task="/apply">
-      <span class="eyebrow">AI Command</span>
-      <h3>/apply &lt;url&gt;</h3>
-      <p>Checks eligibility, scores fit, drafts Anschreiben, and records row.</p>
-      <div class="task-actions">
-        <button class="btn btn--primary" type="button" data-run="/apply "><i class="fa-solid fa-play btn-icon-spacing"></i>Run</button>
-        <button class="btn" type="button" data-copy="/apply "><i class="fa-regular fa-copy btn-icon-spacing"></i>Copy</button>
-      </div>
-    </article>
-
-    <article class="card task" data-task="/rank">
-      <span class="eyebrow">AI Command</span>
-      <h3>/rank</h3>
-      <p>Finds what deserves attention today - overdue follow-ups, best unsent.</p>
-      <div class="task-actions">
-        <button class="btn btn--primary" type="button" data-run="/rank"><i class="fa-solid fa-play btn-icon-spacing"></i>Run</button>
-        <button class="btn" type="button" data-copy="/rank"><i class="fa-regular fa-copy btn-icon-spacing"></i>Copy</button>
-      </div>
-    </article>
-
-    <article class="card task" data-task="/outcome">
-      <span class="eyebrow">AI Command</span>
-      <h3>/outcome</h3>
-      <p>Records the result and draws the lesson from it.</p>
-      <div class="task-actions">
-        <button class="btn btn--primary" type="button" data-run="/outcome "><i class="fa-solid fa-play btn-icon-spacing"></i>Run</button>
-        <button class="btn" type="button" data-copy="/outcome "><i class="fa-regular fa-copy btn-icon-spacing"></i>Copy</button>
-      </div>
-    </article>
-
-    <article class="card task" data-task="/interview">
-      <span class="eyebrow">AI Command</span>
-      <h3>/interview</h3>
-      <p>Builds a prep pack from the archived posting and what you submitted.</p>
-      <div class="task-actions">
-        <button class="btn btn--primary" type="button" data-run="/interview "><i class="fa-solid fa-play btn-icon-spacing"></i>Run</button>
-        <button class="btn" type="button" data-copy="/interview "><i class="fa-regular fa-copy btn-icon-spacing"></i>Copy</button>
-      </div>
-    </article>
-
-    <article class="card task" data-task="/upskill">
-      <span class="eyebrow">AI Command</span>
-      <h3>/upskill</h3>
-      <p>Analyzes the gap between what adverts ask for and your profile.</p>
-      <div class="task-actions">
-        <button class="btn btn--primary" type="button" data-run="/upskill"><i class="fa-solid fa-play btn-icon-spacing"></i>Run</button>
-        <button class="btn" type="button" data-copy="/upskill"><i class="fa-regular fa-copy btn-icon-spacing"></i>Copy</button>
-      </div>
-    </article>
-
-    <article class="card task" data-task="/setup">
-      <span class="eyebrow">AI Command</span>
-      <h3>/setup</h3>
-      <p>Initializes environment, compiles templates, validates profile.</p>
-      <div class="task-actions">
-        <button class="btn btn--primary" type="button" data-run="/setup"><i class="fa-solid fa-play btn-icon-spacing"></i>Run</button>
-        <button class="btn" type="button" data-copy="/setup"><i class="fa-regular fa-copy btn-icon-spacing"></i>Copy</button>
-      </div>
-    </article>
-
-    <article class="card task" data-task="/add-portal">
-      <span class="eyebrow">AI Command</span>
-      <h3>/add-portal</h3>
-      <p>Creates a new scraper configuration to add a new job board.</p>
-      <div class="task-actions">
-        <button class="btn btn--primary" type="button" data-run="/add-portal "><i class="fa-solid fa-play btn-icon-spacing"></i>Run</button>
-        <button class="btn" type="button" data-copy="/add-portal "><i class="fa-regular fa-copy btn-icon-spacing"></i>Copy</button>
-      </div>
-    </article>
-
-    <article class="card task" data-task="/expand">
-      <span class="eyebrow">AI Command</span>
-      <h3>/expand</h3>
-      <p>Fills in details or expands on bullet points in Cover Letter or CV.</p>
-      <div class="task-actions">
-        <button class="btn btn--primary" type="button" data-run="/expand "><i class="fa-solid fa-play btn-icon-spacing"></i>Run</button>
-        <button class="btn" type="button" data-copy="/expand "><i class="fa-regular fa-copy btn-icon-spacing"></i>Copy</button>
-      </div>
-    </article>
-
-    <article class="card task" data-task="/html-report">
-      <span class="eyebrow">AI Command</span>
-      <h3>/html-report</h3>
-      <p>Generates an interactive HTML dashboard of your application progress.</p>
-      <div class="task-actions">
-        <button class="btn btn--primary" type="button" data-run="/html-report"><i class="fa-solid fa-play btn-icon-spacing"></i>Run</button>
-        <button class="btn" type="button" data-copy="/html-report"><i class="fa-regular fa-copy btn-icon-spacing"></i>Copy</button>
-      </div>
-    </article>
-
-    <article class="card task" data-task="/add-template">
-      <span class="eyebrow">AI Command</span>
-      <h3>/add-template</h3>
-      <p>Adds a new template for CVs or cover letters.</p>
-      <div class="task-actions">
-        <button class="btn btn--primary" type="button" data-run="/add-template "><i class="fa-solid fa-play btn-icon-spacing"></i>Run</button>
-        <button class="btn" type="button" data-copy="/add-template "><i class="fa-regular fa-copy btn-icon-spacing"></i>Copy</button>
-      </div>
-    </article>
-
-    <article class="card task" data-task="/gmail-sync">
-      <span class="eyebrow">AI Command</span>
-      <h3>/gmail-sync</h3>
-      <p>Synchronizes data with your Gmail.</p>
-      <div class="task-actions">
-        <button class="btn btn--primary" type="button" data-run="/gmail-sync"><i class="fa-solid fa-play btn-icon-spacing"></i>Run</button>
-        <button class="btn" type="button" data-copy="/gmail-sync"><i class="fa-regular fa-copy btn-icon-spacing"></i>Copy</button>
-      </div>
-    </article>
-
-    <article class="card task" data-task="/notion-sync">
-      <span class="eyebrow">AI Command</span>
-      <h3>/notion-sync</h3>
-      <p>Synchronizes data with your Notion workspace.</p>
-      <div class="task-actions">
-        <button class="btn btn--primary" type="button" data-run="/notion-sync"><i class="fa-solid fa-play btn-icon-spacing"></i>Run</button>
-        <button class="btn" type="button" data-copy="/notion-sync"><i class="fa-regular fa-copy btn-icon-spacing"></i>Copy</button>
-      </div>
-    </article>
-
-    <article class="card task" data-task="/reset">
-      <span class="eyebrow">AI Command</span>
-      <h3>/reset</h3>
-      <p>Resets the assistant's state or local configuration.</p>
-      <div class="task-actions">
-        <button class="btn btn--primary" type="button" data-run="/reset"><i class="fa-solid fa-play btn-icon-spacing"></i>Run</button>
-        <button class="btn" type="button" data-copy="/reset"><i class="fa-regular fa-copy btn-icon-spacing"></i>Copy</button>
-      </div>
-    </article>
-  </div>
-
-  <div class="log-wrap" id="log-wrap" hidden>
-    <div class="log-head">
-      <span class="eyebrow" id="log-title">Output</span>
-      <button class="btn" type="button" id="log-close"><i class="fa-solid fa-xmark btn-icon-spacing"></i>Close</button>
-    </div>
-    <pre class="log" id="log" tabindex="0" aria-live="polite" aria-atomic="false"></pre>
-  </div>
-  </div>
-</details>
 </section>
 
 <section class="workspace-utility workspace-panel" id="flow-insights" aria-labelledby="analytics-h">

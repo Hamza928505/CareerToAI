@@ -114,6 +114,7 @@ REQUIRED_IGNORE_RULES = [
     "applications.xlsx",
     "data/tracker.csv",
     "data/profile-private.json",
+    "src/assets/Student-data/*",
     "src/assets/Student-data/student.json",
     "src/assets/Student-data/*.docx",
     "src/assets/Student-data/tailored/",

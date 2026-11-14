@@ -15,6 +15,94 @@ per-file diff commands.
 
 ### Added
 
+- **CVs & CLs: "Download all as .txt for AI".** One button in the workbench saves everything about the applications as a single text
+  file to give to an AI yourself: the rules for the AI, your settings, the whole profile (`readInternshipsProfile`), the base CV and
+  letter, and per application the full advert, the GJU check and, when run, the ATS assessment (terms to use, gaps never to claim).
+  `lib/application-brief.mjs`, `POST /__editor/internships/brief`; no AI of ours is called. It uses what Phase 1 produced when it has
+  been run, else it evaluates the postings itself. The file holds your contact details, as the profile does.
+- **CVs & CLs: choose the AI that writes the CVs and letters and runs the ATS assessment.** A picker beside the Phase 2 button lists
+  every AI the app knows: Claude Opus (default), Sonnet or Haiku through your Claude subscription, and by name the Claude API, NVIDIA
+  NIM, Gemini API, OpenRouter, GitHub Models and Ollama, each with its own key from Settings (greyed out while the key is missing),
+  whatever `LLM_PROVIDER` says. Every AI call of a Generate goes to it, the city lookup included, and so does the ATS assessment
+  (`POST /__editor/internships/ats-assess` takes `tailorModel`). The pick is saved as soon as it changes. `tailorModel` and
+  `tailorChoices` in `lib/internships-studio.mjs`, `providerConfig` in `lib/llm.mjs` (also used by the Settings tests); an unknown
+  value is Opus.
+
+### Fixed
+
+- **CVs & CLs: the CV is tailored to the advert by Claude Opus, and the page says what happened.** The AI pass was optional, depended on
+  `LLM_PROVIDER` and failed silently, which left only the address, profile line and date changed. `generateDocumentsForPosting`
+  (`lib/internships-studio.mjs`) now always asks Claude Opus (the subscription, no key) with the form's fields, the advert and shortlist
+  text (6000 characters), the base CV and letter in `Input Data` and the profile (`gju-profile.json` while it is the newest). The status
+  line reports how many paragraphs were rewritten, how many were dropped for length, or why Opus did not finish.
+- **Search: Indeed, StepStone and Arbeitsagentur work again.** Claude Code 2.1.323 connects the claude.ai connectors in the background, so a
+  `claude -p` prompt reached the model before Indeed, Apify or Gmail were there, and it wrote its ToolSearch call as text ("Claude did not
+  search Indeed (<invoke name="ToolSearch">…)"). `runClaude` (`lib/indeed-agent.mjs`, also used by Apify and the Claude mail reader) now
+  starts claude with `--input-format stream-json` and sends the prompt after `CONNECTOR_WAIT_MS` (8 s).
+- **Search: a slow NVIDIA answer no longer loses the whole NIM search.** A model timeout or overload ends only the model's part; the site
+  sweep still runs and the search says the model stopped early. A refused key still fails the source.
+- **Search: a failed source is named in the finished-search card**, with its reason, and the Job Boards record keeps that reason instead of
+  "did not answer".
+- **CVs & CLs: the address follows the company's city.** You paste the advert; when the City field is empty or matches no housing city, the AI reads
+  the advert for where the job is done and the CV and letter take the student-housing address of that city (or the nearest listed one)
+  (`evaluateWithCity`, `lib/internships-studio.mjs`). An advert that names no city keeps Deggendorf and the generate note says so. The
+  `Standort:` fallback no longer swallows the words after the city, and the English CV's sign-off city changes too.
+
+### Added
+
+- **CVs & CLs wears the Search page's design.** The page now has the Search page's blue hero with its floating orbs, its section tab bar (Templates,
+  Workbench, Archive, ATS, Before signing; one section at a time, the Workbench first), its next-step line, the same icon chips on every section
+  heading, and the same cards, buttons, links and light and dark colours. The theme (the blue tokens, the tabs, the next-step line) moved out of
+  `workspace.css` into the shared `ws-theme.css`, which both pages import after `board.css`; the Search page is unchanged. `workspace-tabs.js`
+  now serves both pages (any `.ws-tabs` link, and a panel marked `data-default` opens when the address names none). The hero's code chips
+  (`board.css`) are readable on the blue, and the old dark hero of this page is gone.
+- **CVs & CLs: pick applications from the Search page's own board.** *Import from your shortlist* opens the same filters, internship list
+  (logos, tags, duration, pay, languages, Fit, GJU rules, table or cards) and ticks as the Search page, built by the same `createBoard`
+  (`workspace-board.js`) from the same markup (`src/_includes/board.njk`, shared; the documents page sets `pickMode`, which hides the
+  column view, Excel download and full-screen buttons). The status is shown, not edited, and a row's own editor and link are hidden. Ticked rows
+  go into a **Selected applications** table (advert added or not, remove), one card each for the advert text, then Phase 1 and Phase 2 as
+  before; a row already on the workbench is not added twice. `createBoard` gained `onPick`, `ticked()` and `unpick()`, and the SweetAlert
+  look moved to `swal-dialog.js` so both pages share it. The old drawer table (and its `hidden` bug) is gone.
+  Each application's box for the advert now starts **empty** and says to paste the description from their site (the shortlist's own details
+  moved to a collapsed *From your shortlist* note and are still sent to the check with whatever is pasted); the table row has a **Paste the
+  description** button that jumps to its box, and the card has an **Open the posting** link.
+- **Seven pages, one link each: Search, Job Boards, GY Guide, CVs & CLs, Profile / Editor, Mail, Settings.** The journey strip is gone; Search keeps
+  three tabs (Shortlist, Apply, Insights). Profile / Editor links to the editor itself, and the app opens on Search.
+- **Settings page** (`/settings/`). Keys and the AI provider moved here from the workspace. Every integration has a state, a **Test** that makes
+  one cheap real request (`lib/integration-tests.mjs`), and a setup guide that answers the same seven questions (`src/_data/integrations.json`).
+  MCP connectors can be added from presets or by https address, switched on and off and tested (`lib/mcp-config.mjs`); the connectors of the Claude
+  account are read from `claude mcp list`. The browser never sees a key, an address path or a header, and never names a command to run.
+- **Claude through your subscription as an AI provider** (`LLM_PROVIDER=claude`): the claude command with every tool switched off. No API key.
+- **Import from your documents** in the Profile. Upload a certificate, reference, transcript or CV; an AI proposes entries; each value is marked
+  *In the document*, *Online research* (with sources) or *AI suggestion*, and nothing is added until it is ticked and saved (`lib/document-intake.mjs`).
+  New profile sections: courses and training, achievements, soft skills, professional interests, status and constraints.
+- **Company directory** on the Job Boards page: find companies in Germany (ATS manuals, your tracker, Wikidata, by hand), check each website, find the
+  careers page and the recruitment platform, and search vacancies through the platforms' public job-board APIs. robots.txt, a pause between requests
+  and the source policy are enforced in one reader (`lib/company-discovery.mjs`). *Company websites* is a fourth source of the workspace search.
+- **ATS assessment** on the CVs & CLs page: the posting's requirements against the profile as MET / PARTLY / GAP by the ATS manuals, the supported
+  keywords a parser finds in the CV, weak areas, what to change and why, and the form's likely questions with the true answers. It can be run again
+  after every edit. A generated document's text can be edited on the page and is saved as a new version. A job's row on the Search page opens the
+  CVs & CLs page on that job (`?job=`), which fetches the advert where the site allows it.
+- **Claude in a browser** as a way to fill a web application form (`APPLY_BROWSER=claude`). Claude works through five tools that cannot press the final
+  Submit, upload any file but the two tailored documents, tick a consent box or open another address; the window stays open for the student to submit.
+
+### Changed
+
+- One profile for every page: **Save profile** writes `data/*.json` and `src/assets/Student-data/student.json` together, and every module reads the
+  profile through `readUserProfile()`. Everything in `src/assets/Student-data/` is git-ignored; the ATS manuals live in its `ats/` folder.
+- A tailored CV stays on 2 pages and a cover letter on 1.
+
+### Fixed
+
+- The ATS parser check failed on Windows whenever the CV's text held a character the console code page lacks (Python now runs in UTF-8 mode).
+- The studio's tracker import read columns the tracker does not have, so imported postings lost their city, reference and requirements.
+- A file name sent to `/__editor/student-data` was used as a path. Only the two base documents can be written there now.
+- The studio counted a hard-coded skill list as the student's own. Only skills in the profile count.
+- Search and CVs & CLs showed the profile headline as their browser title.
+- A test for structured postings carried a fixed closing date and started failing once that date passed.
+
+### Added (earlier)
+
 - **A "Check my email" button on the board's hero, and Gemini as a second reader.** The button reads the student's Gmail and *proposes* status
   changes (application received, interview or assessment, offer, rejection); each one shows the e-mail it comes from and the sentence that
   triggered it, and nothing reaches the tracker until the student ticks and applies it. The dialog lets the student choose who reads:

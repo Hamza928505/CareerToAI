@@ -1,7 +1,7 @@
 ---
 layout: base.njk
-title: CVs & CLs Studio — GJU Pflichtpraktikum Lebenslauf & Anschreiben
-description: Check internship postings against GJU German Year rules (Part A), generate tailored German/English CVs and Cover Letters (.docx + .pdf) into Desktop\Internships (Part B & C), and run ATS checks.
+pageTitle: CVs & CLs Studio — GJU Pflichtpraktikum Lebenslauf & Anschreiben
+pageDescription: Check internship postings against GJU German Year rules (Part A), generate tailored German/English CVs and Cover Letters (.docx + .pdf) into Desktop\Internships (Part B & C), and run ATS checks.
 permalink: /documents/
 noindex: true
 pageStyles: /assets/documents.css
@@ -25,26 +25,26 @@ eleventyExcludeFromCollections: true
   <section class="gb gb-hero doc-hero" aria-labelledby="doc-hero-h">
     <div class="gb-hero-bg" aria-hidden="true">
       <span class="gb-blob b1"></span><span class="gb-blob b2"></span><span class="gb-blob b3"></span>
+      <span class="gb-orb o1"><i class="fa-solid fa-file-lines"></i></span><span class="gb-orb o2"><i class="fa-solid fa-envelope-open-text"></i></span>
+      <span class="gb-orb o3"><i class="fa-solid fa-language"></i></span><span class="gb-orb o4"><i class="fa-solid fa-scale-balanced"></i></span>
     </div>
     <div class="gb-hero-inner">
       <p class="gb-eyebrow">
         <i class="fa-solid fa-file-signature" aria-hidden="true"></i>
         Connected to <code id="hero-working-dir">C:\Users\Hamza928\Desktop\Internships</code>
       </p>
-      <h2 id="doc-hero-h">GJU Pflichtpraktikum <span class="gb-grad-text">CV &amp; Cover Letter</span> Studio</h2>
+      <h2 id="doc-hero-h">Your <span class="gb-grad-text">CV &amp; letter</span> studio</h2>
       <p class="gb-lead">
-        Part A checks every posting against the GJU internship rules (Rules 1–10) and drafts your German HR clarification email &amp; contract clauses.
-        Part B &amp; C generate tailored German or English <strong>Lebenslauf</strong> (max. 2 pages) and <strong>Anschreiben</strong> (max. 1 page, DIN 5008)
-        in <code>.docx</code> and <code>.pdf</code> from your templates—never inventing facts and never overwriting existing files.
+        Check each posting against the GJU rules, then build a tailored <strong>Lebenslauf</strong> (2 pages) and <strong>Anschreiben</strong> (1 page)
+        as <code>.docx</code> and <code>.pdf</code> from your templates. Nothing is invented and no file is overwritten.
       </p>
       <div class="gb-hero-cta">
         <a class="gb-btn gb-btn-light" href="#workbench-section"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i> Evaluate &amp; Tailor Postings</a>
         <a class="gb-btn gb-btn-glass" href="#archive-section"><i class="fa-solid fa-folder-open" aria-hidden="true"></i> Browse CVs &amp; CLs</a>
         <a class="gb-btn gb-btn-glass" href="#ats-section"><i class="fa-solid fa-magnifying-glass-chart" aria-hidden="true"></i> ATS Checker &amp; Manuals</a>
-        <a class="gb-btn gb-btn-glass" href="#settings-section"><i class="fa-solid fa-sliders" aria-hidden="true"></i> Templates &amp; Settings</a>
       </div>
       <ul class="gb-stats" aria-label="Internships folder summary">
-        <li class="gb-stat-tile"><i class="fa-solid fa-file-user" aria-hidden="true"></i><strong id="stat-cvs">0</strong><span>CV pairs in <code>CVs/</code></span></li>
+        <li class="gb-stat-tile"><i class="fa-solid fa-file-lines" aria-hidden="true"></i><strong id="stat-cvs">0</strong><span>CV pairs in <code>CVs/</code></span></li>
         <li class="gb-stat-tile"><i class="fa-solid fa-envelope-open-text" aria-hidden="true"></i><strong id="stat-cls">0</strong><span>CL pairs in <code>CLs/</code></span></li>
         <li class="gb-stat-tile"><i class="fa-solid fa-map-location-dot" aria-hidden="true"></i><strong id="stat-cities">0</strong><span>German city addresses</span></li>
         <li class="gb-stat-tile"><i class="fa-solid fa-book-bookmark" aria-hidden="true"></i><strong id="stat-manuals">0</strong><span>ATS &amp; company manuals</span></li>
@@ -52,13 +52,25 @@ eleventyExcludeFromCollections: true
     </div>
   </section>
 
+  <nav class="ws-tabs doc-tabs" aria-label="Sections of the CVs &amp; CLs page">
+    <a href="#settings-section"><i class="fa-solid fa-sliders" aria-hidden="true"></i><span><strong>Templates</strong><small>Settings and base files</small></span></a>
+    <a href="#workbench-section"><i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i><span><strong>Workbench</strong><small>Check and tailor postings</small></span></a>
+    <a href="#archive-section"><i class="fa-solid fa-folder-open" aria-hidden="true"></i><span><strong>Archive</strong><small>Your CVs and letters</small></span></a>
+    <a href="#ats-section"><i class="fa-solid fa-magnifying-glass-chart" aria-hidden="true"></i><span><strong>ATS</strong><small>Parser check and manuals</small></span></a>
+    <a href="#checklist-section"><i class="fa-solid fa-list-check" aria-hidden="true"></i><span><strong>Before signing</strong><small>MyGJU checklist, housing</small></span></a>
+  </nav>
+  <p class="journey-next"><strong>Start on the Workbench.</strong> <span>Pick your shortlisted internships, add each advert, run Phase 1 for the GJU check, then Phase 2 for the files.</span></p>
+
   <!-- ==================================== Section 1: Settings & Templates -->
-  <section class="doc-panel" id="settings-section" aria-labelledby="settings-h">
+  <section class="doc-panel workspace-panel" id="settings-section" aria-labelledby="settings-h">
     <div class="doc-panel-head">
+      <div class="doc-panel-title">
+        <span class="gb-chip-icon" aria-hidden="true"><i class="fa-solid fa-sliders"></i></span>
       <div>
         <span class="doc-step">01 / Settings &amp; Input Data</span>
         <h2 id="settings-h">Templates, Dates &amp; Official Documents</h2>
-        <p class="muted">Single source of truth: <code>Input Data\gju-profile.json</code> and your <code>.docx</code> templates. Uploading a new CV or CL template backs up the previous one automatically.</p>
+        <p class="muted">Your facts come from your <a href="{{ '/editor/' | url }}">Profile</a>, the one profile every page reads; the layout comes from your <code>.docx</code> templates. Uploading a new CV or CL template backs up the previous one automatically.</p>
+      </div>
       </div>
       <button type="button" class="btn" id="btn-refresh-state"><i class="fa-solid fa-rotate" aria-hidden="true"></i> Refresh folder</button>
     </div>
@@ -176,44 +188,58 @@ eleventyExcludeFromCollections: true
   </section>
 
   <!-- ======================= Section 2: Phase 1 & Phase 2 Posting Workbench -->
-  <section class="doc-panel" id="workbench-section" aria-labelledby="workbench-h">
+  <section class="doc-panel workspace-panel" data-default id="workbench-section" aria-labelledby="workbench-h">
     <div class="doc-panel-head">
+      <div class="doc-panel-title">
+        <span class="gb-chip-icon" aria-hidden="true"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
       <div>
         <span class="doc-step">02 / Part A, B &amp; C Workbench</span>
         <h2 id="workbench-h">Check Postings &amp; Generate Tailored CVs and Cover Letters</h2>
         <p class="muted">
-          Add one or more internship postings (#1, #2, …) or import shortlisted jobs from your Workspace tracker.
-          Run <strong>Phase 1 (Part A GJU Rules Check)</strong> first, or go straight to <strong>Phase 2 (Generate .docx + .pdf)</strong>.
+          Pick a job on the <a href="{{ '/workspace/' | url }}">Search</a> page (the <i class="fa-solid fa-file-signature" aria-hidden="true"></i> button on its row) and it arrives here with its advert,
+          or add postings by hand. Run <strong>Phase 1 (GJU rules check)</strong>, then the <strong>ATS assessment</strong> to see what the posting asks against what your profile proves,
+          then <strong>Phase 2 (generate .docx + .pdf)</strong>. Edit the text of either document here and run the assessment again until it is ready to export.
         </p>
       </div>
+      </div>
       <div class="doc-head-actions">
-        <button type="button" class="btn" id="btn-import-tracker"><i class="fa-solid fa-table-list" aria-hidden="true"></i> Import from Workspace Tracker</button>
+        <button type="button" class="btn" id="btn-import-tracker"><i class="fa-solid fa-table-list" aria-hidden="true"></i> Import from your shortlist</button>
         <button type="button" class="btn" id="btn-add-posting"><i class="fa-solid fa-plus" aria-hidden="true"></i> Add Posting</button>
       </div>
     </div>
 
-    <!-- Tracker picker drawer -->
-    <div class="doc-card" id="tracker-picker-card" hidden>
-      <div class="doc-card-head">
-        <h3><i class="fa-solid fa-briefcase" aria-hidden="true"></i> Pick Postings from Workspace Tracker</h3>
-        <button type="button" class="btn btn--sm" id="btn-close-tracker-picker"><i class="fa-solid fa-xmark" aria-hidden="true"></i> Close</button>
+    <!-- The Search page's own board (filters, list, ticks): tick the internships to take to the workbench -->
+    <section class="doc-picker" id="tracker-picker-card" aria-label="Pick postings from your shortlist" hidden>
+      <div class="doc-picker-bar">
+        <p><strong>Tick the internships you want</strong>, then add them. They go into the table of selected applications below.</p>
+        <div class="doc-head-actions">
+          <button type="button" class="btn btn--primary" id="btn-import-selected-rows" disabled><i class="fa-solid fa-file-import" aria-hidden="true"></i> Add <span id="picked-count">0</span> Selected</button>
+          <button type="button" class="btn" id="btn-close-tracker-picker"><i class="fa-solid fa-xmark" aria-hidden="true"></i> Close</button>
+        </div>
       </div>
-      <div class="tracker-picker-controls">
-        <input type="search" id="tracker-picker-search" placeholder="Filter by company, position, or city…" class="doc-input">
-        <button type="button" class="btn btn--primary btn--sm" id="btn-import-selected-rows"><i class="fa-solid fa-file-import" aria-hidden="true"></i> Add Selected to Workbench</button>
-      </div>
-      <div class="tracker-picker-list" id="tracker-picker-list"></div>
-    </div>
+      {% set pickMode = true %}{% include "board.njk" %}
+    </section>
 
-    <!-- Postings input queue -->
+    <!-- The selected applications as one table, then one card each for the advert text -->
+    <div id="selected-table"></div>
     <div id="postings-input-list" class="postings-input-list"></div>
 
     <div class="workbench-actions">
       <button type="button" class="btn btn--primary" id="btn-run-phase1">
         <i class="fa-solid fa-scale-balanced" aria-hidden="true"></i> Run Phase 1: GJU Rules Check (Part A)
       </button>
+      <label class="doc-field tailor-picker">
+        <span>AI that writes the CVs &amp; CLs (and runs the ATS assessment)</span>
+        <!-- Filled from tailorChoices (lib/internships-studio.mjs); an AI without its key is greyed out. -->
+        <select id="set-tailor-model" name="tailorModel">
+          <option value="opus">Claude Opus — your Claude subscription</option>
+        </select>
+      </label>
       <button type="button" class="btn btn--accent" id="btn-run-phase2-all" disabled>
         <i class="fa-solid fa-file-export" aria-hidden="true"></i> Run Phase 2: Generate Eligible CVs &amp; CLs (.docx + .pdf)
+      </button>
+      <button type="button" class="btn" id="btn-download-brief" title="One .txt with your profile, your base CV and letter, and these applications with their GJU check and ATS assessment, to give to an AI yourself">
+        <i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i> Download all as .txt for AI
       </button>
       <span id="workbench-status" class="muted" role="status" aria-live="polite"></span>
     </div>
@@ -247,13 +273,28 @@ eleventyExcludeFromCollections: true
     </div>
   </section>
 
+  {# Edit the text of a generated document. A changed document is saved as a new version; the one before it is kept. #}
+  <dialog id="doc-edit" class="doc-edit">
+    <h3>Edit <code id="doc-edit-title"></code></h3>
+    <p class="muted">One box per paragraph. Change what you want and save: a new version (<code>_v2</code>, <code>_v3</code> …) is written with its PDF, and the earlier file stays. A paragraph you change keeps its style, but bold or italic words inside it become plain, so leave label lines as they are.</p>
+    <div id="doc-edit-list" class="doc-edit-list"></div>
+    <div class="doc-card-foot">
+      <span id="doc-edit-status" class="muted" role="status" aria-live="polite"></span>
+      <button type="button" class="btn" id="doc-edit-cancel">Cancel</button>
+      <button type="button" class="btn btn--primary" id="doc-edit-save"><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> Save as a new version</button>
+    </div>
+  </dialog>
+
   <!-- ================ Section 3: Generated CVs & CLs Archive + ATS Checker -->
-  <section class="doc-panel" id="archive-section" aria-labelledby="archive-h">
+  <section class="doc-panel workspace-panel" id="archive-section" aria-labelledby="archive-h">
     <div class="doc-panel-head">
+      <div class="doc-panel-title">
+        <span class="gb-chip-icon" aria-hidden="true"><i class="fa-solid fa-folder-open"></i></span>
       <div>
         <span class="doc-step">03 / Saved Documents Archive</span>
         <h2 id="archive-h">Generated CVs (<code>CVs/</code>) &amp; Cover Letters (<code>CLs/</code>)</h2>
         <p class="muted">Every generated file in <code>C:\Users\Hamza928\Desktop\Internships\CVs</code> and <code>CLs</code>. Existing files are never overwritten—new runs increment <code>_v2</code>, <code>_v3</code>.</p>
+      </div>
       </div>
       <div class="doc-head-actions">
         <input type="search" id="archive-filter" class="doc-input" placeholder="Search company or filename…">
@@ -273,12 +314,15 @@ eleventyExcludeFromCollections: true
   </section>
 
   <!-- ========================= Section 4: ATS Self-Check & Manuals Library -->
-  <section class="doc-panel" id="ats-section" aria-labelledby="ats-h">
+  <section class="doc-panel workspace-panel" id="ats-section" aria-labelledby="ats-h">
     <div class="doc-panel-head">
+      <div class="doc-panel-title">
+        <span class="gb-chip-icon" aria-hidden="true"><i class="fa-solid fa-magnifying-glass-chart"></i></span>
       <div>
         <span class="doc-step">04 / ATS Verification &amp; Guides</span>
-        <h2 id="ats-h">ATS Self-Checker (<code>ats_check.py</code>) &amp; Employer ATS Manuals</h2>
+        <h2 id="ats-h">ATS parser check (<code>ats_check.py</code>) &amp; the ATS manuals</h2>
         <p class="muted">Tests your PDF text layer, page limits (≤ 2 pages CV, ≤ 1 page CL), contact links, German/English headings, <code>MM/YYYY</code> date ranges, two-column reading traps, and optional posting keywords.</p>
+      </div>
       </div>
     </div>
 
@@ -311,7 +355,7 @@ eleventyExcludeFromCollections: true
       </div>
 
       <div class="doc-card">
-        <h3><i class="fa-solid fa-book-open" aria-hidden="true"></i> ATS Systems &amp; German Company Manuals (<code>Input Data/ATS/</code>)</h3>
+        <h3><i class="fa-solid fa-book-open" aria-hidden="true"></i> ATS systems &amp; employer notes (<code>Student-data/ats/</code>)</h3>
         <div class="doc-form-grid">
           <label class="doc-field" style="grid-column: 1 / -1;">
             <span>Choose an ATS system or German employer manual</span>
@@ -324,11 +368,14 @@ eleventyExcludeFromCollections: true
   </section>
 
   <!-- ================== Section 5: MyGJU Contract Checklist & Housing Map -->
-  <section class="doc-panel" id="checklist-section" aria-labelledby="checklist-h">
+  <section class="doc-panel workspace-panel" id="checklist-section" aria-labelledby="checklist-h">
     <div class="doc-panel-head">
+      <div class="doc-panel-title">
+        <span class="gb-chip-icon" aria-hidden="true"><i class="fa-solid fa-list-check"></i></span>
       <div>
         <span class="doc-step">05 / MyGJU Contract Checklist &amp; Needs Your Input</span>
         <h2 id="checklist-h">Before Signing &amp; Uploading to MyGJU</h2>
+      </div>
       </div>
     </div>
     <div class="doc-settings-grid">
@@ -354,3 +401,8 @@ eleventyExcludeFromCollections: true
     </div>
   </section>
 </div>
+
+<script src="{{ '/assets/thinking-orbs.js' | url }}"></script>
+<script src="{{ '/assets/ai-status.js' | url }}"></script>
+<script type="application/json" id="gju-rules">{{ gju | dump | safe }}</script>
+<script type="application/json" id="tracker-schema">{{ tracker | dump | safe }}</script>

@@ -1,0 +1,60 @@
+{#- The internship board (filters, toolbar, list), shared by the Search page and the CVs & CLs page; src/assets/workspace-board.js builds it.
+    The CVs & CLs page sets pickMode first, which hides what only the Search page uses (column view, Excel, full-screen window). -#}
+<details class="gb gb-panel" id="board-filter-panel" open>
+    <summary class="gb-panel-head">
+      <span class="gb-chip-icon"><i class="fa-solid fa-sliders" aria-hidden="true"></i></span>
+      <h3>Filters</h3>
+      <span class="gb-count-badge" id="board-active-count" hidden>0</span>
+      <span class="gb-hint">Search, pick from the lists, or set a range</span>
+      <i class="fa-solid fa-chevron-down gb-caret" aria-hidden="true"></i>
+    </summary>
+    <div class="gb-panel-body">
+      <div class="gb-filter-grid">
+        <div class="gb-field s4"><label class="gb-field-label" for="board-q"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>Search</label>
+          <input id="board-q" class="gb-control" type="search" placeholder="Title, company, city or skill" autocomplete="off" enterkeyhint="search"></div>
+        <div class="gb-field s4" id="board-f-skills"></div>
+        <div class="gb-field s4" id="board-f-status"></div>
+        <div class="gb-field" id="board-f-city"></div>
+        <div class="gb-field" id="board-f-kind"></div>
+        <div class="gb-field" id="board-f-gju"></div>
+        <div class="gb-field" id="board-f-apply"></div>
+        <div class="gb-field" id="board-f-german"></div>
+        <div class="gb-field" id="board-f-english"></div>
+        <div class="gb-field" id="board-f-applicant"></div>
+        <div class="gb-field" id="board-f-recent"></div>
+        <div class="gb-field" id="board-f-by"></div>
+        <div class="gb-field" id="board-f-sites"></div>
+        <div class="gb-field"><label class="gb-field-label" for="board-min-weeks"><i class="fa-solid fa-hourglass-half" aria-hidden="true"></i>At least (weeks)</label>
+          <input id="board-min-weeks" class="gb-control" type="number" inputmode="numeric" min="1" max="104" step="1" placeholder="e.g. 20"></div>
+        <div class="gb-field"><label class="gb-field-label" for="board-min-pay"><i class="fa-solid fa-euro-sign" aria-hidden="true"></i>Pay from (€/month)</label>
+          <input id="board-min-pay" class="gb-control" type="number" inputmode="numeric" min="0" max="20000" step="50" placeholder="e.g. 800"></div>
+        <div class="gb-field"><label class="gb-field-label" for="board-max-pay"><i class="fa-solid fa-euro-sign" aria-hidden="true"></i>Pay up to (€/month)</label>
+          <input id="board-max-pay" class="gb-control" type="number" inputmode="numeric" min="0" max="20000" step="50" placeholder="e.g. 1500"></div>
+        <div class="gb-field"><label class="gb-field-label" for="board-from"><i class="fa-solid fa-calendar-days" aria-hidden="true"></i>Posted from</label>
+          <input id="board-from" class="gb-control" type="date"></div>
+        <div class="gb-field"><label class="gb-field-label" for="board-to"><i class="fa-solid fa-calendar-check" aria-hidden="true"></i>Posted until</label>
+          <input id="board-to" class="gb-control" type="date"></div>
+      </div>
+      <div class="gb-active-row" id="board-active-row" aria-label="Active filters"></div>
+    </div>
+  </details>
+
+  <div class="gb gb-toolbar" id="board-results">
+    <div class="gb-toolbar-title">
+      <span class="gb-chip-icon"><i class="fa-solid fa-briefcase" aria-hidden="true"></i></span>
+      <div><h3>Internships</h3><p class="gb-result-count" id="board-result-count" aria-live="polite">Loading…</p></div>
+    </div>
+    <div class="gb-toolbar-tools">
+      <label class="gb-view-select" for="tracker-column-view"{% if pickMode %} hidden{% endif %}><span>Show</span> <select id="tracker-column-view" class="gb-control"><option value="results">Board</option><option value="review">Shortlist essentials</option><option value="all">All columns</option><option value="contact">Company &amp; contact</option><option value="requirements">Job requirements</option><option value="application">Application details</option></select></label>
+      <div class="gb-field gb-compact" id="board-f-sort"></div>
+      <div class="gb-view-toggle" id="board-view-toggle" role="group" aria-label="Board layout">
+        <button type="button" id="board-view-table" aria-pressed="true" aria-label="Table view" title="Table view"><i class="fa-solid fa-table-list" aria-hidden="true"></i></button>
+        <button type="button" id="board-view-cards" aria-pressed="false" aria-label="Card view" title="Card view"><i class="fa-solid fa-table-cells-large" aria-hidden="true"></i></button>
+      </div>
+      <label class="gb-pick-all" id="board-pick-label"><input type="checkbox" class="gb-check" id="board-pick-all"> <span>Tick all shown</span> <span class="gb-ticked" id="board-ticked" hidden>0</span></label>
+      <button type="button" class="gb-btn gb-btn-primary" id="board-dl" aria-haspopup="menu" aria-expanded="false"{% if pickMode %} hidden{% endif %}><i class="fa-solid fa-file-excel" aria-hidden="true"></i> Download Excel <i class="fa-solid fa-chevron-down" aria-hidden="true"></i></button>
+      <button class="gb-btn tracker-expand" id="tracker-expand" type="button"{% if pickMode %} hidden{% endif %} aria-pressed="false" title="Open the shortlist as a full-screen window (Esc closes it)"><i class="fa-solid fa-expand" aria-hidden="true"></i> <span>Open as window</span></button>
+    </div>
+  </div>
+  <div class="gb gb-results" id="board-list" aria-live="off"></div>
+  <div class="gb gb-more"><button type="button" class="gb-btn" id="board-more" hidden><i class="fa-solid fa-angles-down" aria-hidden="true"></i> Show more</button></div>

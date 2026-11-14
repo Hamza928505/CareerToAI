@@ -7,11 +7,14 @@ import {
   detectAts,
   evaluatePostings,
   evaluateSinglePosting,
+  evaluateWithCity,
   findCityAddress,
   getStudioState,
   loadCityHousing,
   readInternshipsProfile,
   runAtsCheckOnPdf,
+  tailorChoices,
+  tailorModel,
 } from "../lib/internships-studio.mjs";
 
 test("loadCityHousing loads 93 German cities and findCityAddress matches München / Heidelberg", () => {
@@ -92,8 +95,52 @@ test("evaluateSinglePosting applies GJU Rules 1-10 accurately", () => {
   assert.match(negotiableFail.email.body, /20 Wochen|6 Monate/);
 });
 
-test("evaluatePostings sorts overview table by Verdict then Fit", () => {
-  const res = evaluatePostings({
+test("evaluateWithCity lets the AI pick the housing city when the advert names a city the typed field does not", async () => {
+  const housing = loadCityHousing(DEFAULT_INTERNSHIPS_DIR);
+  const profile = readInternshipsProfile(DEFAULT_INTERNSHIPS_DIR);
+  const settings = { matchCityAddress: true, preferredDuration: "6 Monate", earliestStart: "01.03.2027", latestEnd: "30.09.2027" };
+  const raw = { company: "ACME", position: "Pflichtpraktikum Software", text: "Pflichtpraktikum 6 Monate Vollzeit in unserem Büro in Eschborn." };
+  const asked = [];
+  const chat = async (args) => { asked.push(args); return { city: "Eschborn", housingCity: "Frankfurt am Main" }; };
+
+  const res = await evaluateWithCity(raw, 1, profile, settings, housing, chat);
+  assert.equal(res.location, "Eschborn");
+  assert.equal(res.cityAddress.matched, true);
+  assert.equal(res.cityAddress.city, "Frankfurt am Main");
+  assert.match(res.contractWording, /Arbeitsort: Eschborn/);
+  assert.deepEqual(JSON.parse(asked[0].user).CITIES.includes("Frankfurt am Main"), true);
+
+  // A typed city that already matches never reaches the AI.
+  asked.length = 0;
+  const typed = await evaluateWithCity({ ...raw, location: "München" }, 1, profile, settings, housing, chat);
+  assert.equal(typed.cityAddress.city, "München");
+  assert.equal(asked.length, 0);
+
+  // A made-up housing city, an empty answer or a failing AI leaves the Deggendorf address.
+  for (const reply of [async () => ({ city: "", housingCity: "Atlantis" }), async () => { throw new Error("no provider"); }]) {
+    const kept = await evaluateWithCity(raw, 1, profile, settings, housing, reply);
+    assert.equal(kept.cityAddress.matched, false);
+    assert.equal(kept.cityAddress.city, "Deggendorf");
+  }
+});
+
+test("evaluatePostings gives every posting its own city address", async () => {
+  const cities = { "Büro in Eschborn": { city: "Eschborn", housingCity: "Frankfurt am Main" }, "Büro in Wolfsburg": { city: "Wolfsburg", housingCity: "Wolfsburg" } };
+  const chat = async ({ user }) => cities[Object.keys(cities).find((key) => JSON.parse(user).ADVERT.includes(key))];
+  const res = await evaluatePostings({
+    settings: { matchCityAddress: true, preferredDuration: "6 Monate", earliestStart: "01.03.2027", latestEnd: "30.09.2027" },
+    chat,
+    postings: [
+      { company: "A", position: "Pflichtpraktikum", text: "Pflichtpraktikum 6 Monate Vollzeit, Büro in Eschborn." },
+      { company: "B", position: "Pflichtpraktikum", text: "Pflichtpraktikum 6 Monate Vollzeit, Büro in Wolfsburg." },
+    ],
+  });
+  assert.deepEqual(res.evaluated.map((e) => e.cityAddress.city), ["Frankfurt am Main", "Wolfsburg"]);
+});
+
+test("evaluatePostings sorts overview table by Verdict then Fit", async () => {
+  const res = await evaluatePostings({
+    chat: async () => ({ city: "", housingCity: "" }),
     postings: [
       {
         company: "RemoteOnly",
@@ -128,4 +175,20 @@ test("getStudioState and runAtsCheckOnPdf inspect Desktop\\Internships", async (
   assert.equal(ats.ok, true);
   assert.equal(ats.fails, 0);
   assert.ok(ats.reportMd.includes("Summary:"));
+});
+
+test("tailorModel: Opus by default, any provider by name with its own key, whatever LLM_PROVIDER says", () => {
+  assert.deepEqual(tailorModel(undefined).config, { provider: "claude", model: "opus" });
+  assert.deepEqual(tailorModel("rm -rf").config, { provider: "claude", model: "opus" }, "an unknown choice is Opus, never passed on");
+  assert.equal(tailorModel("__proto__").choice, "opus");
+  assert.deepEqual(tailorModel("sonnet").config, { provider: "claude", model: "sonnet" });
+  assert.equal(tailorModel("haiku").label, "Claude Haiku");
+  const env = { LLM_PROVIDER: "nvidia", NVIDIA_API_KEY: "nv-key", LLM_MODEL: "nvidia/some-model", OPENROUTER_API_KEY: "or-key" };
+  assert.equal(tailorModel("nvidia", env).config.model, "nvidia/some-model", "the provider in use keeps its model");
+  assert.equal(tailorModel("openrouter", env).config.provider, "openrouter", "another provider is used by name, not LLM_PROVIDER");
+  assert.notEqual(tailorModel("openrouter", env).config.model, "nvidia/some-model", "LLM_MODEL belongs to the chosen provider only");
+  assert.equal(tailorModel("gemini", env).config, null, "no key, no config");
+  const choices = tailorChoices(env);
+  assert.deepEqual(choices.filter((c) => c.ready).map((c) => c.id), ["opus", "sonnet", "haiku", "nvidia", "openrouter", "ollama"]);
+  assert.ok(!JSON.stringify(choices).includes("-key"), "the picker's list never carries a key");
 });

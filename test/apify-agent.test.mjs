@@ -47,8 +47,14 @@ test("a run that never called Apify, or got only errors back, is an error", asyn
   await assert.rejects(searchApify({ days: 7, run: async () => refused }), /Apify answered with an error: Authentication required/);
 });
 
-test("the prompt names both Actors for every search", () => {
+test("the prompt names both Actors for every search, or only the chosen board's Actor", () => {
   const prompt = apifyPrompt(["a", "b"], { days: 7 });
   assert.match(prompt, /\["a","b"\]/);
   assert.match(prompt, /arbeitsagentur-jobs-feed/);
+  const onlyStepStone = apifyPrompt(["a"], { days: 7, boards: ["StepStone"] });
+  assert.match(onlyStepStone, /valig\/stepstone-jobs-scraper/);
+  assert.doesNotMatch(onlyStepStone, /arbeitsagentur-jobs-feed/);
+  const onlyBa = apifyPrompt(["a"], { days: 7, boards: ["Arbeitsagentur"] });
+  assert.match(onlyBa, /arbeitsagentur-jobs-feed/);
+  assert.doesNotMatch(onlyBa, /valig\/stepstone-jobs-scraper/);
 });

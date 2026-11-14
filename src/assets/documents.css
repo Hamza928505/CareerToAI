@@ -1,121 +1,25 @@
 /* ==========================================================================
    CVs & Cover Letters Studio (/documents/)
+   Wears the Search page's look: board.css (hero, buttons) and ws-theme.css (blue tokens, tabs).
    ========================================================================== */
+@import url("./board.css");
+@import url("./ws-theme.css");
 
 .doc-studio {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
+  min-width: 0;
   padding-bottom: 3rem;
 }
 
-.doc-hero {
-  border-radius: 18px;
-  padding: 2rem 2.2rem;
-  background: linear-gradient(135deg, #0f172a 0%, #1e293b 55%, #0f3d3e 100%);
-  color: #f8fafc;
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.22);
+.doc-studio .notice { margin-bottom: 1rem; }
+
+/* Five sections, one row (the Search page has three) */
+.doc-tabs {
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
 }
 
-.doc-hero code {
-  background: rgba(255, 255, 255, 0.14);
-  color: #e2e8f0;
-  padding: 0.15rem 0.45rem;
-  border-radius: 6px;
-  font-size: 0.85em;
-}
-
-.doc-hero .gb-eyebrow {
-  font-size: 0.82rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: #94a3b8;
-  margin: 0 0 0.5rem;
-}
-
-.doc-hero h2 {
-  font-size: clamp(1.65rem, 2.8vw, 2.35rem);
-  margin: 0 0 0.75rem;
-  color: #ffffff;
-}
-
-.doc-hero .gb-grad-text {
-  background: linear-gradient(90deg, #38bdf8, #34d399);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-.doc-hero .gb-lead {
-  color: #cbd5e1;
-  max-width: 72ch;
-  line-height: 1.6;
-  margin-bottom: 1.25rem;
-}
-
-.doc-hero .gb-hero-cta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.65rem;
-  margin-bottom: 1.5rem;
-}
-
-.doc-hero .gb-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  padding: 0.55rem 1rem;
-  border-radius: 999px;
-  font-weight: 600;
-  font-size: 0.88rem;
-  text-decoration: none;
-  transition: transform 0.15s ease, background 0.15s ease;
-}
-
-.doc-hero .gb-btn-light {
-  background: #38bdf8;
-  color: #0f172a;
-}
-
-.doc-hero .gb-btn-glass {
-  background: rgba(255, 255, 255, 0.1);
-  color: #f8fafc;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.doc-hero .gb-btn:hover {
-  transform: translateY(-1px);
-}
-
-.doc-hero .gb-stats {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 0.85rem;
-}
-
-.doc-hero .gb-stat-tile {
-  background: rgba(255, 255, 255, 0.07);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 12px;
-  padding: 0.85rem 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-}
-
-.doc-hero .gb-stat-tile strong {
-  font-size: 1.45rem;
-  color: #38bdf8;
-}
-
-.doc-hero .gb-stat-tile span {
-  font-size: 0.82rem;
-  color: #cbd5e1;
+@media (max-width: 620px) {
+  .doc-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .doc-tabs a:last-child:nth-child(odd) { grid-column: 1 / -1; }
 }
 
 /* Panels & Cards */
@@ -125,14 +29,30 @@
   gap: 1.15rem;
 }
 
+/* display:flex above would otherwise beat the hidden attribute (the section tabs show one panel at a time) */
+.doc-panel[hidden] {
+  display: none;
+}
+
 .doc-panel-head {
   display: flex;
   justify-content: space-between;
-  align-items: flex-end;
+  align-items: center;
   flex-wrap: wrap;
   gap: 1rem;
-  border-bottom: 1px solid var(--rule, rgba(148, 163, 184, 0.25));
-  padding-bottom: 0.75rem;
+}
+
+.doc-panel-title {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.9rem;
+  flex: 1 1 360px;
+  min-width: 0;
+}
+
+.doc-panel-title p {
+  margin: 0;
+  max-width: 78ch;
 }
 
 .doc-step {
@@ -165,19 +85,19 @@
 }
 
 .doc-card {
-  background: var(--surface, #ffffff);
-  border: 1px solid var(--rule, rgba(148, 163, 184, 0.28));
-  border-radius: 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
   padding: 1.25rem 1.35rem;
-  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+  box-shadow: var(--shadow-sm);
   display: flex;
   flex-direction: column;
   gap: 0.9rem;
 }
 
-[data-theme="dark"] .doc-card {
-  background: rgba(30, 41, 59, 0.75);
-  border-color: rgba(148, 163, 184, 0.2);
+/* display:flex above would otherwise beat the hidden attribute (the shortlist drawer opens and closes with it) */
+.doc-card[hidden] {
+  display: none;
 }
 
 .doc-card h3 {
@@ -401,9 +321,29 @@
 }
 
 .posting-textarea {
-  min-height: 115px;
+  min-height: 11rem;
   resize: vertical;
   font-family: inherit;
+}
+
+.posting-known summary {
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.posting-known pre {
+  max-height: 9rem;
+  overflow: auto;
+  margin: 0.4rem 0 0;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-subtle);
+  font: inherit;
+  font-size: 0.82rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .workbench-actions {
@@ -414,36 +354,45 @@
   padding: 0.5rem 0;
 }
 
-/* Tracker Picker */
-.tracker-picker-controls {
+.workbench-actions .tailor-picker {
+  flex: 1 1 18rem;
+  max-width: 26rem;
+}
+
+/* The Search page's board, picking rows for the workbench */
+.doc-picker {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr); /* the board's wide table scrolls inside its card instead of widening the page */
+  gap: 1rem;
+}
+
+.doc-picker[hidden] {
+  display: none;
+}
+
+.doc-picker-bar {
+  position: sticky;
+  top: 4.6rem;
+  z-index: 6;
   display: flex;
-  gap: 0.65rem;
+  flex-wrap: wrap;
   align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
 }
 
-.tracker-picker-list {
-  max-height: 260px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  border: 1px solid var(--rule, rgba(148, 163, 184, 0.25));
-  border-radius: 8px;
-  padding: 0.5rem;
+.doc-picker-bar p {
+  margin: 0;
 }
 
-.tracker-picker-item {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 0.4rem 0.55rem;
-  border-radius: 6px;
-  font-size: 0.85rem;
-  cursor: pointer;
-}
-
-.tracker-picker-item:hover {
-  background: rgba(148, 163, 184, 0.12);
+/* a row has no editor here, and its link to this page would only reload it */
+.doc-picker .gb-row-acts {
+  display: none;
 }
 
 /* Overview & Rules Tables */
@@ -709,3 +658,36 @@
   gap: 0.75rem;
   flex-wrap: wrap;
 }
+
+/* ------------------------------------------------------------ ATS assessment, advert fetch, document editor */
+.posting-fetch { justify-content: flex-end; gap: .35rem; }
+.posting-fetch .btn { align-self: flex-start; }
+.ats-assessment { display: grid; gap: 1rem; margin: 1rem 0; padding: 1rem; border: 1px solid var(--border-default); border-radius: 12px; background: var(--bg-main); }
+.ats-head { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 1.2rem; align-items: start; }
+.ats-score { display: grid; place-items: center; gap: .2rem; width: 9.5rem; padding: 1rem .6rem; border-radius: 12px; background: var(--bg-surface); border: 2px solid var(--border-strong); text-align: center; }
+.ats-score strong { font: 700 2.6rem/1 var(--font-body); font-variant-numeric: tabular-nums; }
+.ats-score span { font-size: .78rem; color: var(--text-secondary); }
+.ats-score[data-level="ok"] { border-color: var(--success); }
+.ats-score[data-level="ok"] strong { color: var(--success-text); }
+.ats-score[data-level="mid"] { border-color: var(--warning); }
+.ats-score[data-level="mid"] strong { color: var(--warning-text); }
+.ats-score[data-level="low"] { border-color: var(--error); }
+.ats-score[data-level="low"] strong { color: var(--error-text); }
+.ats-summary p { margin: 0 0 .5rem; max-width: none; font-size: .92rem; }
+.ats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); gap: .8rem; }
+.ats-grid ul { margin: .3rem 0 .8rem; padding-left: 1.1rem; }
+.ats-grid li { margin-bottom: .35rem; }
+.ats-grid pre { white-space: pre-wrap; font-size: .76rem; max-height: 16rem; overflow: auto; }
+.ats-error { color: var(--error-text); }
+.proof { display: inline-block; margin-top: .2rem; padding: .05rem .45rem; border-radius: 999px; font-weight: 650; }
+.proof-document { background: var(--success-light); color: var(--success-text); }
+.proof-profile { background: var(--bg-muted); color: var(--text-secondary); }
+@media (max-width: 640px) { .ats-head { grid-template-columns: 1fr; } .ats-score { width: 100%; } }
+.doc-edit { width: min(52rem, calc(100vw - 2rem)); max-height: 90vh; padding: 1.2rem 1.4rem; border: 1px solid var(--border-default); border-radius: 14px; background: var(--bg-surface); color: var(--text-primary); box-shadow: var(--shadow-lg); }
+.doc-edit::backdrop { background: rgba(15, 23, 42, .55); }
+.doc-edit h3 { margin: 0 0 .4rem; }
+.doc-edit-list { display: grid; gap: .45rem; max-height: 56vh; overflow-y: auto; margin: .8rem 0; padding-right: .3rem; }
+.doc-edit-list textarea { width: 100%; padding: .5rem .65rem; border: 1px solid var(--border-control); border-radius: 8px; background: var(--bg-main); color: var(--text-primary); font: inherit; font-size: .9rem; resize: vertical; }
+
+/* File names and folder paths have no spaces to break at. */
+.doc-studio code { overflow-wrap: anywhere; }

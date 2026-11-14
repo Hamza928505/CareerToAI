@@ -179,11 +179,24 @@ job-search/.agents/usage/
 # Brainstorm mockups (superpowers visual companion) - never ship
 job-search/.superpowers/
 
-# The student's own files: contact details, CV and cover letter, and the
-# per-application copies made from them. Local only; never published.
+# The student's own files: contact details, CV and cover letter, the per-application
+# copies made from them, uploaded certificates and references (documents/) and the ATS
+# manuals (ats/). Local only; never published. Everything in the folder is ignored, so a
+# new kind of file can never slip into a commit (.gitkeep is already tracked, so it stays);
+# the three named rules stay because
+# job-search/tools/security_guards.py checks for them.
+src/assets/Student-data/*
 src/assets/Student-data/student.json
 src/assets/Student-data/*.docx
 src/assets/Student-data/tailored/
+
+# Local state of the app: the MCP servers added on the Settings page (an address can hold a key),
+# the company directory, what the last searches found per source, boards added by hand, studio settings.
+data/mcp-servers.json
+data/companies.json
+data/search-runs.json
+data/job-boards.json
+data/internships-settings.json
 
 # Public-board runner: rotation state and credit log are local only
 data/board-state.json

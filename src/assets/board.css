@@ -140,7 +140,7 @@
 .gb-hero h2 { color: #fff; font-size: clamp(2rem, 4.6vw, 3.2rem); max-width: 18ch; font-weight: 800; letter-spacing: -0.035em; }
 .gb-grad-text { background: linear-gradient(90deg, #fff 10%, #ffe0a3 60%, #ffb844); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .gb-lead { max-width: 58ch; font-size: clamp(1rem, 1.7vw, 1.12rem); color: rgba(255, 255, 255, 0.88); }
-.gb-lead code { background: rgba(255, 255, 255, 0.16); color: #fff; }
+.gb-lead code, .gb-eyebrow code, .gb-stat-tile code { background: rgba(255, 255, 255, 0.16); color: #fff; }
 .gb-hero-cta { display: flex; flex-wrap: wrap; gap: 12px; }
 .gb-hero-note { margin: 0; max-width: 62ch; font-size: 14px; color: rgba(255, 255, 255, 0.92); }
 .gb-hero-note:empty { display: none; }
@@ -412,3 +412,5 @@ html.gb-has-sheet { overflow: hidden; } /* the page behind a phone dropdown shee
 @media (prefers-reduced-motion: reduce) {
   .gb-hero, .gb-blob, .gb-orb, .gb-table tbody tr, .gb-card-item, .gb-skeleton, .gb-chip, .gb-count-badge { animation: none; }
 }
+.gb-row-acts { display: inline-flex; align-items: center; gap: 2px; white-space: nowrap; }
+.gb-row-docs { text-decoration: none; }

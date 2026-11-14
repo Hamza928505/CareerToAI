@@ -23,7 +23,12 @@ assert.match(workspace, /class="gb gb-hero"/);
 // The board hero is the page's only hero, at the top and outside any tab panel; no stat tiles or funnel above the tabs.
 assert.doesNotMatch(workspace, /ws-head|workspace-overview|id="stat-total"|id="mode-pill"/);
 assert.equal((workspace.match(/gb-hero"/g) || []).length, 1);
-assert.ok(workspace.indexOf('class="gb gb-hero"') < workspace.indexOf('id="settings-form"') && workspace.indexOf('class="gb gb-hero"') < workspace.indexOf('id="flow-review"'));
+assert.ok(workspace.indexOf('class="gb gb-hero"') < workspace.indexOf('id="flow-review"'));
+// Keys, services and the task runner live on the Settings page now.
+assert.doesNotMatch(workspace, /id="settings-form"|id="flow-tools"/);
+const settings = readFileSync(new URL('../_site/settings/index.html', import.meta.url), 'utf8');
+assert.match(settings, /id="settings-form"/);
+assert.match(settings, /data-run="profile"/);
 for (const stat of ['total', 'meets', 'fresh', 'companies']) assert.match(workspace, new RegExp(`data-stat="${stat}"`));
 for (const filter of ['skills', 'status', 'city', 'kind', 'gju', 'apply', 'german', 'english', 'applicant', 'sort']) assert.match(workspace, new RegExp(`id="board-f-${filter}"`));
 assert.match(workspace, /<option value="results">Board<\/option>/);

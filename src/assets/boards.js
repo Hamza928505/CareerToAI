@@ -3,6 +3,8 @@
  * so without this script they all still work. */
 import { theme, revealOnScroll } from "./boards-ui.js";
 import "./boards-results.js";
+import "./boards-directory.js";
+import "./companies.js";
 
 theme.init();
 revealOnScroll();
@@ -14,8 +16,9 @@ scrolled();
 
 const input = document.getElementById("boards-q");
 const count = document.getElementById("boards-count");
-const items = [...document.querySelectorAll("[data-search-item]")];
 input.addEventListener("input", () => {
+  // Read on every keystroke: boards you add yourself join the grid after the page has loaded.
+  const items = [...document.querySelectorAll("[data-search-item]")];
   const query = input.value.trim().toLocaleLowerCase();
   let shown = 0;
   for (const item of items) {
