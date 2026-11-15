@@ -892,12 +892,36 @@ async function handleInternshipsAssess(req, res) {
 }
 
 const PAGE_ENTITIES = { nbsp: " ", "#160": " ", amp: "&", lt: "<", gt: ">", quot: '"', "#39": "'", apos: "'" };
+const INTERNSHIPS_POSTING_TEXT_ALLOWED_HOSTS = [
+  "linkedin.com",
+  "indeed.com",
+  "stepstone.de",
+  "glassdoor.com",
+  "xing.com",
+  "greenhouse.io",
+  "lever.co",
+  "workable.com",
+];
+
+function isAllowedPostingTextHost(hostname) {
+  const host = String(hostname || "").toLowerCase();
+  return INTERNSHIPS_POSTING_TEXT_ALLOWED_HOSTS.some((allowed) => host === allowed || host.endsWith(`.${allowed}`));
+}
 
 // POST /__editor/internships/posting-text { url }: the advert's text from its own page, through the polite reader
 // (robots.txt, the source policy, no private addresses). A job board that may not be read answers with the reason.
 async function handleInternshipsPostingText(req, res) {
   const { url } = await readBody(req);
-  const page = await siteReader(String(url || ""));
+  let parsed;
+  try {
+    parsed = new URL(String(url || ""));
+  } catch {
+    return sendJson(res, 200, { ok: false, reason: "That is not a public web address." });
+  }
+  if (!["http:", "https:"].includes(parsed.protocol) || !isAllowedPostingTextHost(parsed.hostname)) {
+    return sendJson(res, 200, { ok: false, reason: "That web address is not allowed here. Open the advert and paste its text." });
+  }
+  const page = await siteReader(parsed.href);
   if (!page.ok) {
     const why = page.blocked === "policy" ? "This job board does not allow its pages to be read automatically. Open the advert and paste its text."
       : page.blocked === "robots" ? "The site's robots.txt does not allow this page to be read automatically. Open the advert and paste its text."
