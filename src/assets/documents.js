@@ -300,9 +300,9 @@ function renderSelectedTable() {
   if (!el) return;
   if (!state.postings.some((p) => p.company || p.position || p.text)) { el.innerHTML = ""; return; }
   const rows = state.postings.map((p, idx) => `<tr>
-      <td>${idx + 1}</td><td>${esc(p.company)}</td><td>${esc(p.position)}</td><td>${esc(p.location)}</td>
-      <td>${hasAdvert(p) ? `<span class="rule-pill rule-pass">Advert added</span>` : `<button type="button" class="btn btn--sm" data-focus-advert="${idx}"><i class="fa-solid fa-paste" aria-hidden="true"></i> Paste the description</button>`}</td>
-      <td>${state.postings.length > 1 ? `<button type="button" class="btn btn--sm" data-remove-posting="${idx}"><i class="fa-solid fa-trash" aria-hidden="true"></i> Remove</button>` : ""}</td>
+      <td>${idx + 1}</td><td>${esc(p.company) || `<span class="muted">—</span>`}</td><td>${esc(p.position) || `<span class="muted">—</span>`}</td><td>${esc(p.location) || `<span class="muted">—</span>`}</td>
+      <td>${hasAdvert(p) ? `<span class="rule-pill rule-pass"><i class="fa-solid fa-check" aria-hidden="true"></i> Advert added</span>` : `<button type="button" class="btn btn--sm" data-focus-advert="${idx}"><i class="fa-solid fa-paste" aria-hidden="true"></i> Paste the description</button>`}</td>
+      <td>${state.postings.length > 1 ? `<button type="button" class="btn btn--sm btn--danger-ghost" data-remove-posting="${idx}"><i class="fa-solid fa-trash" aria-hidden="true"></i> Remove</button>` : ""}</td>
     </tr>`).join("");
   el.innerHTML = `<div class="doc-card selected-table">
     <h3>Selected applications (${state.postings.length})</h3>
@@ -311,56 +311,148 @@ function renderSelectedTable() {
   </div>`;
 }
 
+function postingSummaryHtml(p) {
+  const company = (p.company || "").trim();
+  const position = (p.position || "").trim();
+  const location = (p.location || "").trim();
+  if (!company && !position) {
+    return `<span class="posting-head-placeholder">Enter company, position title, and advert text below</span>`;
+  }
+  return `<strong>${esc(company || "Unnamed company")}</strong>${position ? ` <span class="posting-head-role">— ${esc(position)}</span>` : ""}${location ? ` <span class="posting-head-loc"><i class="fa-solid fa-location-dot" aria-hidden="true"></i> ${esc(location)}</span>` : ""}`;
+}
+
+function postingStatusHtml(p) {
+  const len = String(p.text || "").trim().length;
+  if (len >= 200) {
+    return `<span class="rule-pill rule-pass"><i class="fa-solid fa-check" aria-hidden="true"></i> Advert ready (${len.toLocaleString()} chars)</span>`;
+  }
+  if (len > 0) {
+    return `<span class="rule-pill rule-unclear"><i class="fa-solid fa-pen" aria-hidden="true"></i> ${len} / 200+ chars</span>`;
+  }
+  return `<span class="rule-pill rule-unclear"><i class="fa-solid fa-paste" aria-hidden="true"></i> Needs advert text</span>`;
+}
+
+function postingCharCountText(p) {
+  const len = String(p.text || "").trim().length;
+  if (!len) return "0 characters — paste the full job description (min. 200 chars)";
+  if (len < 200) return `${len.toLocaleString()} characters (${200 - len} more needed for full check)`;
+  return `${len.toLocaleString()} characters`;
+}
+
+function updatePostingCardMeta(idx) {
+  const p = state.postings[idx];
+  if (!p) return;
+  const summaryEl = $(`[data-head-summary="${idx}"]`);
+  if (summaryEl) summaryEl.innerHTML = postingSummaryHtml(p);
+  const statusEl = $(`[data-advert-badge="${idx}"]`);
+  if (statusEl) statusEl.innerHTML = postingStatusHtml(p);
+  const countEl = $(`[data-char-count="${idx}"]`);
+  if (countEl) countEl.textContent = postingCharCountText(p);
+  const clearBtn = $(`[data-clear-advert="${idx}"]`);
+  if (clearBtn) clearBtn.hidden = !String(p.text || "").length;
+  const openLink = $(`[data-open-url="${idx}"]`);
+  if (openLink) {
+    const href = httpHref(p.url);
+    if (href) {
+      openLink.href = href;
+      openLink.hidden = false;
+    } else {
+      openLink.removeAttribute("href");
+      openLink.hidden = true;
+    }
+  }
+}
+
 function renderPostingsInputs() {
   const listEl = $("#postings-input-list");
   if (!listEl) return;
   renderSelectedTable();
   listEl.innerHTML = state.postings
     .map(
-      (p, idx) => `
-      <div class="posting-input-card" data-posting-idx="${idx}">
+      (p, idx) => {
+        const href = httpHref(p.url);
+        return `
+      <div class="posting-input-card" data-posting-idx="${idx}"${p.collapsed ? ` data-collapsed="true"` : ""}>
         <div class="posting-input-head">
-          <span class="posting-num-badge">Posting #${idx + 1}</span>
-          ${
-            state.postings.length > 1
-              ? `<button type="button" class="btn btn--sm" data-remove-posting="${idx}"><i class="fa-solid fa-trash" aria-hidden="true"></i> Remove</button>`
-              : ""
-          }
-        </div>
-        <div class="posting-meta-grid">
-          <label class="doc-field">
-            <span>Company</span>
-            <input type="text" data-p-field="company" data-idx="${idx}" value="${esc(p.company)}" placeholder="e.g. BMW Group, Siemens, SAP…">
-          </label>
-          <label class="doc-field">
-            <span>Position Title</span>
-            <input type="text" data-p-field="position" data-idx="${idx}" value="${esc(p.position)}" placeholder="e.g. Praktikum Machine Learning / AI (m/w/d)">
-          </label>
-          <label class="doc-field">
-            <span>City / Location</span>
-            <input type="text" data-p-field="location" data-idx="${idx}" value="${esc(p.location)}" placeholder="e.g. München, Berlin, Stuttgart…">
-          </label>
-          <label class="doc-field">
-            <span>Kennziffer / Ref ID (optional)</span>
-            <input type="text" data-p-field="kennziffer" data-idx="${idx}" value="${esc(p.kennziffer)}" placeholder="e.g. DE-12345">
-          </label>
-          <label class="doc-field">
-            <span>Posting URL (optional)</span>
-            <input type="url" data-p-field="url" data-idx="${idx}" value="${esc(p.url)}" placeholder="https://…">
-          </label>
-          <div class="doc-field posting-fetch">
-            <button type="button" class="btn btn--sm" data-fetch-text="${idx}"><i class="fa-solid fa-cloud-arrow-down" aria-hidden="true"></i> Get the advert text from this link</button>
-            ${httpHref(p.url) ? `<a class="btn btn--sm" href="${esc(httpHref(p.url))}" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i> Open the posting</a>` : ""}
-            <small class="muted" data-fetch-note="${idx}" role="status">Works for company websites. Job boards that forbid automatic reading are not read: paste their text.</small>
+          <div class="posting-head-main">
+            <span class="posting-num-badge">Posting #${idx + 1}</span>
+            <div class="posting-head-summary" data-head-summary="${idx}">${postingSummaryHtml(p)}</div>
+          </div>
+          <div class="posting-head-actions">
+            <span data-advert-badge="${idx}">${postingStatusHtml(p)}</span>
+            ${
+              state.postings.length > 1
+                ? `<button type="button" class="btn btn--sm posting-collapse-btn" data-toggle-posting="${idx}" aria-expanded="${p.collapsed ? "false" : "true"}" title="${p.collapsed ? "Expand posting fields" : "Collapse posting fields"}">
+                    <i class="fa-solid fa-chevron-${p.collapsed ? "down" : "up"}" aria-hidden="true"></i>
+                    <span>${p.collapsed ? "Expand" : "Collapse"}</span>
+                  </button>
+                  <button type="button" class="btn btn--sm btn--danger-ghost" data-remove-posting="${idx}" title="Remove this posting">
+                    <i class="fa-solid fa-trash" aria-hidden="true"></i> Remove
+                  </button>`
+                : ""
+            }
           </div>
         </div>
-        <label class="doc-field">
-          <span>Application description from their site (copy it there and paste it here, German or English)</span>
-          <textarea class="posting-textarea" data-p-field="text" data-idx="${idx}" placeholder="Open the posting, copy the whole description (tasks, requirements, duration, hours, contact person) and paste it here…">${esc(p.text)}</textarea>
-        </label>
-        ${p.baseText ? `<details class="posting-known"><summary>From your shortlist (sent with the description)</summary><pre>${esc(p.baseText)}</pre></details>` : ""}
+        <div class="posting-input-body"${p.collapsed ? " hidden" : ""}>
+          <div class="posting-meta-grid">
+            <label class="doc-field posting-col-company">
+              <span>Company</span>
+              <input type="text" data-p-field="company" data-idx="${idx}" value="${esc(p.company)}" placeholder="e.g. BMW Group, Siemens, SAP…">
+            </label>
+            <label class="doc-field posting-col-position">
+              <span>Position Title</span>
+              <input type="text" data-p-field="position" data-idx="${idx}" value="${esc(p.position)}" placeholder="e.g. Praktikum Machine Learning / AI (m/w/d)">
+            </label>
+            <label class="doc-field posting-col-location">
+              <span>City / Location</span>
+              <input type="text" data-p-field="location" data-idx="${idx}" value="${esc(p.location)}" placeholder="e.g. München, Berlin…">
+            </label>
+            <label class="doc-field posting-col-ref">
+              <span>Kennziffer / Ref ID <small class="muted">(optional)</small></span>
+              <input type="text" data-p-field="kennziffer" data-idx="${idx}" value="${esc(p.kennziffer)}" placeholder="e.g. DE-12345">
+            </label>
+            <div class="doc-field posting-col-url">
+              <div class="posting-url-head">
+                <label for="posting-url-${idx}" class="posting-field-label">Posting URL <small class="muted">(optional)</small></label>
+                <small class="muted posting-fetch-note" data-fetch-note="${idx}" role="status">Works for company websites. Job boards that forbid automatic reading are not read: paste their text.</small>
+              </div>
+              <div class="posting-url-bar">
+                <input type="url" id="posting-url-${idx}" data-p-field="url" data-idx="${idx}" value="${esc(p.url)}" placeholder="https://jobs.company.com/…">
+                <div class="posting-url-actions">
+                  <button type="button" class="btn btn--sm" data-fetch-text="${idx}">
+                    <i class="fa-solid fa-cloud-arrow-down" aria-hidden="true"></i> Get the advert text from this link
+                  </button>
+                  <a class="btn btn--sm" data-open-url="${idx}" ${href ? `href="${esc(href)}"` : "hidden"} target="_blank" rel="noopener noreferrer">
+                    <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i> Open the posting
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="doc-field posting-advert-field">
+            <div class="posting-advert-head">
+              <label for="posting-text-${idx}" class="posting-field-label">
+                Application description from their site <small class="muted">(copy &amp; paste, German or English)</small>
+              </label>
+              <div class="posting-advert-tools">
+                <span class="posting-char-count muted" data-char-count="${idx}">${postingCharCountText(p)}</span>
+                <button type="button" class="btn btn--sm" data-paste-advert="${idx}" title="Paste text from clipboard">
+                  <i class="fa-regular fa-clipboard" aria-hidden="true"></i> Paste
+                </button>
+                <button type="button" class="btn btn--sm" data-clear-advert="${idx}" ${String(p.text || "").length ? "" : "hidden"} title="Clear description text">
+                  <i class="fa-solid fa-eraser" aria-hidden="true"></i> Clear
+                </button>
+              </div>
+            </div>
+            <textarea id="posting-text-${idx}" class="posting-textarea" data-p-field="text" data-idx="${idx}" placeholder="Open the posting, copy the whole description (tasks, requirements, duration, hours, contact person) and paste it here…">${esc(p.text)}</textarea>
+          </div>
+
+          ${p.baseText ? `<details class="posting-known"><summary><i class="fa-solid fa-table-list" aria-hidden="true"></i> From your shortlist (sent with the description)</summary><pre>${esc(p.baseText)}</pre></details>` : ""}
+        </div>
       </div>
-    `
+    `;
+      }
     )
     .join("");
 }
@@ -1085,6 +1177,9 @@ document.addEventListener("DOMContentLoaded", () => {
     syncPostingInputsFromDom();
     state.postings.push({ company: "", position: "", location: "", kennziffer: "", url: "", text: "" });
     renderPostingsInputs();
+    const lastCard = $(`#postings-input-list [data-posting-idx="${state.postings.length - 1}"]`);
+    lastCard?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    lastCard?.querySelector(`input[data-p-field="company"]`)?.focus({ preventScroll: true });
   });
 
   const removePosting = (e) => {
@@ -1093,23 +1188,79 @@ document.addEventListener("DOMContentLoaded", () => {
     syncPostingInputsFromDom();
     const idx = Number(rmBtn.dataset.removePosting);
     state.postings.splice(idx, 1);
+    if (state.postings.length === 1) state.postings[0].collapsed = false;
     renderPostingsInputs();
   };
-  $("#postings-input-list")?.addEventListener("click", removePosting);
+  $("#postings-input-list")?.addEventListener("click", async (e) => {
+    removePosting(e);
+
+    const toggleBtn = e.target.closest("[data-toggle-posting]");
+    if (toggleBtn) {
+      syncPostingInputsFromDom();
+      const idx = Number(toggleBtn.dataset.togglePosting);
+      if (state.postings[idx]) {
+        state.postings[idx].collapsed = !state.postings[idx].collapsed;
+        renderPostingsInputs();
+      }
+      return;
+    }
+
+    const pasteBtn = e.target.closest("[data-paste-advert]");
+    if (pasteBtn) {
+      const idx = Number(pasteBtn.dataset.pasteAdvert);
+      const area = $(`textarea[data-p-field="text"][data-idx="${idx}"]`);
+      if (!area) return;
+      try {
+        const clip = await navigator.clipboard.readText();
+        if (clip) {
+          area.value = area.value.trim() ? `${area.value.trim()}\n\n${clip.trim()}` : clip.trim();
+          syncPostingInputsFromDom();
+          updatePostingCardMeta(idx);
+          renderSelectedTable();
+        }
+      } catch {
+        area.focus();
+      }
+      return;
+    }
+
+    const clearBtn = e.target.closest("[data-clear-advert]");
+    if (clearBtn) {
+      const idx = Number(clearBtn.dataset.clearAdvert);
+      const area = $(`textarea[data-p-field="text"][data-idx="${idx}"]`);
+      if (!area) return;
+      area.value = "";
+      syncPostingInputsFromDom();
+      updatePostingCardMeta(idx);
+      renderSelectedTable();
+      area.focus();
+    }
+  });
   $("#selected-table")?.addEventListener("click", removePosting); // the table's own Remove buttons
   $("#selected-table")?.addEventListener("click", (e) => {
     const button = e.target.closest("[data-focus-advert]");
-    const area = button && $(`textarea[data-p-field="text"][data-idx="${button.dataset.focusAdvert}"]`);
+    if (!button) return;
+    const idx = Number(button.dataset.focusAdvert);
+    if (state.postings[idx]?.collapsed) {
+      syncPostingInputsFromDom();
+      state.postings[idx].collapsed = false;
+      renderPostingsInputs();
+    }
+    const area = $(`textarea[data-p-field="text"][data-idx="${idx}"]`);
     if (!area) return;
     area.scrollIntoView({ behavior: "smooth", block: "center" });
     area.focus({ preventScroll: true });
   });
-  // Pasting or typing an advert updates its row in the selected table when the box loses focus.
-  $("#postings-input-list")?.addEventListener("change", (e) => {
+  // Pasting or typing updates the card header summary, status pill, and selected table live.
+  const onPostingFieldUpdate = (e) => {
     if (!e.target.matches("[data-p-field]")) return;
+    const idx = Number(e.target.dataset.idx);
     syncPostingInputsFromDom();
+    updatePostingCardMeta(idx);
     renderSelectedTable();
-  });
+  };
+  $("#postings-input-list")?.addEventListener("input", onPostingFieldUpdate);
+  $("#postings-input-list")?.addEventListener("change", onPostingFieldUpdate);
 
   // Tracker picker
   $("#btn-import-tracker")?.addEventListener("click", openTrackerPicker);
